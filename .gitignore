@@ -1,4 +1,3 @@
 macro briefing*.md
 macro_weekly_log*.md
 macro weekly synthesis*.md
-webhook_config.txt
