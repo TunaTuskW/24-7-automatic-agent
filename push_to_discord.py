@@ -12,22 +12,18 @@ logging.basicConfig(
 )
 
 ALLOWED_PATTERNS = [
-    r'^macro update \(\d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC\)\.md$',
+    r'^4 hours update \(\d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC\)\.md$',
+    r'^72 hours roll \(\d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC\)\.md$',
     r'^macro weekly synthesis \(\d{4}-\d{2}-\d{2} UTC\)\.md$',
 ]
 
-VALID_TIERS = {"ROUTINE", "ELEVATED", "CRITICAL"}
+VALID_TIERS = {"ROUTINE", "ELEVATED", "CRITICAL", "DAILY"}
 
 COLORS = {
     "ROUTINE": 0x2ECC71,    # green
     "ELEVATED": 0xF1C40F,   # yellow
     "CRITICAL": 0xE74C3C,   # red
-}
-
-PINGS = {
-    "ROUTINE": "",
-    "ELEVATED": "@here",
-    "CRITICAL": "@everyone",
+    "DAILY": 0x3498DB,      # blue
 }
 
 MAX_FILE_SIZE_MB = 7
@@ -44,9 +40,21 @@ def get_webhook_url():
     if os.path.exists(config_path):
         with open(config_path, 'r') as f:
             url = f.read().strip()
-            if url and not url.startswith("PASTE_YOUR_WEBHOOK_URL_HERE"):
+            if url and not url.startswith("PASTE_YOUR_WEBHOOK"):
                 return url
     return None
+
+def get_notification_ping():
+    ping = os.environ.get("DISCORD_ROLE_PING")
+    if ping:
+        return ping
+    config_path = os.path.join(os.path.dirname(__file__), "role_config.txt")
+    if os.path.exists(config_path):
+        with open(config_path, 'r') as f:
+            ping = f.read().strip()
+            if ping and not ping.startswith("PASTE_YOUR_ROLE"):
+                return ping
+    return "@here" # Default fallback
 
 def post_with_retry(url, retries=3, delay=10, **kwargs):
     for attempt in range(retries):
@@ -135,7 +143,10 @@ def push_to_discord(file_path, tier_override=None):
 
     tier = headline["tier"]
     color = COLORS.get(tier, COLORS["ROUTINE"])
-    ping = PINGS.get(tier, "")
+    
+    ping = ""
+    if tier in ["ELEVATED", "CRITICAL"]:
+        ping = get_notification_ping()
 
     # File size check
     file_size_mb = os.path.getsize(file_path) / (1024 * 1024)

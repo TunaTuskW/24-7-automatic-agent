@@ -1,0 +1,1 @@
+PASTE_YOUR_ROLE_PING_HERE (e.g., @everyone or <@&123456789>)
