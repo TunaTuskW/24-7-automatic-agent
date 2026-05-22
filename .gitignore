@@ -1,9 +1,10 @@
+config/webhook_config.txt
+config/fred_api_key.txt
+logs/
+data/market_snapshot.json
+reports/72 hours roll*.md
+reports/updates/
+logs/macro_weekly_log*.md
+reports/macro weekly synthesis*.md
+reports/macro briefing*.md
 macro briefing*.md
-macro_weekly_log*.md
-macro weekly synthesis*.md
-*.log
-72 hours roll*.md
-webhook_config.txt
-fred_api_key.txt
-market_snapshot.json
-fetch_market_data.log
