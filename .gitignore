@@ -8,3 +8,5 @@ logs/macro_weekly_log*.md
 reports/macro weekly synthesis*.md
 reports/macro briefing*.md
 macro briefing*.md
+data/hmm_model.pkl
+data/hmm_scaler.pkl
