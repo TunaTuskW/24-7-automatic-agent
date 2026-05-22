@@ -7,7 +7,7 @@ import logging
 import requests
 
 logging.basicConfig(
-    filename='push_to_discord.log',
+    filename=os.path.join(os.path.dirname(__file__), '..', 'logs', 'push_to_discord.log'),
     level=logging.INFO,
     format='%(asctime)s — %(levelname)s — %(message)s'
 )
@@ -37,7 +37,7 @@ def get_webhook_url():
     url = os.environ.get("DISCORD_WEBHOOK_URL")
     if url:
         return url
-    config_path = os.path.join(os.path.dirname(__file__), "webhook_config.txt")
+    config_path = os.path.join(os.path.dirname(__file__), '..', 'config', 'webhook_config.txt')
     if os.path.exists(config_path):
         with open(config_path, 'r') as f:
             url = f.read().strip()
@@ -49,7 +49,7 @@ def get_notification_ping():
     ping = os.environ.get("DISCORD_ROLE_PING")
     if ping:
         return ping
-    config_path = os.path.join(os.path.dirname(__file__), "role_config.txt")
+    config_path = os.path.join(os.path.dirname(__file__), '..', 'config', 'role_config.txt')
     if os.path.exists(config_path):
         with open(config_path, 'r') as f:
             ping = f.read().strip()
