@@ -191,7 +191,7 @@ It is time for the 24/7 global macro briefing update.
 
 9. Run the Discord notification script, passing the escalation tier as the 
    second argument:
-   `python3 push_to_discord.py "updates/4 hours update (YYYY-MM-DD HH:MM UTC).md" [TIER]`
+   `./push_to_discord.py "updates/4 hours update (YYYY-MM-DD HH:MM UTC).md" [TIER]`
    Where [TIER] is ROUTINE, ELEVATED, or CRITICAL as determined in Step 3a.
 
    Do not push macro_weekly_log.md to Discord. It is a machine file only.
@@ -265,7 +265,7 @@ It is time for the weekly macro regime synthesis.
    Do not clear the log under any failure condition.
 
 5. Run the Discord notification script for the new synthesis file:
-   `python3 push_to_discord.py "macro weekly synthesis (YYYY-MM-DD UTC).md"`
+   `./push_to_discord.py "macro weekly synthesis (YYYY-MM-DD UTC).md"`
 ```
 
 ### Task 3: Daily Digest Push (Every 24 Hours)
@@ -280,7 +280,7 @@ It is time for the daily macro digest push to Discord.
    (named `72 hours roll (YYYY-MM-DD HH:MM UTC).md`).
 
 2. Run the Discord notification script for this file, passing DAILY as the tier argument:
-   `python3 push_to_discord.py "72 hours roll (YYYY-MM-DD HH:MM UTC).md" DAILY`
+   `./push_to_discord.py "72 hours roll (YYYY-MM-DD HH:MM UTC).md" DAILY`
 ```
 
 ## 3. Versioning System & Patch Notes
