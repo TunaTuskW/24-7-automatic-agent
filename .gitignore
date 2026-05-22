@@ -4,3 +4,6 @@ macro weekly synthesis*.md
 *.log
 72 hours roll*.md
 webhook_config.txt
+fred_api_key.txt
+market_snapshot.json
+fetch_market_data.log

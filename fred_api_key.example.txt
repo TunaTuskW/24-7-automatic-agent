@@ -1,0 +1,6 @@
+your key is here
+
+# How to get a FRED API Key:
+# 1. Register for a free account at: https://fredaccount.stlouisfed.org/login/SecureAuth.mvc/Login
+# 2. Request an API key at: https://fred.stlouisfed.org/docs/api/api_key.html
+# 3. Paste your key above and save this file as fred_api_key.txt
