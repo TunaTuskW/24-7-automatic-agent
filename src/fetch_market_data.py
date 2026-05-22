@@ -19,7 +19,7 @@ except ImportError:
     raise ImportError("Install yfinance: pip install yfinance --break-system-packages")
 
 logging.basicConfig(
-    filename='fetch_market_data.log',
+    filename=os.path.join(os.path.dirname(__file__), '..', 'logs', 'fetch_market_data.log'),
     level=logging.INFO,
     format='%(asctime)s — %(levelname)s — %(message)s'
 )
@@ -28,7 +28,7 @@ def get_fred_key():
     key = os.environ.get("FRED_API_KEY")
     if key:
         return key
-    path = os.path.join(os.path.dirname(__file__), "fred_api_key.txt")
+    path = os.path.join(os.path.dirname(__file__), '..', 'config', 'fred_api_key.txt')
     if os.path.exists(path):
         with open(path, 'r') as f:
             key = f.read().strip()
@@ -247,7 +247,7 @@ def main():
     escalation = compute_data_driven_escalation(snapshot, flags)
     snapshot["cross_asset_flags"]      = flags
     snapshot["data_driven_escalation"] = escalation
-    output_path = os.path.join(os.path.dirname(__file__), "market_snapshot.json")
+    output_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'market_snapshot.json')
     with open(output_path, 'w') as f:
         json.dump(snapshot, f, indent=2)
     logging.info(f"Snapshot written: {output_path}")
