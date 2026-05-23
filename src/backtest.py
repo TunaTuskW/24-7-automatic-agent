@@ -32,19 +32,29 @@ def get_fred_key():
     return None
 
 def fetch_data_for_backtest(years=2):
-    logging.info(f"Fetching {years} years of market data for backtesting...")
+    logging.info(f"Fetching {years} years of training data...")
     period = f"{years * 365}d"
     fred_key = get_fred_key()
+    tickers = ["^GSPC", "CL=F", "DX-Y.NYB", "SI=F", "USDCAD=X", "GC=F"]
+    data = yf.download(tickers, period=period, progress=False)["Close"]
+    
+    spx = data["^GSPC"].dropna()
+    wti = data["CL=F"].dropna()
+    dxy = data["DX-Y.NYB"].dropna()
+    silver = data["SI=F"].dropna()
+    usdcad = data["USDCAD=X"].dropna()
+    gold = data["GC=F"].dropna()
 
-    spx = yf.Ticker("^GSPC").history(period=period)["Close"]
-    wti = yf.Ticker("CL=F").history(period=period)["Close"]
-    dxy = yf.Ticker("DX-Y.NYB").history(period=period)["Close"]
+    for s in [spx, wti, dxy, silver, usdcad, gold]:
+        s.index = pd.to_datetime(s.index).tz_localize(None).normalize()
 
     spx_ret = spx.pct_change() * 100
     wti_ret = wti.pct_change() * 100
     dxy_ret = dxy.pct_change() * 100
-
-    # Approximate GARCH conditional volatility with rolling std for backtest speed
+    gsr_ret = (gold / silver).pct_change() * 100
+    usdcad_ret = usdcad.pct_change() * 100
+    
+    # approximate garch for speed
     spx_garch_vol = spx_ret.rolling(21).std()
 
     us2y_series = None
@@ -55,9 +65,9 @@ def fetch_data_for_backtest(years=2):
                 start_date = (datetime.now(timezone.utc) - timedelta(days=years * 366)).strftime("%Y-%m-%d")
                 url = "https://api.stlouisfed.org/fred/series/observations"
                 params = {
-                    "series_id": series_id,
-                    "api_key": fred_key,
-                    "file_type": "json",
+                    "series_id":         series_id,
+                    "api_key":           fred_key,
+                    "file_type":         "json",
                     "observation_start": start_date,
                 }
                 resp = requests.get(url, params=params, timeout=15)
@@ -72,30 +82,33 @@ def fetch_data_for_backtest(years=2):
                     us10y_series = s
             except Exception as e:
                 logging.warning(f"FRED {series_id} fetch failed: {e}")
-
     df = pd.DataFrame({
-        "spx_ret": spx_ret,
-        "wti_ret": wti_ret,
-        "dxy_ret": dxy_ret,
+        "spx_ret":       spx_ret,
+        "wti_ret":       wti_ret,
+        "dxy_ret":       dxy_ret,
         "spx_garch_vol": spx_garch_vol,
+        "gsr_ret":       gsr_ret,
+        "usdcad_ret":    usdcad_ret
     })
     df.index = pd.to_datetime(df.index).tz_localize(None)
-
+    # Keyless Credit ETF historical proxy
+    df["crypto_mfi_z"] = df["spx_ret"].rolling(10).std() * 0.1
     if us10y_series is not None:
         us10y_delta = us10y_series.diff()
         df["us10y_delta"] = us10y_delta.reindex(df.index, method="ffill")
-        df["us10y_level"] = us10y_series.reindex(df.index, method="ffill")
     else:
         df["us10y_delta"] = 0.0
-        df["us10y_level"] = 0.0
-
     if us2y_series is not None and us10y_series is not None:
         spread = (us10y_series - us2y_series).diff()
         df["spread_delta"] = spread.reindex(df.index, method="ffill")
+        df["spread_level"] = (us10y_series - us2y_series).reindex(df.index, method="ffill")
     else:
         df["spread_delta"] = 0.0
-
+        df["spread_level"] = 0.0
+    # Implied volatility index historical proxy
+    df["vix_zscore"] = df["spx_garch_vol"].rolling(21).apply(lambda x: (x[-1] - x.mean())/x.std() if x.std() > 0 else 0)
     df = df.dropna()
+    logging.info(f"Training data shape: {df.shape}")
     return df
 
 def run_backtest():

@@ -35,5 +35,11 @@ The agent manages three distinct workflows on its own:
 
 6. OFFLINE MODEL TRAINING & BACKTESTING
 The deep learning models (HMM and MLP) are not static. The agent includes an offline training pipeline (train_models.py) that allows you to periodically re-train the neural networks on fresh market data. Whenever you train the models, it automatically generates a Backtest Report (backtest_results.md) so you can empirically verify the agent's mathematical edge before it trades or analyzes live markets.
+7. ADVANCED MODEL GOVERNANCE & TACTICAL ASSUMPTIONS
+The agent uses advanced self-monitoring techniques to ensure it does not suffer from AI over-confidence:
+- KL Divergence & Structural Ambiguity Index (SAI): The agent mathematically measures the disagreement between its HMM and MLP models. If the disagreement (SAI) gets too high, it automatically degrades its confidence level and flags a model divergence.
+- Rolling Brier Score: A self-calibration tool that tracks if the agent's historical probability forecasts have actually been accurate over time.
+- 1.5 Std Dev Dynamic Boundaries: Continuously tracks volatility thresholds to automatically invalidate outdated narratives the moment a statistical sweep occurs.
+- AI Strategic Assumptions Layer: At the end of every update, the AI must explicitly document its market interpretation, tactical lean, confidence level, and exact invalidation conditions in a non-theatrical format.
 
 By anchoring the AI to a rigid mathematical backbone, the agent provides institutional-quality insights with deterministic reliability.

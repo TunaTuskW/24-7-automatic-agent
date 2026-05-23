@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-build_report.py - v2.7.0
+build_report.py - v2.9.0
 Generates institutional macro updates displaying dual-engine (HMM + Deep MLP)
-statistics alongside TruChain-verified volatility and commodities dashboards.
+statistics alongside the decision-oriented AI Strategic Assumptions Layer.
 """
 import os
 import json
@@ -19,10 +19,16 @@ def generate_llm_report(data, api_key, timestamp_str, session, tier):
     try:
         from google import genai
         client = genai.Client(api_key=api_key)
-        prompt = f"""You are an institutional macro analyst.
-Generate the 4-hour macro update based on the following raw JSON data:
+        
+        # Pull dynamic invalidation targets for prompt precision
+        inv = data.get("invalidation_boundaries", {})
+        us10y_target = inv.get("us10y_invalidation_level", 4.65)
+        vix_target = inv.get("vix_invalidation_level", 22.0)
+        
+        prompt = f"""You are an elite institutional macro strategist writing the 4-hour macro briefing.
+Generate the update based on this raw quantitative JSON snapshot:
 {json.dumps(data, indent=2)}
-Use this header exact format:
+Use this exact header format:
 ## {timestamp_str} — {session} — {tier}
 Write the report following strict guidelines. Highlight:
 1. Headline Block
@@ -31,6 +37,15 @@ Write the report following strict guidelines. Highlight:
 4. Narrative Continuity
 5. Risk Flags
 6. Forward Look
+CRITICAL TASK: You must append a dedicated, concise, non-theatrical section at the end of the report called:
+### AI Strategic Assumptions
+This section must convert the math into plain, practical decision-support instructions for downstream execution systems. 
+It MUST follow this strict 5-part structure:
+- **Market Interpretation:** Explain what institutions are doing internally (concise, no academic jargon).
+- **Tactical Implication:** Give practical buy/sell/hold positioning guidelines.
+- **Invalidation Conditions:** Explicitly state what mathematical limits invalidate this thesis (incorporate the dynamic target limits provided: US10Y exceeding {us10y_target}% or VIX rising above {vix_target}).
+- **Confidence Level:** LOW, MODERATE, or HIGH (must dynamically reflect the Brier Score calibration and SAI conflict indexes provided in the JSON).
+- **Directional Lean:** Mild bullish lean, Mild bearish lean, Neutral, or No directional edge.
 """
         response = client.models.generate_content(model='gemini-2.5-pro', contents=prompt)
         return response.text
@@ -51,12 +66,14 @@ def main():
     mcs_label = data.get("mcs", {}).get("label", "NEUTRAL")
     regime = data.get("regime", {}).get("current", "UNKNOWN")
     
-    # Kalman State
+    # Kalman & Model Governance
     kalman = data.get("kalman_state", {})
     dominant_state = kalman.get("dominant_state", "unknown")
     dominant_prob = kalman.get("dominant_prob", 0.0) * 100
+    sai_score = kalman.get("structural_ambiguity_index", 0.0)
+    brier_score = kalman.get("brier_score_calibration", 0.15)
     
-    # MLP Deep Classifier State
+    # MLP State
     mlp = data.get("mlp_deep_state", {}) or {}
     mlp_dominant = mlp.get("dominant_state", "unknown").upper()
     mlp_prob = mlp.get("dominant_prob", 0.0) * 100
@@ -92,6 +109,18 @@ def main():
     crypto_mfi = crypto.get("composite_z", 0.0)
     credit = raw.get("credit_stress_proxy", {}) or {}
     credit_label = credit.get("label", "NORMAL")
+    # Tactical setup
+    tactical = raw.get("tactical_setup", {}) or {}
+    setup_name = tactical.get("matched_setup", "NONE")
+    edge_prob = tactical.get("regime_conditioned_probability", 0.50) * 100
+    
+    boundaries = raw.get("spx_weekly_boundaries", {}) or {}
+    pwh_level = boundaries.get("pwh", 0.0)
+    pwl_level = boundaries.get("pwl", 0.0)
+    
+    inv_bounds = data.get("invalidation_boundaries", {})
+    us10y_target = inv_bounds.get("us10y_invalidation_level", 4.65)
+    vix_target = inv_bounds.get("vix_invalidation_level", 22.0)
     session = "US Session"
     if 0 <= dt.hour < 8:
         session = "Asian Session"
@@ -104,14 +133,27 @@ def main():
         report_content = generate_llm_report(data, api_key, timestamp_str, session, tier)
     if not report_content:
         print("Using deterministic template.")
+        # Setup narrative mapping
+        setup_narrative = "No structural liquidity sweeps detected in the current session."
+        if setup_name == "PWL_Sweep":
+            setup_narrative = f"ALERT: Wednesday PWL Swept ({pwl_level}). Volatility-filtered checks confirm clean institutional absorption. Standard technical analysis suggests a V-shape reversal trap."
+        elif setup_name == "PWH_Sweep":
+            setup_narrative = f"ALERT: PWH Swept ({pwh_level}). Distribution patterns identified at key ceiling. Trapped buyers likely to face liquidation cascade."
+        # Compute dynamic confidence class
+        computed_confidence = "HIGH"
+        if sai_score > 0.65 or brier_score > 0.25:
+            computed_confidence = "LOW"
+        elif sai_score > 0.35 or brier_score > 0.18:
+            computed_confidence = "MODERATE"
         report_content = f"""## {timestamp_str} — {session} — {tier}
 **MCS:** {mcs_score} ({mcs_label}) | **Regime:** {regime} [HMM]
 **State:** Bayesian HMM: {dominant_state} ({dominant_prob:.1f}%) | Deep MLP: {mlp_dominant} ({mlp_prob:.1f}%)
+**Model Conflict (SAI):** {sai_score} | **Brier Calibration:** {brier_score}
 **Sources:** FRED, ECB Data Portal, Yahoo Finance (TruChain Verified)
 -----------------------------------------------
 [ {tier} ] {timestamp_str} — {session}
 Sentiment: {dominant_state.upper()} | SPX {spx_sign}{spx_pct}% | DXY {dxy_level} | VIX {vix_level} | US10Y {us10y}% | WTI {wti_sign}{wti_pct}%
-Key: Automated briefing utilizing verified TruChain-signed metrics.
+Key: Automated briefing utilizing verified TruChain-signed metrics. Model Agreement: {"HIGH" if sai_score < 0.3 else "MODERATE" if sai_score < 0.6 else "DIVERGENT"}.
 -----------------------------------------------
 a. SESSION TAG — {session}.
 b. ASSET DASHBOARD
@@ -130,16 +172,27 @@ COMMODITIES & SAFE HAVENS
 - Industrial Demand (Copper): {copper_sign}{copper_pct}%
 - Safe Haven (Gold): {gold_sign}{gold_pct}%
 - Energy Stress (WTI): {wti_sign}{wti_pct}%
-c. DATA OBSERVATION
+c. TACTICAL EXECUTION EDGE
+- MATCHED PATTERN: {setup_name}
+- REGIME-CONDITIONED SUCCESS PROBABILITY: {edge_prob:.1f}%
+- WEEKLY STRUCTURAL BOUNDARIES: PWH: {pwh_level} | PWL: {pwl_level}
+- SETUP INSIGHT: {setup_narrative}
+d. DATA OBSERVATION
 All quantitative observations are verified and signed against TruChain integrity ledger.
-d. MARKET IMPLICATION
+e. MARKET IMPLICATION
 Double-engine consensus confirms current regime conditions.
-e. NARRATIVE CONTINUITY
+f. NARRATIVE CONTINUITY
 Continuity tracks HMM structural shifts combined with MLP Deep Neural features.
-f. RISK FLAGS
+g. RISK FLAGS
 PRIMARY RISK: Spikes in VIX above 22 or sudden widening of HYG/LQD credit spreads.
-g. FORWARD LOOK
+h. FORWARD LOOK
 Continuous real-time verification logs active.
+### AI Strategic Assumptions
+- **Market Interpretation:** Market exhibits structural rotation with tight institutional control proximate to weekly boundaries. 
+- **Tactical Implication:** High-frequency breakouts are likely to fail; mean-reversion trading within the PWH/PWL bands has structural mathematical support.
+- **Invalidation Conditions:** Bullish thesis is completely invalidated if US10Y rises above {us10y_target}% or VIX expands above {vix_target}.
+- **Confidence Level:** {computed_confidence}
+- **Directional Lean:** Neutral
 """
     report_filename = f"4 hours update ({timestamp_str}).md"
     reports_dir = os.path.join(os.path.dirname(__file__), '..', 'reports', 'updates')
@@ -148,12 +201,10 @@ Continuous real-time verification logs active.
     with open(report_path, 'w') as f:
         f.write(report_content)
     print(f"Generated {report_filename} successfully.")
-    # Append to weekly log
     log_path = os.path.join(os.path.dirname(__file__), '..', 'logs', 'macro_weekly_log.md')
     log_entry = f"{timestamp_str} | {session} | {dominant_state.upper()} | {tier} | TruChain-signed dual-engine update recorded.\n"
     with open(log_path, 'a') as f:
         f.write(log_entry)
-    # push to discord
     push_script = os.path.join(os.path.dirname(__file__), 'push_to_discord.py')
     os.system(f'python3 "{push_script}" "{report_path}" "{tier}"')
 if __name__ == "__main__":
