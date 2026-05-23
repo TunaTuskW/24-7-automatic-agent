@@ -11,3 +11,4 @@ macro briefing*.md
 data/hmm_model.pkl
 data/hmm_scaler.pkl
 config/gemini_api_key.txt
+data/mlp_model.pkl

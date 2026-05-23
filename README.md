@@ -1,4 +1,4 @@
-# Macro Briefing Agent Setup Guide (v2.4.1)
+# Macro Briefing Agent Setup Guide (v2.7.1)
 
 This guide provides step-by-step instructions on how to set up the macro briefing agent, configure Discord notifications, and automate the execution using cron jobs.
 
@@ -121,7 +121,21 @@ If your Mac was asleep and missed a run, you can always catch up manually! Just 
 
 ---
 
-## 6. Troubleshooting & Logs
+## 6. Offline Model Training & Backtesting
+
+The agent's deep learning components (HMM and MLP Classifier) are not static. You must periodically retrain them on new market data to maintain their edge.
+
+1. Once a quarter, open your terminal.
+2. Run the offline training script:
+   ```bash
+   python3 /Users/mac/agent/src/train_models.py
+   ```
+3. The script will fetch 5 years of historical data, re-fit the Hidden Markov Models, retrain the Deep Neural Network, and generate updated historical performance statistics in `reports/backtest_results.md`.
+4. The agent will automatically begin using the updated models on its next 4-hour cron cycle!
+
+---
+
+## 7. Troubleshooting & Logs
 
 Because Cron runs invisibly, you won't see pop-ups if it succeeds or fails. To check on it, you can view the log file. Both the Python scripts and your cron jobs will write out helpful error messages there.
 
@@ -131,7 +145,7 @@ tail -n 20 /Users/mac/agent/logs/cron.log
 ```
 This will show you the output of the most recent automated runs!
 
-## 7. Versioning System & Patch Notes
+## 8. Versioning System & Patch Notes
 Whenever changes are made to this setup document, automatically update the version number in the title and summarize the patch notes to the user.
 - **Big change** (e.g., major feature additions): Increment minor version (x.1 to 9). Example: v1.3.x -> v1.4.0
 - **Small change** (e.g., prompt tweak, new section): Increment patch version (x.x.1 to 9). Example: v1.3.1 -> v1.3.2
