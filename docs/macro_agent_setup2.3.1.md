@@ -1,4 +1,4 @@
-# 24/7 Macro Analyst Agent Setup (v2.3.0)
+# 24/7 Macro Analyst Agent Setup (v2.3.1)
 
 This document contains the configuration used to create a 24/7 autonomous macro analyst using Agentic Scheduling. You can share this with any capable AI agent to recreate the exact same workflow.
 
@@ -120,8 +120,8 @@ It is time for the 24/7 global macro briefing update.
     - MCS score and label (mcs.score, mcs.label)
     - All four sub-components (mcs.sub_components)
     - Regime current and whether it changed this cycle (regime.current, regime.confirmed_change)
-    - Bayesian dominant state and probability (bayesian_state.dominant_state, bayesian_state.dominant_prob)
-    - Bayesian ambiguity flag (bayesian_state.ambiguous)
+    - Bayesian dominant state and probability (kalman_state.dominant_state, kalman_state.dominant_prob)
+    - Bayesian ambiguity flag (kalman_state.ambiguous)
     - All cross_asset_flags
     Do not interpret yet. Only establish what the numbers say.
     Record internally: "MCS is [score] ([label]). Dominant state is [X] at [Y]% probability."
@@ -231,7 +231,7 @@ It is time for the 24/7 global macro briefing update.
    transition. Name the prior regime, the new regime, and the primary
    cause (from SAP Stage 3) that drove the shift.
 
-   If bayesian_state.ambiguous is TRUE: acknowledge the contested causal
+   If kalman_state.ambiguous is TRUE: acknowledge the contested causal
    picture explicitly. Present the two competing explanations from SAP
    Stage 3 and note what evidence would resolve the ambiguity.
 
@@ -266,7 +266,7 @@ It is time for the 24/7 global macro briefing update.
    Frame against SAP Stage 5 Scenario A as the base case.
    State: what is the market pricing in, what would constitute a surprise,
    and which scenario (A or B from Stage 5) each possible outcome maps to.
-   If bayesian_state.ambiguous is TRUE, the pre-analysis must address both
+   If kalman_state.ambiguous is TRUE, the pre-analysis must address both
    competing causal scenarios and how the calendar events could resolve them.
    This section carries more analytical weight than the calendar listing.
 
