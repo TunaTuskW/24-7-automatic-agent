@@ -1,0 +1,39 @@
+MACRO ANALYST AGENT - CONCEPT AND MODEL
+=======================================
+
+1. WHAT IT IS
+This is a 24/7 autonomous agent that monitors global markets, analyzes data, and writes institutional-grade macro reports. It runs completely automatically in the background using your computer's scheduler, without you needing to do anything.
+
+2. THE END-TO-END WORKFLOW
+- Data Collection: Every cycle, the agent automatically downloads real-time market data from Yahoo Finance, FRED, and the ECB. It tracks stocks, bonds, commodities, currencies, and even crypto ETF flows.
+- Mathematical Scoring: It runs this data through advanced python scripts to mathematically score how stressed the market is.
+- AI Logic Guardrails (SAP): Before the AI is allowed to write a report, it is forced through a strict 5-step logic test (The Structured Analytical Protocol). It must verify the math, look for contradictions, and identify a single root cause. This prevents the AI from "guessing" or hallucinating.
+- Report Generation: The agent writes a clean, professional narrative explaining what happened, why it happened, and what the risks are going forward.
+- Discord Delivery: The final report is instantly pushed to your Discord channel.
+- Cryptographic Proof: Every report is digitally signed and "hash-chained" (TruChain) so that its history cannot be secretly altered later.
+
+3. THE MATH & MODELS BEHIND THE SCENES
+Instead of relying purely on an AI's text generation, the agent uses hard quantitative models to determine the true state of the market:
+
+- Macro Condition Score (MCS): A composite number measuring overall market stress based on stock momentum, interest rates, energy prices, and cross-asset behavior (like Gold vs. Silver, or safe-havens vs. risk-assets).
+- Hidden Markov Models (HMM) & Kalman Filters: These algorithms smooth out daily noise to figure out the "true" underlying regime (Risk-On, Risk-Off, or Transitional).
+- Deep Classifier (MLP): A trained neural network that double-checks the HMM. If the two models disagree, the agent automatically flags an anomaly.
+- GARCH Volatility: Predicts upcoming volatility spikes before they happen.
+- Synthetic Corporate Credit: Mathematically estimates high-yield credit stress even when traditional data is delayed.
+
+4. ESCALATION SYSTEM
+The agent respects your time and won't spam you with panicky alerts. It only flags urgency when the math demands it:
+- ROUTINE: Normal market updates.
+- ELEVATED: Moderate volatility spikes, sudden currency squeezes, or early-warning transition signals.
+- CRITICAL: Extreme mathematical stress (e.g., VIX > 30, simultaneous stock and bond crashes). Discord will ping you heavily for these.
+
+5. THE AUTOMATED SCHEDULE
+The agent manages three distinct workflows on its own:
+- The 4-Hour Briefing: A quick pulse-check of the active market session.
+- The Daily Roll: At midnight, it pushes a master document containing the last 72 hours of updates.
+- The Sunday Synthesis: A deep-dive research report summarizing the entire week and previewing the week ahead.
+
+6. OFFLINE MODEL TRAINING & BACKTESTING
+The deep learning models (HMM and MLP) are not static. The agent includes an offline training pipeline (train_models.py) that allows you to periodically re-train the neural networks on fresh market data. Whenever you train the models, it automatically generates a Backtest Report (backtest_results.md) so you can empirically verify the agent's mathematical edge before it trades or analyzes live markets.
+
+By anchoring the AI to a rigid mathematical backbone, the agent provides institutional-quality insights with deterministic reliability.

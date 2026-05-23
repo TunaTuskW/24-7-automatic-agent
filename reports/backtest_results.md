@@ -2,9 +2,9 @@
 
 | Regime | Days | Freq % | Ann. SPX Return | Ann. WTI Return | Avg 10Y Δ (bps/day) |
 |--------|------|--------|-----------------|-----------------|----------------------|
-| NEUTRAL_TRANSITIONAL_4 | 157 | 31.3% | 24.12% | 33.63% | 0.31 bps |
-| NEUTRAL_TRANSITIONAL | 121 | 24.1% | 25.27% | -16.56% | 0.02 bps |
-| NEUTRAL_TRANSITIONAL_3 | 96 | 19.1% | 12.5% | 113.61% | -0.49 bps |
-| NEUTRAL_TRANSITIONAL_2 | 47 | 9.4% | 99.16% | -9.74% | -0.26 bps |
-| DEFLATION_FEAR | 44 | 8.8% | -50.22% | 126.24% | -0.02 bps |
-| NEUTRAL_TRANSITIONAL_5 | 37 | 7.4% | 62.39% | -58.42% | 0.32 bps |
+| NEUTRAL_TRANSITIONAL_5 | 203 | 40.4% | 29.52% | 27.0% | 0.29 bps |
+| NEUTRAL_TRANSITIONAL | 164 | 32.7% | 31.14% | 20.58% | -0.18 bps |
+| NEUTRAL_TRANSITIONAL_1 | 47 | 9.4% | 163.45% | -29.8% | -0.64 bps |
+| NEUTRAL_TRANSITIONAL_4 | 46 | 9.2% | -2.22% | 15.83% | -0.41 bps |
+| NEUTRAL_TRANSITIONAL_3 | 27 | 5.4% | 45.63% | -71.38% | 0.93 bps |
+| NEUTRAL_TRANSITIONAL_2 | 15 | 3.0% | -98.16% | 5079.46% | -0.27 bps |

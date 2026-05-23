@@ -12,8 +12,10 @@ def main():
         print("No updates directory found.")
         return
 
+    # Target Upgrade v2.7.1: Separate roll compiling from file deletion
     now_utc = datetime.now(timezone.utc)
-    cutoff_time = now_utc - timedelta(hours=72)
+    cutoff_time_roll = now_utc - timedelta(hours=72)     # Roll only the last 72 hours
+    cutoff_time_delete = now_utc - timedelta(hours=168)  # Retain files for 7 days (168 hours)
     
     update_files = glob.glob(os.path.join(updates_dir, '4 hours update (*).md'))
     valid_updates = []
@@ -29,12 +31,15 @@ def main():
             try:
                 dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M")
                 dt = dt.replace(tzinfo=timezone.utc)
-                if dt >= cutoff_time:
+                
+                # Check if the file belongs in the 72-hour roll
+                if dt >= cutoff_time_roll:
                     valid_updates.append((dt, fpath))
-                else:
-                    # Clean up files older than 72 hours
+                
+                # Check if the file is older than 7 days and should be deleted
+                elif dt < cutoff_time_delete:
                     os.remove(fpath)
-                    print(f"Deleted old update: {fname}")
+                    print(f"Deleted old update (7-day retention cutoff): {fname}")
             except ValueError:
                 pass
 
