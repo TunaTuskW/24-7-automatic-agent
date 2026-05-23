@@ -1,4 +1,4 @@
-# 24/7 Macro Analyst Agent Setup (v2.3.1)
+# 24/7 Macro Analyst Agent Setup (v2.4.0)
 
 This document contains the configuration used to create a 24/7 autonomous macro analyst using Agentic Scheduling. You can share this with any capable AI agent to recreate the exact same workflow.
 
@@ -350,7 +350,7 @@ It is time for the weekly macro regime synthesis.
       2–3 paragraphs. Institutional depth. No simplification.
 
    c. ASSET PERFORMANCE — Weekly change across the standard dashboard:
-      Equities: SPX, NDX, DAX, FTSE 100, Nikkei 225, HSI
+      Equities: SPX, NDX, DAX, FTSE 100, Nikkei 225, HSI, DFM, TASI
       Bonds: US 2Y, US 10Y, Bund 10Y, 2s10s spread (start vs. end)
       Energy: WTI, Brent, TTF
       Note any cross-asset correlation events that occurred during the week.

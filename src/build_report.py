@@ -67,6 +67,12 @@ def main():
     spx_pct = data.get("equities", {}).get("SPX", {}).get("delta_pct", 0)
     spx_sign = "+" if spx_pct >= 0 else ""
     
+    tasi_pct = data.get("equities", {}).get("TASI", {}).get("delta_pct", 0)
+    tasi_sign = "+" if tasi_pct >= 0 else ""
+    
+    dfm_pct = data.get("equities", {}).get("DFM", {}).get("delta_pct", 0)
+    dfm_sign = "+" if dfm_pct >= 0 else ""
+    
     us10y = data.get("bonds", {}).get("US10Y", {}).get("current", 0)
     
     wti_pct = data.get("energy", {}).get("WTI", {}).get("delta_pct", 0)
@@ -138,7 +144,7 @@ CROSS-ASSET CHECK
 No cross-asset flags this cycle (Automated).
 
 c. DATA OBSERVATION
-Equities (SPX: {spx_sign}{spx_pct}%), Bonds (US10Y: {us10y}%), Energy (WTI: {wti_sign}{wti_pct}%). This is an automated observation derived directly from the market_snapshot.json data payload.
+Equities (SPX: {spx_sign}{spx_pct}%, TASI: {tasi_sign}{tasi_pct}%, DFM: {dfm_sign}{dfm_pct}%), Bonds (US10Y: {us10y}%), Energy (WTI: {wti_sign}{wti_pct}%). This is an automated observation derived directly from the market_snapshot.json data payload.
 
 d. MARKET IMPLICATION
 {implication_text} Assets are exhibiting a {dominant_state} momentum.

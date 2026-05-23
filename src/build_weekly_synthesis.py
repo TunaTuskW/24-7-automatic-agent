@@ -82,6 +82,8 @@ The current Macro Condition Score (MCS) rests at {data.get('mcs', {}).get('score
 
 ## c. ASSET PERFORMANCE (Snapshot)
 - **SPX:** {data.get('equities', {}).get('SPX', {}).get('current', 'N/A')} ({data.get('equities', {}).get('SPX', {}).get('delta_pct', 0)}%)
+- **TASI:** {data.get('equities', {}).get('TASI', {}).get('current', 'N/A')} ({data.get('equities', {}).get('TASI', {}).get('delta_pct', 0)}%)
+- **DFM:** {data.get('equities', {}).get('DFM', {}).get('current', 'N/A')} ({data.get('equities', {}).get('DFM', {}).get('delta_pct', 0)}%)
 - **US10Y:** {data.get('bonds', {}).get('US10Y', {}).get('current', 'N/A')}%
 - **WTI:** {data.get('energy', {}).get('WTI', {}).get('current', 'N/A')} ({data.get('energy', {}).get('WTI', {}).get('delta_pct', 0)}%)
 

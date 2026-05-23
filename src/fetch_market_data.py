@@ -50,6 +50,8 @@ EQUITY_TICKERS = {
     "SHANGHAI": "000001.SS",
     "SHENZHEN": "399001.SZ",
     "KOSPI":    "^KS11",
+    "TASI":     "^TASI.SR",
+    "DFM":      "DFMGI.AE",
 }
 
 ENERGY_TICKERS = {
@@ -65,6 +67,8 @@ FX_TICKERS = {
     "CNYUSD": "CNYUSD=X",
     "KRWUSD": "KRWUSD=X",
     "JPYUSD": "JPYUSD=X",
+    "AEDUSD": "AED=X",
+    "SARUSD": "SAR=X",
 }
 
 def compute_stats(series, garch_conditional_vol=None):
