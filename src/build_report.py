@@ -1,67 +1,53 @@
 #!/usr/bin/env python3
 """
-build_report.py - v3.2.1
+build_report.py - v3.6.0
 Generates institutional macro updates displaying dual-engine (HMM + Deep MLP)
 statistics alongside the decision-oriented AI Strategic Assumptions Layer.
 """
 import os
 import json
 from datetime import datetime, timezone
-def compute_deterministic_synthesis(data):
-    kalman = data.get("kalman_state", {})
-    tvd_score = kalman.get("tvd", 0.0)
-    brier_score = kalman.get("brier_score_calibration", 0.15)
-    dominant_state = kalman.get("dominant_state", "unknown").upper()
-    dominant_prob = kalman.get("dominant_prob", 0.0) * 100
+def compute_deterministic_synthesis(kalman, volume_heat, extremes, epistemic):
+    # Extract variables
+    dominant_prob = kalman.get("dominant_prob", 0.33)
+    brier = kalman.get("brier_score_calibration", 0.25)
+    tvd = kalman.get("tvd", 0.0)
+    kelly_frac = epistemic.get("kelly_exposure_fraction", 0.0)
+    entropy = epistemic.get("shannon_entropy", 1.58)
     
-    raw = data.get("raw_indicators", {})
-    vol_heat = raw.get("volume_activity_heat", {})
-    part_type = vol_heat.get("participation_type", "UNKNOWN")
-    
-    ext = data.get("market_extremes_insight", {})
-    temp = ext.get('temperature_state', "NORMAL")
-    crowd = ext.get('crowded_state', "BALANCED")
-    
-    inv_bounds = data.get("invalidation_boundaries", {})
-    us10y_target = inv_bounds.get("us10y_invalidation_level", 4.65)
-    vix_target = inv_bounds.get("vix_invalidation_level", 22.0)
-    
-    # Base Lean
-    if dominant_state == "RISK_ON":
-        if dominant_prob > 65.0: lean = "Strong Bullish"
-        else: lean = "Weak Bullish"
-    elif dominant_state == "RISK_OFF":
-        if dominant_prob > 65.0: lean = "Strong Bearish"
-        else: lean = "Weak Bearish"
-    else:
-        lean = "Neutral / Transitional"
-
-    # Positioning logic
-    positioning = "Hold current regime exposure."
-    if temp == "OVERHEATED" and crowd == "LONG_TRADE_TOO_CROWDED":
-        lean = "Mean Reversion (Bearish Bias)"
-        positioning = "Cap long exposure; take profits. Vulnerable to cascade."
-    elif temp == "ICE_COLD":
-        if part_type == "INSTITUTIONAL_ACCUMULATION":
-            lean = "Capitulation Bottom (Bullish Bias)"
-            positioning = "Initiate contrarian longs. Institutional absorption detected."
-        else:
-            positioning = "Wait for institutional volume. Do not catch falling knives."
-    elif dominant_state == "RISK_ON" and part_type == "INSTITUTIONAL_DISTRIBUTION":
-        positioning = "Tighten trailing stops. Retail drifting up into institutional selling."
-    elif dominant_state == "RISK_OFF" and part_type == "INSTITUTIONAL_ACCUMULATION":
-        positioning = "Scale into risk. Institutions absorbing panic selling."
+    # 1. Chaos / Abstention Rule (The new noise filter)
+    # If Kelly calculates 0% exposure, OR Entropy is near max (> 1.50)
+    if kelly_frac == 0.0 or entropy > 1.50:
+        return {
+            "market_state": f"NOISY / HIGH CHAOS (Entropy: {entropy})",
+            "directional_lean": "NO PREDICT (Statistical Coin-Flip)",
+            "positioning": "STAND ASIDE. 0% Exposure.",
+            "invalidation": "Requires dominant probability > 45.0%"
+        }
         
-    # High Entropy or Coin-Flip Check
-    if brier_score > 0.25 or tvd_score > 0.10 or dominant_prob < 60.0:
-        lean = "NO PREDICT (Statistical Noise / Coin Flip)"
-        positioning = "No Comment. Stand aside. Market action is currently indistinguishable from noise."
+    # 2. Base Deterministic Logic
+    market_state = f"Regime clear (Prob: {dominant_prob*100:.1f}%)"
+    lean = "Follow Dominant Regime"
+    
+    # Apply Volume & Extreme Overrides
+    if extremes.get("temperature_state") == "TOO HOT" and extremes.get("crowded_state", "").startswith("LONG"):
+        lean = "Mean Reversion (Bearish Bias)"
+        market_state = "OVERHEATED & CROWDED"
+    elif volume_heat.get("participation_type") == "INSTITUTIONAL DISTRIBUTION" and kalman.get("dominant_state") == "RISK_ON":
+        lean = "Bearish Divergence (Retail Trapped)"
+        market_state = "INSTITUTIONAL SELLING INTO RALLY"
+        
+    # 3. Dynamic Kelly Positioning
+    positioning = f"Scale exposure to exactly {kelly_frac * 100:.1f}% of maximum capital."
+    
+    if brier > 0.20 or tvd > 0.08:
+        positioning += " [WARNING: Model Conflict/Degraded - Maintain strict stops]"
         
     return {
-        "market_state": dominant_state,
-        "lean": lean,
+        "market_state": market_state,
+        "directional_lean": lean,
         "positioning": positioning,
-        "invalidation": f"VIX breakout > {vix_target} or US10Y > {us10y_target}%"
+        "invalidation": "Regime flip or VIX breakout."
     }
 def main():
     snapshot_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'market_snapshot.json')
@@ -118,12 +104,27 @@ def main():
     gold_sign = "+" if gold_pct >= 0 else ""
     copper_pct = raw.get("Copper", {}).get("delta_pct", 0.0)
     copper_sign = "+" if copper_pct >= 0 else ""
-    gsr = raw.get("gold_to_silver_ratio", {}) or {}
-    gsr_val = gsr.get("current", 0.0)
-    gsr_sig = gsr.get("signal", "NEUTRAL")
-    crypto = raw.get("institutional_crypto_mfi", {}) or {}
-    crypto_regime = crypto.get("flow_regime", "FLAT")
-    crypto_mfi = crypto.get("composite_z", 0.0)
+    btc_pct = raw.get("BTC", {}).get("delta_pct", 0.0)
+    btc_sign = "+" if btc_pct >= 0 else ""
+    btc_level = raw.get("BTC", {}).get("current", 0.0)
+    
+    # Global Equities Extractor
+    def fmt_ticker(ticker_name):
+        t_data = raw.get(ticker_name, {})
+        if not t_data: return ""
+        pct = t_data.get("delta_pct", 0.0)
+        sign = "+" if pct >= 0 else ""
+        return f"{ticker_name} {sign}{pct}%"
+
+    eq_list = ["NDX", "DAX", "FTSE", "N225", "HSI", "SHANGHAI", "KOSPI", "TASI", "DFM"]
+    eq_str = " | ".join(filter(None, [fmt_ticker(t) for t in eq_list]))
+
+    fx_list = ["EURUSD", "GBPUSD", "JPYUSD", "CHFUSD", "USDCAD"]
+    fx_str = " | ".join(filter(None, [fmt_ticker(t) for t in fx_list]))
+    
+    crypto_list = ["IBIT", "ETHA", "COIN"]
+    crypto_str = " | ".join(filter(None, [fmt_ticker(t) for t in crypto_list]))
+
     credit = raw.get("credit_stress_proxy", {}) or {}
     credit_label = credit.get("label", "NORMAL")
     # Tactical setup
@@ -143,7 +144,9 @@ def main():
         session = "Asian Session"
     elif 8 <= dt.hour < 14:
         session = "European Session"
-    synth = compute_deterministic_synthesis(data)
+    kalman = data.get("kalman_state", {})
+    epistemic = data.get("epistemic_metrics", {})
+    synth = compute_deterministic_synthesis(kalman, vol_heat, ext, epistemic)
 
     print("Using Algorithmic Directional Synthesis.")
     # Setup narrative mapping
@@ -163,9 +166,13 @@ def main():
 **Max Prob:** {dominant_prob:.1f}% | **Brier Calibration:** {brier_score:.4f}
 **Model Distance (TVD):** {tvd_score:.4f}
 a. SESSION SNAPSHOT
-SPX {spx_sign}{spx_pct}% | DXY {dxy_level} | VIX {vix_level} | US10Y {us10y}% | WTI {wti_sign}{wti_pct}%
+SPX {spx_sign}{spx_pct}% | DXY {dxy_level} | VIX {vix_level} | US10Y {us10y}% | WTI {wti_sign}{wti_pct}% | BTC {btc_sign}{btc_pct}%
 b. ASSET DASHBOARD
-- VIX: {vix_level} 
+- Equities: {eq_str}
+- FX/Rates: {fx_str}
+- Commodities: Gold {gold_sign}{gold_pct}% | Copper {copper_sign}{copper_pct}% | {fmt_ticker('Silver')}
+- Crypto (Spot & Flows): BTC ${btc_level:,.0f} ({btc_sign}{btc_pct}%) | {crypto_str}
+- Volatility: VIX {vix_level} 
 - Activity Heat (Inst vs Retail): {part_type}
 - Market Temp: {ext.get('temperature_state')}
 - Crowdedness: {ext.get('crowded_state')}
@@ -174,7 +181,7 @@ c. TACTICAL EDGE
 - SUCCESS PROBABILITY: {edge_prob:.1f}%
 ### QUANTITATIVE DIRECTIONAL SYNTHESIS
 - **Market State:** {synth['market_state']}
-- **Directional Lean:** {synth['lean']}
+- **Directional Lean:** {synth['directional_lean']}
 - **Positioning:** {synth['positioning']}
 - **Invalidation:** {synth['invalidation']}
 """

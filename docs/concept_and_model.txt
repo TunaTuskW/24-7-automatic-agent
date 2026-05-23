@@ -43,5 +43,10 @@ The agent uses advanced self-monitoring techniques to ensure it does not suffer 
 - AI Strategic Assumptions Layer: At the end of every update, the AI must explicitly document its market interpretation, tactical lean, confidence level, and exact invalidation conditions in a non-theatrical format.
 8. STATISTICAL NOISE FILTERING & "NO PREDICT" GOVERNANCE
 The deterministic synthesis engine is trained to explicitly filter out market noise. If the primary Kalman classifier drops below 60.0% probability (indicating a statistical coin flip), the system refuses to force a directional lean. It overrides the output with explicit "NO PREDICT / No Comment" tags, clearly advising the user to stand aside rather than trading on noise.
+9. EPISTEMIC SIZING & FRACTIONAL KELLY
+The system has replaced strict probability cutoffs with Epistemic Sizing. It calculates the pure Shannon Entropy of the market to measure statistical chaos. Instead of a binary "trade/no-trade" decision, the agent uses a modified Fractional Kelly Criterion to scale exposure based on the exact mathematical edge it has over random chance. It will penalize this output using its own self-calibrated Brier score.
+
+10. EXPANDED ASSET DASHBOARD & ALGORITHMIC SYNTHESIS
+The local algorithmic logic engine now processes an expanded payload across all global markets. The dashboard natively tracks and analyzes Global Equities (NDX, DAX, FTSE, N225, HSI, SHANGHAI, KOSPI, TASI, DFM), Global Fiat FX Pairs, and a dedicated Institutional Crypto Flow section combining Spot BTC with IBIT/ETHA/COIN ETFs.
 
 By anchoring the AI to a rigid mathematical backbone, the agent provides institutional-quality insights with deterministic reliability.

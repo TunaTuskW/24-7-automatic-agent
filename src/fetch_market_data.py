@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-fetch_market_data.py - v3.2.1
+fetch_market_data.py - v3.6.0
 Pulls multi-source parallel data from yfinance, FRED, and ECB.
 Performs TruChain verification, executes HMM & Deep MLP predictions, 
 runs self-calibration (Brier Score), and outputs data-science-ready outputs.
@@ -36,7 +36,8 @@ ALL_YF_TICKERS = {
     "JPYUSD": "JPYUSD=X", "CHFUSD": "CHFUSD=X", "USDCAD": "USDCAD=X",
     # Volatility
     "VIX": "^VIX",
-    # Institutional Digital Asset Flow
+    # Institutional Digital Asset Flow & Spot
+    "BTC": "BTC-USD",
     "IBIT": "IBIT",      
     "ETHA": "ETHA",      
     "COIN": "COIN"       
@@ -507,8 +508,41 @@ def run_kalman_filter(mcs, sub_components, hmm_regime_probs, prior_state=None, p
         "is_ambiguous":     bool(is_ambiguous),
         "covariance_matrix": P_updated.tolist()
     }
+
+def compute_shannon_entropy(probs):
+    """
+    Measures the absolute chaos of the probability distribution.
+    Max Entropy for 3 states is ~1.58 (pure noise).
+    """
+    probs = np.clip(probs, 1e-9, 1.0)
+    entropy = -np.sum(probs * np.log2(probs))
+    return round(float(entropy), 3)
+
+def compute_kelly_sizing(max_prob, brier_score, num_states=3):
+    """
+    Modified Fractional Kelly Criterion.
+    Scales portfolio exposure based on edge vs. random noise.
+    """
+    random_chance = 1.0 / num_states
+    
+    # If probability is indistinguishable from noise, exposure is 0
+    if max_prob <= random_chance:
+        return 0.0
+        
+    # Edge = How far above random chance we are
+    edge = max_prob - random_chance
+    
+    # Base Kelly fraction
+    base_fraction = edge * 2.0 
+    
+    # Penalty: If Brier is poor (> 0.20), scale down the position
+    calibration_penalty = max(0.0, 1.0 - (brier_score * 4.0)) 
+    
+    final_fraction = base_fraction * calibration_penalty
+    return round(max(0.0, min(1.0, final_fraction)), 3) # Bound 0% to 100%
+
 def main():
-    logging.info("=== fetch_market_data.py v3.2.1 starting ===")
+    logging.info("=== fetch_market_data.py v3.6.0 starting ===")
     fred_key = get_fred_key()
     output_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'market_snapshot.json')
     predictions_history_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'predictions_history.json')
@@ -666,6 +700,18 @@ def main():
         tvd_score = calculate_model_tvd(hmm_regime_probs, mlp_state)
     kalman_state["tvd"] = tvd_score
     kalman_state["brier_score_calibration"] = brier_score
+    
+    kalman_probs = np.array([kalman_state.get("risk_on", 0.33), kalman_state.get("risk_off", 0.33), kalman_state.get("transitional", 0.33)])
+    entropy = compute_shannon_entropy(kalman_probs)
+    dominant_prob = kalman_state.get("dominant_prob", 0.33)
+    kelly_fraction = compute_kelly_sizing(dominant_prob, brier_score)
+    
+    data_science_layer["epistemic_metrics"] = {
+        "shannon_entropy": entropy,
+        "kelly_exposure_fraction": kelly_fraction,
+        "is_high_risk_edge": bool(dominant_prob >= 0.45) # The new aggressive edge threshold
+    }
+
     # Core escalation assessment & model conflict resolution overrides
     escalation = "ROUTINE"
     if spx_ret_now and abs(spx_ret_now) > 2.0: escalation = "CRITICAL"
@@ -708,7 +754,7 @@ def main():
     with open(output_path, 'w') as f:
         json.dump(snapshot_to_sign, f, indent=2)
     append_to_immutable_chain(signature, snapshot_to_sign["generated_utc"])
-    print(f"[OK] v3.2.1 complete | Regime: {current_regime} | Deep MLP: {mlp_state.get('dominant_state') if mlp_state else 'None'} | Brier Calibration: {brier_score}")
+    print(f"[OK] v3.6.0 complete | Regime: {current_regime} | Kelly Exposure: {kelly_fraction * 100:.1f}%")
 def fetch_fred_yield(series_id, fred_key):
     try:
         url = "https://api.stlouisfed.org/fred/series/observations"
