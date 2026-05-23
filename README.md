@@ -1,4 +1,4 @@
-# Macro Briefing Agent Setup Guide (v2.4.0)
+# Macro Briefing Agent Setup Guide (v2.4.1)
 
 This guide provides step-by-step instructions on how to set up the macro briefing agent, configure Discord notifications, and automate the execution using cron jobs.
 
@@ -19,7 +19,7 @@ Ensure you have **Python 3** installed on your system. You will also need to ins
 
 1. Open your terminal and navigate to the agent directory:
    ```bash
-   cd /Users/mac/Downloads/agent
+   cd /Users/mac/agent
    ```
 2. Install the required dependencies:
    ```bash
@@ -37,11 +37,11 @@ The agent requires a FRED (Federal Reserve Economic Data) API key to fetch speci
 
 ## 2. How to Set Up the Agent .md File
 
-The core instructions for the macro analyst are stored in `docs/macro_agent_setup2.4.0.md`. This file contains the exact prompts, artifacts, and scheduling rules the agent follows. 
+The core instructions for the macro analyst are stored in `docs/macro_agent_setup2.4.1.md`. This file contains the exact prompts, artifacts, and scheduling rules the agent follows. 
 
 If you want an AI (like ChatGPT or Claude) to manually adopt this persona and run a cycle for you:
 1. Open your AI assistant of choice.
-2. Upload the `docs/macro_agent_setup2.4.0.md` file (or copy/paste its contents into the chat).
+2. Upload the `docs/macro_agent_setup2.4.1.md` file (or copy/paste its contents into the chat).
 3. Say: *"Please read this setup document and execute Task 1 (the 4-hour briefing) using the latest market data."*
 4. The AI will follow the exact structured analytical protocol outlined in the document.
 
@@ -91,21 +91,21 @@ Cron requires your Mac to be awake. If your Mac goes to sleep, the cron job will
 
    ```cron
    # Run the 4-hour automated pipeline (every 4 hours)
-   0 */4 * * * /Users/mac/Downloads/agent/run_4h.sh >> /Users/mac/Downloads/agent/logs/cron.log 2>&1
+   0 */4 * * * /Users/mac/agent/run_4h.sh >> /Users/mac/agent/logs/cron.log 2>&1
 
    # Run the daily 72-hour roll push (every day at 8:00 AM)
-   0 8 * * * /Users/mac/Downloads/agent/run_daily.sh >> /Users/mac/Downloads/agent/logs/cron.log 2>&1
+   0 8 * * * /Users/mac/agent/run_daily.sh >> /Users/mac/agent/logs/cron.log 2>&1
 
    # Run the weekly synthesis pipeline (every Sunday at 10:00 AM)
-   0 10 * * 0 /Users/mac/Downloads/agent/run_weekly.sh >> /Users/mac/Downloads/agent/logs/cron.log 2>&1
+   0 10 * * 0 /Users/mac/agent/run_weekly.sh >> /Users/mac/agent/logs/cron.log 2>&1
    ```
 3. Save and exit the editor. Your cron jobs are now scheduled!
 
 ### How to "Catch Up"
 If your Mac was asleep and missed a run, you can always catch up manually! Just open your terminal and run the exact absolute path for whichever script you missed (you don't need to change folders, just copy/paste these):
-- Missed a 4-hour update? Run: `/Users/mac/Downloads/agent/run_4h.sh`
-- Missed the daily Discord push? Run: `/Users/mac/Downloads/agent/run_daily.sh`
-- Missed the Sunday weekly report? Run: `/Users/mac/Downloads/agent/run_weekly.sh`
+- Missed a 4-hour update? Run: `/Users/mac/agent/run_4h.sh`
+- Missed the daily Discord push? Run: `/Users/mac/agent/run_daily.sh`
+- Missed the Sunday weekly report? Run: `/Users/mac/agent/run_weekly.sh`
 
 ### How to Pause or Remove the Automation
 **To Pause (Temporarily Disable):**
@@ -127,7 +127,7 @@ Because Cron runs invisibly, you won't see pop-ups if it succeeds or fails. To c
 
 Open Terminal and run this command to see the latest activity:
 ```bash
-tail -n 20 /Users/mac/Downloads/agent/logs/cron.log
+tail -n 20 /Users/mac/agent/logs/cron.log
 ```
 This will show you the output of the most recent automated runs!
 

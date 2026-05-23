@@ -217,7 +217,7 @@ def compute_equity_momentum_score(equities):
     Weighted average z-score across SPX (40%), NDX (20%), DAX (20%), N225 (20%).
     Breadth matters — all four must agree for a strong signal.
     """
-    weights = {"SPX": 0.40, "NDX": 0.20, "DAX": 0.20, "N225": 0.20}
+    weights = {"SPX": 0.35, "NDX": 0.18, "DAX": 0.18, "N225": 0.18, "TASI": 0.06, "DFM": 0.05}
     weighted_z = 0.0
     total_weight = 0.0
     for name, weight in weights.items():
