@@ -41,5 +41,7 @@ The agent uses advanced self-monitoring techniques to ensure it does not suffer 
 - Rolling Brier Score: A self-calibration tool that tracks if the agent's historical probability forecasts have actually been accurate over time.
 - 1.5 Std Dev Dynamic Boundaries: Continuously tracks volatility thresholds to automatically invalidate outdated narratives the moment a statistical sweep occurs.
 - AI Strategic Assumptions Layer: At the end of every update, the AI must explicitly document its market interpretation, tactical lean, confidence level, and exact invalidation conditions in a non-theatrical format.
+8. STATISTICAL NOISE FILTERING & "NO PREDICT" GOVERNANCE
+The deterministic synthesis engine is trained to explicitly filter out market noise. If the primary Kalman classifier drops below 60.0% probability (indicating a statistical coin flip), the system refuses to force a directional lean. It overrides the output with explicit "NO PREDICT / No Comment" tags, clearly advising the user to stand aside rather than trading on noise.
 
 By anchoring the AI to a rigid mathematical backbone, the agent provides institutional-quality insights with deterministic reliability.

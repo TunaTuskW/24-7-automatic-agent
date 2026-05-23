@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-fetch_market_data.py - v2.9.0
+fetch_market_data.py - v3.2.1
 Pulls multi-source parallel data from yfinance, FRED, and ECB.
 Performs TruChain verification, executes HMM & Deep MLP predictions, 
 runs self-calibration (Brier Score), and outputs data-science-ready outputs.
@@ -134,6 +134,47 @@ def compute_stats(series, garch_conditional_vol=None):
         "z_score":   round(z_score, 3),
         "momentum":  momentum,
     }
+def compute_volume_heat(spx_series, spx_vol_series):
+    if len(spx_series) < 20 or len(spx_vol_series) < 20:
+        return {"participation_type": "UNKNOWN", "institutional_heat_index": 0.0}
+    try:
+        vol_mean = spx_vol_series.rolling(20).mean().iloc[-1]
+        vol_std = spx_vol_series.rolling(20).std().iloc[-1]
+        current_vol = float(spx_vol_series.iloc[-1])
+        effort_z = (current_vol - vol_mean) / vol_std if vol_std > 0 else 0.0
+        
+        current_close = float(spx_series.iloc[-1])
+        recent_low = float(spx_series.tail(10).min())
+        recent_high = float(spx_series.tail(10).max())
+        result_vector = (current_close - recent_low) / (recent_high - recent_low) if recent_high != recent_low else 0.5
+        
+        ihi = effort_z * (result_vector - 0.5)
+        
+        part_type = "RETAIL_DRIFT"
+        if effort_z > 1.0:
+            part_type = "INSTITUTIONAL_ACCUMULATION" if result_vector > 0.5 else "INSTITUTIONAL_DISTRIBUTION"
+            
+        return {"participation_type": part_type, "institutional_heat_index": round(ihi, 3)}
+    except Exception as e:
+        return {"participation_type": "UNKNOWN", "institutional_heat_index": 0.0}
+
+def compute_market_extremes(spx_series, vix_series):
+    try:
+        spx_returns = spx_series.pct_change().dropna().tail(10) * 100
+        vix_returns = vix_series.pct_change().dropna().tail(10) * 100
+        spx_abs = spx_returns.abs().sum()
+        vix_abs = vix_returns.abs().sum()
+        temperature_z = (spx_abs - vix_abs) / vix_abs if vix_abs > 0 else 0.0
+        
+        crowdedness = spx_returns.corr(vix_returns)
+        
+        return {
+            "temperature_zscore": round(temperature_z, 3),
+            "temperature_state": "OVERHEATED" if temperature_z > 1.0 else "ICE_COLD" if temperature_z < -1.0 else "NORMAL",
+            "crowded_state": "LONG_TRADE_TOO_CROWDED" if crowdedness > 0.5 else "SHORT_TRADE_TOO_CROWDED" if crowdedness < -0.5 else "BALANCED"
+        }
+    except Exception:
+        return {}
 def compute_garch_volatility(ticker_symbol, lookback_days=250):
     try:
         from arch import arch_model
@@ -171,6 +212,11 @@ def run_mlp_inference(features_vector, mlp_package):
         obs = np.array([features_vector])
         obs_scaled = scaler.transform(obs)
         probs = model.predict_proba(obs_scaled)[0]
+        
+        # Ensure no probability drops to absolute zero
+        probs = np.clip(probs, 0.01, 0.99)
+        probs /= probs.sum() # Re-normalize to 1.0
+
         classes = ["risk_off", "risk_on", "transitional"]
         dominant_idx = int(np.argmax(probs))
         return {
@@ -211,7 +257,11 @@ def compute_weekly_liquidity_boundaries(ticker_symbol):
     except Exception as e:
         logging.error(f"Error computing weekly boundaries for {ticker_symbol}: {e}")
     return None
-def calculate_kl_divergence(p_dist, q_dist):
+def calculate_model_tvd(p_dist, q_dist):
+    """
+    Computes Total Variation Distance (TVD) between HMM and MLP.
+    TVD = 0.5 * sum(|P - Q|)
+    """
     try:
         hmm_risk_on = p_dist.get("RISK_ON_EXPANSION", 0.0) + p_dist.get("LIQUIDITY_DRIVEN_RALLY", 0.0)
         hmm_risk_off = (p_dist.get("STAGFLATION_STRESS", 0.0) + 
@@ -223,18 +273,14 @@ def calculate_kl_divergence(p_dist, q_dist):
         P = np.array([hmm_risk_on, hmm_risk_off, hmm_trans])
         Q = np.array([q_dist.get("risk_on", 0.33), q_dist.get("risk_off", 0.34), q_dist.get("transitional", 0.33)])
         
-        epsilon = 1e-4
-        P = np.clip(P, epsilon, 1.0 - epsilon)
-        Q = np.clip(Q, epsilon, 1.0 - epsilon)
-        P /= P.sum()
-        Q /= Q.sum()
+        # Clip to prevent 0.0
+        P = np.clip(P, 0.01, 0.99); P /= P.sum()
+        Q = np.clip(Q, 0.01, 0.99); Q /= Q.sum()
         
-        kl = float(np.sum(P * np.log(P / Q)))
-        sai = float(np.tanh(kl))
-        return round(kl, 4), round(sai, 3)
+        tvd = 0.5 * float(np.sum(np.abs(P - Q)))
+        return round(tvd, 4)
     except Exception as e:
-        logging.error(f"KL Divergence Calculation Failure: {e}")
-        return 0.0, 0.0
+        return 0.0
 def calculate_bayesian_conditional_probability(setup_name, current_regime):
     historical_matrices = {
         "PWL_Sweep": {
@@ -294,6 +340,9 @@ def run_self_calibration(new_spx_ret, predictions_history_path):
         graded_predictions = [p for p in history if p.get("target_graded", False)]
         if len(graded_predictions) > 0:
             brier_score = float(np.mean([p["squared_error"] for p in graded_predictions]))
+            # Brier > 0.25 is worse than guessing 0.5
+            if brier_score > 0.25:
+                logging.warning(f"CRITICAL: Brier Score {brier_score} is worse than random. Model is severely degraded.")
             
         return round(brier_score, 4), history
     except Exception as e:
@@ -391,6 +440,11 @@ def run_hmm_inference(equities, bonds, energy, fx, garch_layer, hmm_package):
         obs_scaled = scaler.transform(obs)
         _, posteriors = hmm.score_samples(obs_scaled)
         state_probs = posteriors[0]
+        
+        # Ensure no probability drops to absolute zero
+        state_probs = np.clip(state_probs, 0.01, 0.99)
+        state_probs /= state_probs.sum() # Re-normalize to 1.0
+
         regime_probs = {state_labels.get(i, f"STATE_{i}"): round(float(prob), 4) for i, prob in enumerate(state_probs)}
         dominant_state_id = int(np.argmax(state_probs))
         dominant_regime = state_labels.get(dominant_state_id, "NEUTRAL_TRANSITIONAL")
@@ -436,6 +490,11 @@ def run_kalman_filter(mcs, sub_components, hmm_regime_probs, prior_state=None, p
     x_updated /= x_updated.sum()
     P_updated = (np.eye(n) - K @ H) @ P_pred
     uncertainty = float(np.trace(P_updated))
+    
+    # Calculate Max Probability Confidence
+    max_prob = float(np.max(x_updated))
+    is_ambiguous = max_prob < 0.60 # If no state has 60% conviction, it is essentially a coin-flip
+
     states = ["risk_on", "risk_off", "transitional"]
     dominant_idx = int(np.argmax(x_updated))
     return {
@@ -445,11 +504,11 @@ def run_kalman_filter(mcs, sub_components, hmm_regime_probs, prior_state=None, p
         "dominant_state":   states[dominant_idx],
         "dominant_prob":    round(float(x_updated[dominant_idx]), 3),
         "uncertainty":      round(uncertainty, 4),
-        "ambiguous":        uncertainty > 0.15 or float(np.max(x_updated)) < 0.50,
+        "is_ambiguous":     bool(is_ambiguous),
         "covariance_matrix": P_updated.tolist()
     }
 def main():
-    logging.info("=== fetch_market_data.py v2.9.0 starting ===")
+    logging.info("=== fetch_market_data.py v3.2.1 starting ===")
     fred_key = get_fred_key()
     output_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'market_snapshot.json')
     predictions_history_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'predictions_history.json')
@@ -493,6 +552,19 @@ def main():
         except Exception as e:
             logging.error(f"Error parsing parallel tick {name}: {e}")
             parsed_assets[name] = None
+    
+    # Compute Volume Heat & Market Extremes
+    vol_heat_stats = {"participation_type": "UNKNOWN", "institutional_heat_index": 0.0}
+    market_extremes = {}
+    if "SPX" in raw_data.columns.get_level_values(0):
+        spx_series = raw_data["SPX"]["Close"].dropna()
+        spx_vol = raw_data["SPX"]["Volume"].dropna()
+        vol_heat_stats = compute_volume_heat(spx_series, spx_vol)
+        if "VIX" in raw_data.columns.get_level_values(0):
+            vix_series = raw_data["VIX"]["Close"].dropna()
+            market_extremes = compute_market_extremes(spx_series, vix_series)
+            
+    parsed_assets["volume_activity_heat"] = vol_heat_stats
     # Gold-to-Silver Ratio
     gold = parsed_assets.get("Gold")
     silver = parsed_assets.get("Silver")
@@ -567,6 +639,7 @@ def main():
         ("US10Y_delta", "bonds", "US10Y_delta"),
         ("US_2s10s_spread", "bonds", "spread_2s10s"),
         ("CryptoMFI_zscore", "institutional_crypto_mfi", "composite_z"),
+        ("VolumeHeat_ihi", "volume_activity_heat", "institutional_heat_index"),
         ("USDCAD_ret", "USDCAD", "delta_pct")
     ]
     features_vector = []
@@ -587,12 +660,11 @@ def main():
     # Core calibration calculations (Brier Score)
     spx_ret_now = parsed_assets.get("SPX", {}).get("delta_pct", 0.0) if parsed_assets.get("SPX") else 0.0
     brier_score, predictions_history = run_self_calibration(spx_ret_now, predictions_history_path)
-    # Execute model conflict resolution (KL Divergence & SAI)
-    kl_div, sai = 0.0, 0.0
+    # Execute model conflict resolution (TVD)
+    tvd_score = 0.0
     if mlp_state and hmm_regime_probs:
-        kl_div, sai = calculate_kl_divergence(hmm_regime_probs, mlp_state)
-    kalman_state["kl_divergence"] = kl_div
-    kalman_state["structural_ambiguity_index"] = sai
+        tvd_score = calculate_model_tvd(hmm_regime_probs, mlp_state)
+    kalman_state["tvd"] = tvd_score
     kalman_state["brier_score_calibration"] = brier_score
     # Core escalation assessment & model conflict resolution overrides
     escalation = "ROUTINE"
@@ -600,9 +672,9 @@ def main():
     elif spx_ret_now and abs(spx_ret_now) > 1.0: escalation = "ELEVATED"
     
     # Model conflict override: raise alert if models diverge significantly
-    if sai > 0.65 and escalation == "ROUTINE":
+    if tvd_score > 0.10 and escalation == "ROUTINE":
         escalation = "ELEVATED"
-        logging.warning(f"TruChain L2: Model conflict override triggered. SAI: {sai}")
+        logging.warning(f"Model conflict override triggered. TVD: {tvd_score}")
     # Track forecast for the next cycle calibration check
     prob_risk_on = mlp_state.get("risk_on", 0.33) if mlp_state else 0.33
     predictions_history.append({
@@ -618,6 +690,7 @@ def main():
     snapshot_to_sign = {
         "generated_utc": datetime.now(timezone.utc).isoformat(),
         "raw_indicators": parsed_assets,
+        "market_extremes_insight": market_extremes,
         "bonds": bonds,
         "data_science_layer": data_science_layer,
         "mcs": {"score": mcs, "label": "NEUTRAL", "sub_components": sub_components},
@@ -635,7 +708,7 @@ def main():
     with open(output_path, 'w') as f:
         json.dump(snapshot_to_sign, f, indent=2)
     append_to_immutable_chain(signature, snapshot_to_sign["generated_utc"])
-    print(f"[OK] v2.9.0 complete | HMM Regime: {current_regime} | Deep MLP: {mlp_state.get('dominant_state') if mlp_state else 'None'} | Brier Calibration: {brier_score}")
+    print(f"[OK] v3.2.1 complete | Regime: {current_regime} | Deep MLP: {mlp_state.get('dominant_state') if mlp_state else 'None'} | Brier Calibration: {brier_score}")
 def fetch_fred_yield(series_id, fred_key):
     try:
         url = "https://api.stlouisfed.org/fred/series/observations"
