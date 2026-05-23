@@ -1,4 +1,4 @@
-# 24/7 Macro Analyst Agent Setup (v2.0.0)
+# 24/7 Macro Analyst Agent Setup (v2.3.0)
 
 This document contains the configuration used to create a 24/7 autonomous macro analyst using Agentic Scheduling. You can share this with any capable AI agent to recreate the exact same workflow.
 

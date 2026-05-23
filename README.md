@@ -1,4 +1,4 @@
-# Macro Briefing Agent Setup Guide (v2.2.0)
+# Macro Briefing Agent Setup Guide (v2.3.0)
 
 This guide provides step-by-step instructions on how to set up the macro briefing agent, configure Discord notifications, and automate the execution using cron jobs.
 
@@ -33,14 +33,32 @@ The agent requires a FRED (Federal Reserve Economic Data) API key to fetch speci
 2. Open the `config/fred_api_key.txt` file and paste your API key inside it.
    - Alternatively, you can set it as an environment variable: `export FRED_API_KEY="your_key"`
 
-The agent can optionally use Google's Gemini API to generate advanced, natural-language narrative reports instead of basic deterministic templates.
-1. Get a Gemini API key from Google AI Studio.
-2. Create or open the file `config/gemini_api_key.txt` and paste your API key inside it.
-   *(If this file is missing or the API fails, the agent will safely fall back to the deterministic templates).*
+---
+
+## 2. How to Set Up the Agent .md File
+
+The core instructions for the macro analyst are stored in `docs/macro_agent_setup2.3.0.md`. This file contains the exact prompts, artifacts, and scheduling rules the agent follows. 
+
+If you want an AI (like ChatGPT or Claude) to manually adopt this persona and run a cycle for you:
+1. Open your AI assistant of choice.
+2. Upload the `docs/macro_agent_setup2.3.0.md` file (or copy/paste its contents into the chat).
+3. Say: *"Please read this setup document and execute Task 1 (the 4-hour briefing) using the latest market data."*
+4. The AI will follow the exact structured analytical protocol outlined in the document.
 
 ---
 
-## 2. Discord Push Setup
+## 3. How to Set Up Optional LLM
+
+By default, the agent runs deterministically using local Python templates (`src/build_report.py`). However, the agent can optionally use an LLM API to generate advanced, natural-language narrative reports instead.
+
+To enable the LLM generation:
+1. Get a Gemini API key from [Google AI Studio](https://aistudio.google.com/) (or an OpenAI/Anthropic key, depending on your script configuration).
+2. Create or open the file `config/gemini_api_key.txt` and paste your API key inside it.
+   *(If this file is missing or the API request fails, the agent will safely fall back to the standard deterministic templates).*
+
+---
+
+## 4. Discord Push Setup
 
 The agent can push generated reports to a Discord channel using a webhook.
 
@@ -57,7 +75,7 @@ The agent can push generated reports to a Discord channel using a webhook.
 
 ---
 
-## 3. Cron Job Setup
+## 5. Cron Job Setup
 
 To fully automate the agent, you can schedule the bash scripts using your system's cron daemon. `cron` runs silently in the background and executes scripts at specific times or intervals.
 
@@ -103,7 +121,7 @@ If your Mac was asleep and missed a run, you can always catch up manually! Just 
 
 ---
 
-## 4. Troubleshooting & Logs
+## 6. Troubleshooting & Logs
 
 Because Cron runs invisibly, you won't see pop-ups if it succeeds or fails. To check on it, you can view the log file. Both the Python scripts and your cron jobs will write out helpful error messages there.
 
@@ -113,7 +131,7 @@ tail -n 20 /Users/mac/Downloads/agent/logs/cron.log
 ```
 This will show you the output of the most recent automated runs!
 
-## 5. Versioning System & Patch Notes
+## 7. Versioning System & Patch Notes
 Whenever changes are made to this setup document, automatically update the version number in the title and summarize the patch notes to the user.
 - **Big change** (e.g., major feature additions): Increment minor version (x.1 to 9). Example: v1.3.x -> v1.4.0
 - **Small change** (e.g., prompt tweak, new section): Increment patch version (x.x.1 to 9). Example: v1.3.1 -> v1.3.2

@@ -9,10 +9,10 @@ This guide explains how to fully automate the Macro Agent pipeline using a stand
 Cron requires your Mac to be awake. If your Mac goes to sleep, the cron job will skip any scheduled runs that occur while asleep. It will resume once the Mac wakes up.
 
 **How to "Catch Up":**
-If your Mac was asleep and missed a run, you can always catch up manually! Just open your terminal and run whichever script you missed:
-- Missed a 4-hour update? Run `./run_4h.sh`
-- Missed the daily Discord push? Run `./run_daily.sh`
-- Missed the Sunday weekly report? Run `./run_weekly.sh`
+If your Mac was asleep and missed a run, you can always catch up manually! Just open your terminal and run the exact absolute path for whichever script you missed (you don't need to change folders, just copy/paste these):
+- Missed a 4-hour update? Run: `/Users/mac/Downloads/agent/run_4h.sh`
+- Missed the daily Discord push? Run: `/Users/mac/Downloads/agent/run_daily.sh`
+- Missed the Sunday weekly report? Run: `/Users/mac/Downloads/agent/run_weekly.sh`
 
 ---
 
