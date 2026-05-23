@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-fetch_market_data.py - v3.6.0
+fetch_market_data.py - v3.7.0
 Pulls multi-source parallel data from yfinance, FRED, and ECB.
 Performs TruChain verification, executes HMM & Deep MLP predictions, 
 runs self-calibration (Brier Score), and outputs data-science-ready outputs.
@@ -542,7 +542,7 @@ def compute_kelly_sizing(max_prob, brier_score, num_states=3):
     return round(max(0.0, min(1.0, final_fraction)), 3) # Bound 0% to 100%
 
 def main():
-    logging.info("=== fetch_market_data.py v3.6.0 starting ===")
+    logging.info("=== fetch_market_data.py v3.7.0 starting ===")
     fred_key = get_fred_key()
     output_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'market_snapshot.json')
     predictions_history_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'predictions_history.json')
@@ -568,7 +568,7 @@ def main():
         garch_layer[name] = {"conditional_vol": cond_vol, "vol_regime": vol_regime, "forecast_vol": forecast_vol}
     logging.info("Parallel downloading complete ticker universe...")
     tickers_list = list(ALL_YF_TICKERS.values())
-    raw_data = yf.download(tickers_list, period="15d", interval="1d", group_by="ticker", progress=False)
+    raw_data = yf.download(tickers_list, period="30d", interval="1d", group_by="ticker", progress=False)
     parsed_assets = {}
     for name, symbol in ALL_YF_TICKERS.items():
         try:
@@ -590,12 +590,12 @@ def main():
     # Compute Volume Heat & Market Extremes
     vol_heat_stats = {"participation_type": "UNKNOWN", "institutional_heat_index": 0.0}
     market_extremes = {}
-    if "SPX" in raw_data.columns.get_level_values(0):
-        spx_series = raw_data["SPX"]["Close"].dropna()
-        spx_vol = raw_data["SPX"]["Volume"].dropna()
+    if "^GSPC" in raw_data.columns.get_level_values(0):
+        spx_series = raw_data["^GSPC"]["Close"].dropna()
+        spx_vol = raw_data["^GSPC"]["Volume"].dropna()
         vol_heat_stats = compute_volume_heat(spx_series, spx_vol)
-        if "VIX" in raw_data.columns.get_level_values(0):
-            vix_series = raw_data["VIX"]["Close"].dropna()
+        if "^VIX" in raw_data.columns.get_level_values(0):
+            vix_series = raw_data["^VIX"]["Close"].dropna()
             market_extremes = compute_market_extremes(spx_series, vix_series)
             
     parsed_assets["volume_activity_heat"] = vol_heat_stats
@@ -754,7 +754,7 @@ def main():
     with open(output_path, 'w') as f:
         json.dump(snapshot_to_sign, f, indent=2)
     append_to_immutable_chain(signature, snapshot_to_sign["generated_utc"])
-    print(f"[OK] v3.6.0 complete | Regime: {current_regime} | Kelly Exposure: {kelly_fraction * 100:.1f}%")
+    print(f"[OK] v3.7.0 complete | Regime: {current_regime} | Kelly Exposure: {kelly_fraction * 100:.1f}%")
 def fetch_fred_yield(series_id, fred_key):
     try:
         url = "https://api.stlouisfed.org/fred/series/observations"

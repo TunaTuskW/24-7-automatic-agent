@@ -59,14 +59,13 @@ def main():
     roll_path = os.path.join(reports_dir, roll_filename)
 
     with open(roll_path, 'w') as out_f:
-        out_f.write(f"# 72 Hours Rolling Macro Update\n")
-        out_f.write(f"*Generated at: {latest_dt_str}*\n\n")
+        out_f.write(f"```text\n[ 72 HOURS ROLLING MACRO UPDATE ]\nGenerated at: {latest_dt_str}\n```\n\n")
         
         for dt, fpath in valid_updates:
             with open(fpath, 'r') as in_f:
                 content = in_f.read()
                 out_f.write(content)
-                out_f.write("\n\n---\n\n")
+                out_f.write("\n\n")
                 
     print(f"Created {roll_filename} with {len(valid_updates)} recent updates.")
 

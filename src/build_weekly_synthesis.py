@@ -70,31 +70,31 @@ def main():
     if not report_content:
         print("Using deterministic template.")
         # A simple weekly deterministic template
-        template = f"""# Weekly Macro Synthesis
-**Date:** {timestamp_str}
+        template = f"""```text
+[ WEEKLY MACRO SYNTHESIS ]
+Date        : {timestamp_str}
+Session Tag : Transitional / Data-Driven (Automated Snapshot)
 
-## a. WEEK TAG
-**Dominant Session Character:** Transitional / Data-Driven (Automated Snapshot)
+[ REGIME SUMMARY ]
+Regime      : {data.get('regime', {}).get('current', 'UNKNOWN')}
+MCS Score   : {data.get('mcs', {}).get('score', 0)} ({data.get('mcs', {}).get('label', 'UNKNOWN')})
+Dominant    : {data.get('kalman_state', {}).get('dominant_state', 'unknown')} ({data.get('kalman_state', {}).get('dominant_prob', 0)*100:.1f}%)
 
-## b. REGIME SUMMARY
-This automated weekly synthesis confirms the current market regime as **{data.get('regime', {}).get('current', 'UNKNOWN')}**.
-The current Macro Condition Score (MCS) rests at {data.get('mcs', {}).get('score', 0)}, maintaining a {data.get('mcs', {}).get('label', 'UNKNOWN')} stance.
+[ ASSET PERFORMANCE ]
+SPX   | {data.get('equities', {}).get('SPX', {}).get('current', 'N/A')} ({data.get('equities', {}).get('SPX', {}).get('delta_pct', 0)}%)
+TASI  | {data.get('equities', {}).get('TASI', {}).get('current', 'N/A')} ({data.get('equities', {}).get('TASI', {}).get('delta_pct', 0)}%)
+DFM   | {data.get('equities', {}).get('DFM', {}).get('current', 'N/A')} ({data.get('equities', {}).get('DFM', {}).get('delta_pct', 0)}%)
+US10Y | {data.get('bonds', {}).get('US10Y', {}).get('current', 'N/A')}%
+WTI   | {data.get('energy', {}).get('WTI', {}).get('current', 'N/A')} ({data.get('energy', {}).get('WTI', {}).get('delta_pct', 0)}%)
 
-## c. ASSET PERFORMANCE (Snapshot)
-- **SPX:** {data.get('equities', {}).get('SPX', {}).get('current', 'N/A')} ({data.get('equities', {}).get('SPX', {}).get('delta_pct', 0)}%)
-- **TASI:** {data.get('equities', {}).get('TASI', {}).get('current', 'N/A')} ({data.get('equities', {}).get('TASI', {}).get('delta_pct', 0)}%)
-- **DFM:** {data.get('equities', {}).get('DFM', {}).get('current', 'N/A')} ({data.get('equities', {}).get('DFM', {}).get('delta_pct', 0)}%)
-- **US10Y:** {data.get('bonds', {}).get('US10Y', {}).get('current', 'N/A')}%
-- **WTI:** {data.get('energy', {}).get('WTI', {}).get('current', 'N/A')} ({data.get('energy', {}).get('WTI', {}).get('delta_pct', 0)}%)
+[ KEY DEVELOPMENTS ]
+> Automated reporting relies on real-time data ingestion module.
+> No qualitative human-in-the-loop developments injected.
 
-## d. KEY DEVELOPMENTS
-*Automated reporting relies on the real-time data ingestion module. No qualitative human-in-the-loop developments are manually injected into this deterministic summary.*
-
-## e. REGIME FLAGS
-The Bayesian state estimator places the highest probability on **{data.get('kalman_state', {}).get('dominant_state', 'unknown')}** ({data.get('kalman_state', {}).get('dominant_prob', 0)*100:.1f}%). 
-
-## f. WEEK AHEAD
-Continued monitoring of the SPX conditional volatility (currently {data.get('garch_layer', {}).get('SPX', {}).get('vol_regime', 'UNKNOWN')}) will be critical to establishing whether this regime persists or breaks down.
+[ WEEK AHEAD ]
+> Watch SPX conditional volatility (Current: {data.get('garch_layer', {}).get('SPX', {}).get('vol_regime', 'UNKNOWN')})
+> Critical to establishing whether this regime persists or breaks down.
+```
 """
         report_content = template
 

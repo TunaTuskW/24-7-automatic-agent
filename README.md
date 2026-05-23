@@ -1,4 +1,4 @@
-# Macro Briefing Agent Setup Guide (v3.6.0)
+# Macro Briefing Agent Setup Guide (v3.7.0)
 
 This guide provides step-by-step instructions on how to set up the macro briefing agent, configure Discord notifications, and automate the execution using cron jobs.
 
@@ -37,11 +37,11 @@ The agent requires a FRED (Federal Reserve Economic Data) API key to fetch speci
 
 ## 2. How to Set Up the Agent .md File
 
-The core instructions for the macro analyst are stored in `docs/macro_agent_setup3.6.0.md`. This file contains the exact prompts, artifacts, and scheduling rules the agent follows. 
+The core instructions for the macro analyst are stored in `docs/macro_agent_setup3.7.0.md`. This file contains the exact prompts, artifacts, and scheduling rules the agent follows. 
 
 If you want an AI (like ChatGPT or Claude) to manually adopt this persona and run a cycle for you:
 1. Open your AI assistant of choice.
-2. Upload the `docs/macro_agent_setup3.6.0.md` file (or copy/paste its contents into the chat).
+2. Upload the `docs/macro_agent_setup3.7.0.md` file (or copy/paste its contents into the chat).
 3. Say: *"Please read this setup document and execute Task 1 (the 4-hour briefing) using the latest market data."*
 4. The AI will follow the exact structured analytical protocol outlined in the document.
 

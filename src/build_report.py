@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-build_report.py - v3.6.0
+build_report.py - v3.7.0
 Generates institutional macro updates displaying dual-engine (HMM + Deep MLP)
 statistics alongside the decision-oriented AI Strategic Assumptions Layer.
 """
@@ -161,29 +161,36 @@ def main():
         computed_confidence = "LOW"
     elif tvd_score > 0.05 or brier_score > 0.18:
         computed_confidence = "MODERATE"
-    report_content = f"""## {timestamp_str} — {session} — {tier}
-**Regime:** {regime} | **MCS:** {mcs_score}
-**Max Prob:** {dominant_prob:.1f}% | **Brier Calibration:** {brier_score:.4f}
-**Model Distance (TVD):** {tvd_score:.4f}
-a. SESSION SNAPSHOT
+    report_content = f"""```text
+[ SESSION SNAPSHOT ]
 SPX {spx_sign}{spx_pct}% | DXY {dxy_level} | VIX {vix_level} | US10Y {us10y}% | WTI {wti_sign}{wti_pct}% | BTC {btc_sign}{btc_pct}%
-b. ASSET DASHBOARD
+[ ASSET DASHBOARD ]
 - Equities: {eq_str}
 - FX/Rates: {fx_str}
 - Commodities: Gold {gold_sign}{gold_pct}% | Copper {copper_sign}{copper_pct}% | {fmt_ticker('Silver')}
 - Crypto (Spot & Flows): BTC ${btc_level:,.0f} ({btc_sign}{btc_pct}%) | {crypto_str}
-- Volatility: VIX {vix_level} 
-- Activity Heat (Inst vs Retail): {part_type}
-- Market Temp: {ext.get('temperature_state')}
-- Crowdedness: {ext.get('crowded_state')}
-c. TACTICAL EDGE
-- PATTERN: {setup_name}
-- SUCCESS PROBABILITY: {edge_prob:.1f}%
-### QUANTITATIVE DIRECTIONAL SYNTHESIS
-- **Market State:** {synth['market_state']}
-- **Directional Lean:** {synth['directional_lean']}
-- **Positioning:** {synth['positioning']}
-- **Invalidation:** {synth['invalidation']}
+- Volatility: VIX {vix_level}
+[ QUANTITATIVE MATRIX ]
+SPX   | {spx_sign}{spx_pct}% | Heat: {part_type}
+VIX   | {vix_level} | Temp: {ext.get('temperature_state', 'UNKNOWN')}
+US10Y | {us10y}% | Crowd: {ext.get('crowded_state', 'UNKNOWN')}
+DXY   | {dxy_level} ({dxy_sign}{dxy_pct}%) | Credit: {credit_label}
+BTC   | {btc_level:,.0f} ({btc_sign}{btc_pct}%) | Crypto Flow: {raw.get('institutional_crypto_mfi', {}).get('flow_regime', 'UNKNOWN')}
+[ SYSTEM HEALTH ]
+Regime      : {regime}
+Max Prob    : {dominant_prob:.1f}% 
+Brier Score : {brier_score:.4f} ({'DEGRADED' if brier_score > 0.25 else 'CALIBRATED'})
+Conflict    : {tvd_score:.4f} TVD
+[ TACTICAL DIAGNOSTICS ]
+> Edge Setup: {setup_name}
+> Probability: {edge_prob:.1f}%
+> Escalation: {tier}
+[ ALGORITHMIC SYNTHESIS ]
+State       : {synth['market_state']}
+Lean        : {synth['directional_lean']}
+Positioning : {synth['positioning']}
+Invalidation: {synth['invalidation']}
+```
 """
     report_filename = f"4 hours update ({timestamp_str}).md"
     reports_dir = os.path.join(os.path.dirname(__file__), '..', 'reports', 'updates')
