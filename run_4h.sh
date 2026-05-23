@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# run_all.sh
+# 100% deterministic, harmless script to build and push the 4-hour report
+
+DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$DIR"
+
+echo "==========================================="
+echo "Running automated pipeline: $(date)"
+echo "==========================================="
+
+echo "1) Fetching market data..."
+python3 src/fetch_market_data.py
+
+echo "2) Building 4-hour report and pushing to Discord..."
+python3 src/build_report.py
+
+echo "3) Updating the local 72-hours roll file..."
+python3 src/build_72h_roll.py
+
+echo "Pipeline complete!"
+echo "==========================================="
