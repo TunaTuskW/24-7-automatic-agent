@@ -1,6 +1,16 @@
-# Macro Briefing Agent Setup Guide (v2.1.0)
+# Macro Briefing Agent Setup Guide (v2.2.0)
 
 This guide provides step-by-step instructions on how to set up the macro briefing agent, configure Discord notifications, and automate the execution using cron jobs.
+
+## Project Structure Overview
+Following the v2.0 refactor, the project is organized into dedicated folders:
+- **`config/`**: Contains your API keys and webhook configurations (`fred_api_key.txt`, `webhook_config.txt`, etc.).
+- **`src/`**: Houses the core Python code (`fetch_market_data.py`, `push_to_discord.py`, etc.).
+- **`docs/`**: Documentation and agent setup prompts.
+- **`data/`**: Local data files (e.g., market snapshots, models).
+- **`reports/`**: Generated macro updates and weekly syntheses.
+- **`logs/`**: Execution and error logs.
+- **`older_versions/`**: Archived agent setup instructions.
 
 ## 1. Agent Setup
 
@@ -74,10 +84,10 @@ Cron requires your Mac to be awake. If your Mac goes to sleep, the cron job will
 3. Save and exit the editor. Your cron jobs are now scheduled!
 
 ### How to "Catch Up"
-If your Mac was asleep and missed a run, you can always catch up manually! Just open your terminal and run whichever script you missed:
-- Missed a 4-hour update? Run `./run_4h.sh`
-- Missed the daily Discord push? Run `./run_daily.sh`
-- Missed the Sunday weekly report? Run `./run_weekly.sh`
+If your Mac was asleep and missed a run, you can always catch up manually! Just open your terminal and run the exact absolute path for whichever script you missed (you don't need to change folders, just copy/paste these):
+- Missed a 4-hour update? Run: `/Users/mac/Downloads/agent/run_4h.sh`
+- Missed the daily Discord push? Run: `/Users/mac/Downloads/agent/run_daily.sh`
+- Missed the Sunday weekly report? Run: `/Users/mac/Downloads/agent/run_weekly.sh`
 
 ### How to Pause or Remove the Automation
 **To Pause (Temporarily Disable):**
@@ -102,3 +112,11 @@ Open Terminal and run this command to see the latest activity:
 tail -n 20 /Users/mac/Downloads/agent/logs/cron.log
 ```
 This will show you the output of the most recent automated runs!
+
+## 5. Versioning System & Patch Notes
+Whenever changes are made to this setup document, automatically update the version number in the title and summarize the patch notes to the user.
+- **Big change** (e.g., major feature additions): Increment minor version (x.1 to 9). Example: v1.3.x -> v1.4.0
+- **Small change** (e.g., prompt tweak, new section): Increment patch version (x.x.1 to 9). Example: v1.3.1 -> v1.3.2
+- **Tiny change** (e.g., typo fix, formatting): Increment sub-patch version (x.x.x.1 to 9). Example: v1.3.1 -> v1.3.1.1
+
+*Note to agent: After every change, ensure the title reflects the new version and summarize the patch notes to the user.*
