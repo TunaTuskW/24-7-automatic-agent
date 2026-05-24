@@ -14,7 +14,11 @@ import hashlib
 import hmac
 import numpy as np
 import pandas as pd
+import pandas as pd
 from datetime import datetime, timezone, timedelta
+from dataclasses import dataclass, asdict
+import feedparser
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 try:
     import yfinance as yf
 except ImportError:
@@ -36,6 +40,8 @@ ALL_YF_TICKERS = {
     "JPYUSD": "JPYUSD=X", "CHFUSD": "CHFUSD=X", "USDCAD": "USDCAD=X",
     # Volatility
     "VIX": "^VIX",
+    "VVIX": "^VVIX",
+    "VIX": "^VIX",
     # Institutional Digital Asset Flow & Spot
     "BTC": "BTC-USD",
     "IBIT": "IBIT",      
@@ -45,8 +51,34 @@ ALL_YF_TICKERS = {
 garch_targets = {
     "SPX":   "^GSPC",
     "WTI":   "CL=F",
+}
+garch_targets = {
+    "SPX":   "^GSPC",
+    "WTI":   "CL=F",
     "DXY":   "DX-Y.NYB",   
 }
+
+SOURCES = {
+    "yahoo_spx": {"url": "https://feeds.finance.yahoo.com/rss/2.0/headline?s=^GSPC,BTC-USD,CL=F,GC=F,^TNX", "authority": 0.95},
+    "wsj_markets": {"url": "https://feeds.a.dj.com/rss/RSSMarketsMain.xml", "authority": 0.90},
+    "cnbc_top": {"url": "https://search.cnbc.com/rs/search/combinedcms/view.xml?profile=120000000", "authority": 0.85}
+}
+
+@dataclass
+class NewsSignalVector:
+    sentiment_mean: float        # [-1.0, 1.0]
+    sentiment_std: float         # [0.0, 1.0] — proxy for news uncertainty
+    sentiment_momentum: float    # delta vs previous run [-1.0, 1.0]
+    event_flag: int              # 0 = no event, 1 = event detected
+    event_type: str              # "earnings" | "macro" | "geopolitical" | "none"
+    source_authority_mean: float # [0.0, 1.0]
+    article_volume: int          # relevant articles in window
+    directional_bias: str        # "bullish" | "bearish" | "neutral"
+    top_headlines: list          # top 3 headlines for display
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
 ROLLING_DAYS = 5
 def get_fred_key():
     key = os.environ.get("FRED_API_KEY")
@@ -159,20 +191,40 @@ def compute_volume_heat(spx_series, spx_vol_series):
     except Exception as e:
         return {"participation_type": "UNKNOWN", "institutional_heat_index": 0.0}
 
-def compute_market_extremes(spx_series, vix_series):
+def compute_market_extremes(spx_series, vix_series, vvix_series=None, dxy_series=None):
     try:
         spx_returns = spx_series.pct_change().dropna().tail(10) * 100
         vix_returns = vix_series.pct_change().dropna().tail(10) * 100
+        
+        # 1. Base Temperature & Crowdedness (Existing Logic)
         spx_abs = spx_returns.abs().sum()
         vix_abs = vix_returns.abs().sum()
         temperature_z = (spx_abs - vix_abs) / vix_abs if vix_abs > 0 else 0.0
-        
         crowdedness = spx_returns.corr(vix_returns)
         
+        # 2. Hidden Fragility Calculations
+        fragility_score = 0.0
+        vvix_ratio = 0.0
+        cross_corr = 0.0
+        
+        if vvix_series is not None and not vvix_series.empty:
+            vvix_ratio = vvix_series.iloc[-1] / vix_series.iloc[-1]
+            if vvix_ratio > 6.0:  # VVIX expanding much faster than VIX
+                fragility_score += 0.4
+                
+        if dxy_series is not None and not dxy_series.empty:
+            dxy_returns = dxy_series.pct_change().dropna().tail(10) * 100
+            cross_corr = spx_returns.corr(dxy_returns)
+            # If SPX and DXY are highly positively correlated, liquidity is draining
+            if cross_corr > 0.4:
+                fragility_score += 0.6
+                
         return {
             "temperature_zscore": round(temperature_z, 3),
             "temperature_state": "OVERHEATED" if temperature_z > 1.0 else "ICE_COLD" if temperature_z < -1.0 else "NORMAL",
-            "crowded_state": "LONG_TRADE_TOO_CROWDED" if crowdedness > 0.5 else "SHORT_TRADE_TOO_CROWDED" if crowdedness < -0.5 else "BALANCED"
+            "crowded_state": "LONG_TRADE_TOO_CROWDED" if crowdedness > 0.5 else "SHORT_TRADE_TOO_CROWDED" if crowdedness < -0.5 else "BALANCED",
+            "fragility_score": round(fragility_score, 3),
+            "vvix_vix_ratio": round(vvix_ratio, 2)
         }
     except Exception:
         return {}
@@ -518,40 +570,132 @@ def compute_shannon_entropy(probs):
     entropy = -np.sum(probs * np.log2(probs))
     return round(float(entropy), 3)
 
-def compute_kelly_sizing(max_prob, brier_score, num_states=3):
-    """
-    Modified Fractional Kelly Criterion.
-    Scales portfolio exposure based on edge vs. random noise.
-    """
-    random_chance = 1.0 / num_states
+def compute_kelly_sizing(max_prob, brier_score, duration_days=0.0, half_life=99.0):
+    edge = max_prob - 0.333
+    if edge <= 0: return 0.0
     
-    # If probability is indistinguishable from noise, exposure is 0
-    if max_prob <= random_chance:
-        return 0.0
-        
-    # Edge = How far above random chance we are
-    edge = max_prob - random_chance
+    # Base Kelly (same as before)
+    win_rate = max_prob
+    loss_rate = 1.0 - win_rate
+    base_fraction = win_rate - (loss_rate / 1.5)
     
-    # Base Kelly fraction
-    base_fraction = edge * 2.0 
-    
-    # Penalty: If Brier is poor (> 0.20), scale down the position
-    calibration_penalty = max(0.0, 1.0 - (brier_score * 4.0)) 
+    if brier_score > 0.25: calibration_penalty = 0.2
+    elif brier_score > 0.15: calibration_penalty = 0.6
+    else: calibration_penalty = 1.0
     
     final_fraction = base_fraction * calibration_penalty
-    return round(max(0.0, min(1.0, final_fraction)), 3) # Bound 0% to 100%
+    
+    # === NEW: Persistence Decay Penalty ===
+    # If a regime outlives its half-life, scale out automatically
+    if duration_days > half_life:
+        decay_factor = math.exp(-0.2 * (duration_days - half_life))
+        final_fraction *= max(0.2, decay_factor) # Don't drop below 20% of original size immediately
+        
+    return round(max(0.0, min(1.0, final_fraction)), 3)
+
+def fetch_market_news(prior_sentiment=0.0):
+    analyzer = SentimentIntensityAnalyzer()
+    articles = []
+    
+    earnings = ["earnings", "eps", "revenue", "guidance", "beat", "miss"]
+    macro = ["fed", "inflation", "gdp", "rate", "cpi", "fomc", "central bank", "powell", "jobs", "payroll"]
+    geo = ["war", "sanction", "tariff", "election", "conflict", "geopolitical", "strike", "missile"]
+    
+    now = datetime.now(timezone.utc)
+    
+    for src_name, config in SOURCES.items():
+        try:
+            feed = feedparser.parse(config["url"])
+            for entry in feed.entries[:15]: 
+                title = entry.get("title", "")
+                published = entry.get("published_parsed")
+                if published:
+                    dt = datetime(*published[:6]).replace(tzinfo=timezone.utc)
+                    age_hours = (now - dt).total_seconds() / 3600.0
+                else:
+                    age_hours = 0.5
+                
+                sentiment = analyzer.polarity_scores(title)["compound"]
+                authority = config["authority"]
+                recency = np.exp(-0.3 * max(0, age_hours))
+                
+                title_lower = title.lower()
+                rel_score = 0.0
+                if any(k in title_lower for k in ["spx", "s&p", "stock", "market", "yield", "bitcoin", "oil", "gold"]):
+                    rel_score = 1.0
+                
+                priority = (0.4 * authority) + (0.35 * recency) + (0.25 * rel_score)
+                
+                e_type = "none"
+                if any(k in title_lower for k in earnings): e_type = "earnings"
+                elif any(k in title_lower for k in macro): e_type = "macro"
+                elif any(k in title_lower for k in geo): e_type = "geopolitical"
+                
+                articles.append({
+                    "title": title,
+                    "sentiment": sentiment,
+                    "priority": priority,
+                    "authority": authority,
+                    "event_type": e_type
+                })
+        except Exception as e:
+            logging.error(f"News fetch error for {src_name}: {e}")
+            
+    if not articles:
+        return NewsSignalVector(0.0, 0.0, 0.0, 0, "none", 0.0, 0, "neutral", []).to_dict()
+        
+    articles.sort(key=lambda x: x["priority"], reverse=True)
+    top_articles = articles[:20] 
+    
+    sentiments = [a["sentiment"] for a in top_articles]
+    authorities = [a["authority"] for a in top_articles]
+    
+    mean_sent = float(np.mean(sentiments))
+    std_sent = float(np.std(sentiments)) if len(sentiments) > 1 else 0.0
+    mean_auth = float(np.mean(authorities))
+    
+    event_type = "none"
+    # Requires multiple hits or specific keywords to trigger high-uncertainty event flag
+    macro_hits = sum(1 for a in top_articles if a["event_type"] in ["macro", "geopolitical"])
+    event_flag = 1 if macro_hits >= 3 or any("breaking" in a["title"].lower() for a in top_articles) else 0
+    event_type = "macro_cluster" if macro_hits >= 3 else "none"
+            
+    # Swap out Vader Directional Bias for Absolute Shock Magnitude
+    # Vader is mathematically inverse to finance, so we only use absolute variance.
+    bias = "normal"
+    if abs(mean_sent) > 0.20 or std_sent > 0.35: 
+        bias = "shock"
+    
+    momentum = mean_sent - prior_sentiment
+    headlines = [a["title"] for a in top_articles[:3]]
+    
+    vector = NewsSignalVector(
+        sentiment_mean=round(mean_sent, 3),
+        sentiment_std=round(std_sent, 3),
+        sentiment_momentum=round(momentum, 3),
+        event_flag=event_flag,
+        event_type=event_type,
+        source_authority_mean=round(mean_auth, 3),
+        article_volume=len(articles),
+        directional_bias=bias,
+        top_headlines=headlines
+    )
+    return vector.to_dict()
 
 def main():
-    logging.info("=== fetch_market_data.py v3.7.0 starting ===")
+    logging.info("=== fetch_market_data.py v3.9.0 starting ===")
     fred_key = get_fred_key()
     output_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'market_snapshot.json')
     predictions_history_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'predictions_history.json')
     prior_estimate, prior_cov, prior_regime = None, None, None
+    prior_sentiment = 0.0
+    prior = {}
     if os.path.exists(output_path):
         try:
             with open(output_path, 'r') as f:
                 prior = json.load(f)
             prior_regime = prior.get("regime", {}).get("current")
+            prior_sentiment = prior.get("news_signal", {}).get("sentiment_mean", 0.0)
             ks = prior.get("kalman_state", {})
             if ks:
                 prior_estimate = {k: ks[k] for k in ["risk_on", "risk_off", "transitional"] if k in ks}
@@ -596,7 +740,9 @@ def main():
         vol_heat_stats = compute_volume_heat(spx_series, spx_vol)
         if "^VIX" in raw_data.columns.get_level_values(0):
             vix_series = raw_data["^VIX"]["Close"].dropna()
-            market_extremes = compute_market_extremes(spx_series, vix_series)
+            vvix_series = raw_data["^VVIX"]["Close"].dropna() if "^VVIX" in raw_data.columns.get_level_values(0) else None
+            dxy_series = raw_data["DX-Y.NYB"]["Close"].dropna() if "DX-Y.NYB" in raw_data.columns.get_level_values(0) else None
+            market_extremes = compute_market_extremes(spx_series, vix_series, vvix_series, dxy_series)
             
     parsed_assets["volume_activity_heat"] = vol_heat_stats
     # Gold-to-Silver Ratio
@@ -645,9 +791,48 @@ def main():
     hmm_regime_probs, hmm_dominant, transition_risk, _ = run_hmm_inference(parsed_assets, bonds, parsed_assets, parsed_assets, garch_layer, hmm_package)
     current_regime = hmm_dominant if hmm_dominant else "NEUTRAL_TRANSITIONAL"
     regime_changed = current_regime != prior_regime
+    
+    now_utc = datetime.now(timezone.utc)
+    
+    # Extract prior state
+    prior_regime_dict = prior.get("regime") or {}
+    prior_start_str = prior_regime_dict.get("start_utc", now_utc.isoformat())
+    prior_start = datetime.fromisoformat(prior_start_str)
+    
+    prior_probs_dict = prior_regime_dict.get("probabilities") or {}
+    prior_prob = prior_probs_dict.get("risk_on", 0.33)
+    
+    # Calculate Velocity & Duration
+    safe_hmm_probs = hmm_regime_probs or {}
+    current_prob = safe_hmm_probs.get("risk_on", 0.33)
+    transition_velocity = current_prob - prior_prob
+    
+    if regime_changed:
+        regime_start_utc = now_utc.isoformat()
+        duration_days = 0.0
+    else:
+        regime_start_utc = prior_start_str
+        duration_days = (now_utc - prior_start).total_seconds() / 86400.0
+
+    # Hardcoded Stability Constants
+    half_life_map = {
+        "RISK_ON": 11.0,
+        "NEUTRAL_TRANSITIONAL": 2.5,
+        "RISK_OFF": 1.2
+    }
+    stability_half_life = half_life_map.get(current_regime, 2.5)
+
     regime_data = {
-        "current": current_regime, "prior": prior_regime, "changed_this_cycle": regime_changed,
-        "confirmed_change": regime_changed and prior_regime is not None, "probabilities": hmm_regime_probs, "transition_risk": transition_risk
+        "current": current_regime, 
+        "prior": prior_regime, 
+        "changed_this_cycle": regime_changed,
+        "confirmed_change": regime_changed and prior_regime is not None, 
+        "probabilities": hmm_regime_probs, 
+        "transition_risk": transition_risk,
+        "start_utc": regime_start_utc,
+        "duration_days": round(duration_days, 2),
+        "stability_half_life": stability_half_life,
+        "transition_velocity": round(transition_velocity, 4)
     }
     kalman_state = run_kalman_filter(mcs, sub_components, hmm_regime_probs, prior_estimate, prior_cov)
     # Weekly boundaries & setups
@@ -704,7 +889,7 @@ def main():
     kalman_probs = np.array([kalman_state.get("risk_on", 0.33), kalman_state.get("risk_off", 0.33), kalman_state.get("transitional", 0.33)])
     entropy = compute_shannon_entropy(kalman_probs)
     dominant_prob = kalman_state.get("dominant_prob", 0.33)
-    kelly_fraction = compute_kelly_sizing(dominant_prob, brier_score)
+    kelly_fraction = compute_kelly_sizing(dominant_prob, brier_score, regime_data.get("duration_days", 0.0), regime_data.get("stability_half_life", 99.0))
     
     data_science_layer["epistemic_metrics"] = {
         "shannon_entropy": entropy,
@@ -733,6 +918,10 @@ def main():
             json.dump(predictions_history, f, indent=2)
     except Exception:
         pass
+    
+    logging.info("Scraping news signal vector...")
+    news_signal = fetch_market_news(prior_sentiment)
+    
     snapshot_to_sign = {
         "generated_utc": datetime.now(timezone.utc).isoformat(),
         "raw_indicators": parsed_assets,
@@ -743,6 +932,7 @@ def main():
         "regime": regime_data,
         "kalman_state": kalman_state,
         "mlp_deep_state": mlp_state,
+        "news_signal": news_signal,
         "invalidation_boundaries": {
             "us10y_invalidation_level": us10y_invalidation_level,
             "vix_invalidation_level": vix_invalidation_level
@@ -754,7 +944,7 @@ def main():
     with open(output_path, 'w') as f:
         json.dump(snapshot_to_sign, f, indent=2)
     append_to_immutable_chain(signature, snapshot_to_sign["generated_utc"])
-    print(f"[OK] v3.7.0 complete | Regime: {current_regime} | Kelly Exposure: {kelly_fraction * 100:.1f}%")
+    print(f"[OK] v3.9.0 complete | Regime: {current_regime} | Kelly Exposure: {kelly_fraction * 100:.1f}%")
 def fetch_fred_yield(series_id, fred_key):
     try:
         url = "https://api.stlouisfed.org/fred/series/observations"

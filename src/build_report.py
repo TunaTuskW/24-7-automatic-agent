@@ -7,41 +7,102 @@ statistics alongside the decision-oriented AI Strategic Assumptions Layer.
 import os
 import json
 from datetime import datetime, timezone
-def compute_deterministic_synthesis(kalman, volume_heat, extremes, epistemic):
-    # Extract variables
+from dataclasses import dataclass
+
+@dataclass
+class ModelResult:
+    name: str
+    signal: str           # "long" | "short" | "flat"
+    conviction: float     # [0.0, 1.0]
+    is_noise: bool        
+    regime: str           
+
+def run_consensus_engine(kalman, volume_heat, extremes, mcs_score, epistemic, news_signal, current_regime):
+    models = []
+    
+    dom_state = kalman.get("dominant_state", "")
+    k_signal = "long" if dom_state == "risk_on" else "short" if dom_state == "risk_off" else "flat"
+    k_noise = kalman.get("is_ambiguous", False) or kalman.get("tvd", 0) > 0.10
+    models.append(ModelResult("HMM_Kalman", k_signal, kalman.get("dominant_prob", 0.0), k_noise, current_regime))
+    
+    m_signal = "long" if mcs_score > 10 else "short" if mcs_score < -10 else "flat"
+    models.append(ModelResult("MCS", m_signal, min(abs(mcs_score)/100.0, 1.0), False, current_regime))
+    
+    part_type = volume_heat.get("participation_type", "UNKNOWN")
+    v_signal = "long" if part_type == "INSTITUTIONAL_ACCUMULATION" else "short" if part_type == "INSTITUTIONAL_DISTRIBUTION" else "flat"
+    models.append(ModelResult("Volume_Heat", v_signal, 0.8, part_type == "RETAIL_DRIFT", current_regime))
+    
+    k_frac = epistemic.get("kelly_exposure_fraction", 0.0)
+    e_signal = "long" if kalman.get("risk_on", 0) > kalman.get("risk_off", 0) else "short"
+    e_noise = epistemic.get("shannon_entropy", 0) > 1.5
+    models.append(ModelResult("Epistemic_Kelly", e_signal, k_frac, e_noise, current_regime))
+    
+    ext_state = extremes.get("temperature_state", "UNKNOWN")
+    t_signal = "long" if ext_state == "ICE_COLD" else "short" if ext_state == "OVERHEATED" else "flat"
+    models.append(ModelResult("Market_Extremes", t_signal, min(abs(extremes.get("temperature_zscore", 0))/3.0, 1.0), ext_state == "NORMAL", current_regime))
+    
+    clean_models = [m for m in models if not m.is_noise]
+    if len(clean_models) <= 2:
+        return "FLAT (Too much noise)", len(clean_models), "Neutral Impact (Insufficient Valid Models)"
+        
+    long_score = sum(m.conviction for m in clean_models if m.signal == "long")
+    short_score = sum(m.conviction for m in clean_models if m.signal == "short")
+    total = long_score + short_score
+    if total == 0:
+        return "FLAT (No conviction)", len(clean_models), "Neutral Impact (Zero Conviction)"
+        
+    dominant_dir = "LONG" if long_score > short_score else "SHORT"
+    dominant_score = max(long_score, short_score) / total
+    
+    thresh = 0.60
+    n_flag = news_signal.get("event_flag", 0)
+    n_bias = news_signal.get("directional_bias", "normal")
+    
+    impact_str = "Neutral Impact (Threshold 0.60)"
+    
+    if n_flag == 1 or n_bias == "shock":
+        thresh = 0.65
+        impact_str = "High Event Uncertainty / Shock (Threshold Raised to 0.65)"
+        
+    if (dominant_dir == "LONG" and n_bias == "bullish") or (dominant_dir == "SHORT" and n_bias == "bearish"):
+        thresh = 0.50
+        impact_str = f"Signal Confirmation ({n_bias.upper()}) (Threshold Lowered to 0.50)"
+        
+    if dominant_score >= thresh:
+        return f"{dominant_dir} (Score: {dominant_score:.2f} >= Thresh: {thresh:.2f})", len(clean_models), impact_str
+    else:
+        return f"FLAT (Score: {dominant_score:.2f} < Thresh: {thresh:.2f})", len(clean_models), impact_str
+
+def compute_deterministic_synthesis(kalman, volume_heat, extremes, epistemic, direction_str, news_impact):
     dominant_prob = kalman.get("dominant_prob", 0.33)
     brier = kalman.get("brier_score_calibration", 0.25)
     tvd = kalman.get("tvd", 0.0)
     kelly_frac = epistemic.get("kelly_exposure_fraction", 0.0)
     entropy = epistemic.get("shannon_entropy", 1.58)
     
-    # 1. Chaos / Abstention Rule (The new noise filter)
-    # If Kelly calculates 0% exposure, OR Entropy is near max (> 1.50)
-    if kelly_frac == 0.0 or entropy > 1.50:
-        return {
-            "market_state": f"NOISY / HIGH CHAOS (Entropy: {entropy})",
-            "directional_lean": "NO PREDICT (Statistical Coin-Flip)",
-            "positioning": "STAND ASIDE. 0% Exposure.",
-            "invalidation": "Requires dominant probability > 45.0%"
-        }
+    # 1. Base Consensus State (Trust the Consensus Engine)
+    market_state = f"Consensus clear (HMM Prob: {dominant_prob*100:.1f}%)"
+    if entropy > 1.50:
+        market_state = f"NOISY / HIGH CHAOS (Entropy: {entropy:.2f})"
         
-    # 2. Base Deterministic Logic
-    market_state = f"Regime clear (Prob: {dominant_prob*100:.1f}%)"
-    lean = "Follow Dominant Regime"
+    lean = direction_str
     
-    # Apply Volume & Extreme Overrides
+    # 2. Extreme Overrides
     if extremes.get("temperature_state") == "TOO HOT" and extremes.get("crowded_state", "").startswith("LONG"):
-        lean = "Mean Reversion (Bearish Bias)"
+        lean += " [Mean Reversion Bias]"
         market_state = "OVERHEATED & CROWDED"
     elif volume_heat.get("participation_type") == "INSTITUTIONAL DISTRIBUTION" and kalman.get("dominant_state") == "RISK_ON":
-        lean = "Bearish Divergence (Retail Trapped)"
+        lean += " [Bearish Divergence]"
         market_state = "INSTITUTIONAL SELLING INTO RALLY"
         
     # 3. Dynamic Kelly Positioning
-    positioning = f"Scale exposure to exactly {kelly_frac * 100:.1f}% of maximum capital."
-    
+    if kelly_frac == 0.0:
+        positioning = f"STAND ASIDE. 0% Exposure. {news_impact}"
+    else:
+        positioning = f"Scale exposure to exactly {kelly_frac * 100:.1f}%. {news_impact}"
+        
     if brier > 0.20 or tvd > 0.08:
-        positioning += " [WARNING: Model Conflict/Degraded - Maintain strict stops]"
+        positioning += " [WARNING: Model Degraded]"
         
     return {
         "market_state": market_state,
@@ -49,6 +110,7 @@ def compute_deterministic_synthesis(kalman, volume_heat, extremes, epistemic):
         "positioning": positioning,
         "invalidation": "Regime flip or VIX breakout."
     }
+
 def main():
     snapshot_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'market_snapshot.json')
     if not os.path.exists(snapshot_path):
@@ -146,21 +208,15 @@ def main():
         session = "European Session"
     kalman = data.get("kalman_state", {})
     epistemic = data.get("epistemic_metrics", {})
-    synth = compute_deterministic_synthesis(kalman, vol_heat, ext, epistemic)
-
-    print("Using Algorithmic Directional Synthesis.")
-    # Setup narrative mapping
-    setup_narrative = "No structural liquidity sweeps detected in the current session."
-    if setup_name == "PWL_Sweep":
-        setup_narrative = f"ALERT: Wednesday PWL Swept ({pwl_level}). Volatility-filtered checks confirm clean institutional absorption. Standard technical analysis suggests a V-shape reversal trap."
-    elif setup_name == "PWH_Sweep":
-        setup_narrative = f"ALERT: PWH Swept ({pwh_level}). Distribution patterns identified at key ceiling. Trapped buyers likely to face liquidation cascade."
-    # Compute dynamic confidence class
-    computed_confidence = "HIGH"
-    if tvd_score > 0.10 or brier_score > 0.25:
-        computed_confidence = "LOW"
-    elif tvd_score > 0.05 or brier_score > 0.18:
-        computed_confidence = "MODERATE"
+    news_signal = data.get("news_signal", {})
+    
+    direction, clean_count, news_impact = run_consensus_engine(kalman, vol_heat, ext, mcs_score, epistemic, news_signal, regime)
+    
+    synth = compute_deterministic_synthesis(kalman, vol_heat, ext, epistemic, direction, news_impact)
+    
+    headlines = news_signal.get("top_headlines", [])
+    headlines_str = "\n".join(f"> {h}" for h in headlines) if headlines else "> No significant headlines detected."
+        
     report_content = f"""```text
 [ SESSION SNAPSHOT ]
 SPX {spx_sign}{spx_pct}% | DXY {dxy_level} | VIX {vix_level} | US10Y {us10y}% | WTI {wti_sign}{wti_pct}% | BTC {btc_sign}{btc_pct}%
@@ -185,6 +241,8 @@ Conflict    : {tvd_score:.4f} TVD
 > Edge Setup: {setup_name}
 > Probability: {edge_prob:.1f}%
 > Escalation: {tier}
+> News Impact: {news_impact}
+{headlines_str}
 [ ALGORITHMIC SYNTHESIS ]
 State       : {synth['market_state']}
 Lean        : {synth['directional_lean']}

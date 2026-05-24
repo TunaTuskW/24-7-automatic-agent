@@ -2,6 +2,9 @@
 import os
 import json
 from datetime import datetime, timezone
+import sys
+sys.path.append(os.path.dirname(__file__))
+from build_report import run_consensus_engine, compute_deterministic_synthesis
 
 def read_api_key():
     key_path = os.path.join(os.path.dirname(__file__), '..', 'config', 'gemini_api_key.txt')
@@ -25,16 +28,6 @@ Here is the log of all developments across the past 7 days:
 {log_content}
 
 Synthesize this data into a professional weekly institutional report.
-Use the following strict structure:
-# Weekly Macro Synthesis
-**Date:** {timestamp_str}
-
-## a. WEEK TAG
-## b. REGIME SUMMARY
-## c. ASSET PERFORMANCE
-## d. KEY DEVELOPMENTS (Synthesize the log into 3 major bullet points)
-## e. REGIME FLAGS
-## f. WEEK AHEAD (Identify key risks and what data to watch)
 """
         response = client.models.generate_content(model='gemini-2.5-pro', contents=prompt)
         return response.text
@@ -69,31 +62,101 @@ def main():
 
     if not report_content:
         print("Using deterministic template.")
-        # A simple weekly deterministic template
+        
+        generated_utc = data.get("generated_utc", datetime.now(timezone.utc).isoformat())
+        dt = datetime.fromisoformat(generated_utc)
+        
+        mcs_score = data.get("mcs", {}).get("score", 0.0)
+        regime = data.get("regime", {}).get("current", "UNKNOWN")
+        kalman = data.get("kalman_state", {})
+        dominant_state = kalman.get("dominant_state", "unknown")
+        dominant_prob = kalman.get("dominant_prob", 0.0) * 100
+        tvd_score = kalman.get("tvd", 0.0)
+        brier_score = kalman.get("brier_score_calibration", 0.15)
+        
+        tier = data.get("data_driven_escalation", "ROUTINE")
+        raw = data.get("raw_indicators", {})
+        vol_heat = raw.get("volume_activity_heat", {})
+        part_type = vol_heat.get("participation_type", "UNKNOWN")
+        ext = data.get("market_extremes_insight", {})
+        
+        spx_pct = raw.get("SPX", {}).get("delta_pct", 0.0)
+        spx_sign = "+" if spx_pct >= 0 else ""
+        us10y = data.get("bonds", {}).get("US10Y", {}).get("current", 0.0) if data.get("bonds", {}).get("US10Y") else 0.0
+        wti_pct = raw.get("WTI", {}).get("delta_pct", 0.0)
+        wti_sign = "+" if wti_pct >= 0 else ""
+        vix_level = raw.get("VIX", {}).get("current", 0.0)
+        dxy_level = raw.get("DXY", {}).get("current", 0.0)
+        dxy_pct = raw.get("DXY", {}).get("delta_pct", 0.0)
+        dxy_sign = "+" if dxy_pct >= 0 else ""
+        gold_pct = raw.get("Gold", {}).get("delta_pct", 0.0)
+        gold_sign = "+" if gold_pct >= 0 else ""
+        copper_pct = raw.get("Copper", {}).get("delta_pct", 0.0)
+        copper_sign = "+" if copper_pct >= 0 else ""
+        btc_pct = raw.get("BTC", {}).get("delta_pct", 0.0)
+        btc_sign = "+" if btc_pct >= 0 else ""
+        btc_level = raw.get("BTC", {}).get("current", 0.0)
+        
+        def fmt_ticker(ticker_name):
+            t_data = raw.get(ticker_name, {})
+            if not t_data: return ""
+            pct = t_data.get("delta_pct", 0.0)
+            sign = "+" if pct >= 0 else ""
+            return f"{ticker_name} {sign}{pct}%"
+
+        eq_list = ["NDX", "DAX", "FTSE", "N225", "HSI", "SHANGHAI", "KOSPI", "TASI", "DFM"]
+        eq_str = " | ".join(filter(None, [fmt_ticker(t) for t in eq_list]))
+        fx_list = ["EURUSD", "GBPUSD", "JPYUSD", "CHFUSD", "USDCAD"]
+        fx_str = " | ".join(filter(None, [fmt_ticker(t) for t in fx_list]))
+        crypto_list = ["IBIT", "ETHA", "COIN"]
+        crypto_str = " | ".join(filter(None, [fmt_ticker(t) for t in crypto_list]))
+
+        credit = raw.get("credit_stress_proxy", {}) or {}
+        credit_label = credit.get("label", "NORMAL")
+        tactical = raw.get("tactical_setup", {}) or {}
+        setup_name = tactical.get("matched_setup", "NONE")
+        edge_prob = tactical.get("regime_conditioned_probability", 0.50) * 100
+        
+        epistemic = data.get("epistemic_metrics", {})
+        news_signal = data.get("news_signal", {})
+        
+        direction, clean_count, news_impact = run_consensus_engine(kalman, vol_heat, ext, mcs_score, epistemic, news_signal, regime)
+        synth = compute_deterministic_synthesis(kalman, vol_heat, ext, epistemic, direction, news_impact)
+        
+        headlines = news_signal.get("top_headlines", [])
+        headlines_str = "\n".join(f"> {h}" for h in headlines) if headlines else "> No significant headlines detected."
+        
         template = f"""```text
 [ WEEKLY MACRO SYNTHESIS ]
-Date        : {timestamp_str}
-Session Tag : Transitional / Data-Driven (Automated Snapshot)
-
-[ REGIME SUMMARY ]
-Regime      : {data.get('regime', {}).get('current', 'UNKNOWN')}
-MCS Score   : {data.get('mcs', {}).get('score', 0)} ({data.get('mcs', {}).get('label', 'UNKNOWN')})
-Dominant    : {data.get('kalman_state', {}).get('dominant_state', 'unknown')} ({data.get('kalman_state', {}).get('dominant_prob', 0)*100:.1f}%)
-
-[ ASSET PERFORMANCE ]
-SPX   | {data.get('equities', {}).get('SPX', {}).get('current', 'N/A')} ({data.get('equities', {}).get('SPX', {}).get('delta_pct', 0)}%)
-TASI  | {data.get('equities', {}).get('TASI', {}).get('current', 'N/A')} ({data.get('equities', {}).get('TASI', {}).get('delta_pct', 0)}%)
-DFM   | {data.get('equities', {}).get('DFM', {}).get('current', 'N/A')} ({data.get('equities', {}).get('DFM', {}).get('delta_pct', 0)}%)
-US10Y | {data.get('bonds', {}).get('US10Y', {}).get('current', 'N/A')}%
-WTI   | {data.get('energy', {}).get('WTI', {}).get('current', 'N/A')} ({data.get('energy', {}).get('WTI', {}).get('delta_pct', 0)}%)
-
-[ KEY DEVELOPMENTS ]
-> Automated reporting relies on real-time data ingestion module.
-> No qualitative human-in-the-loop developments injected.
-
-[ WEEK AHEAD ]
-> Watch SPX conditional volatility (Current: {data.get('garch_layer', {}).get('SPX', {}).get('vol_regime', 'UNKNOWN')})
-> Critical to establishing whether this regime persists or breaks down.
+SPX {spx_sign}{spx_pct}% | DXY {dxy_level} | VIX {vix_level} | US10Y {us10y}% | WTI {wti_sign}{wti_pct}% | BTC {btc_sign}{btc_pct}%
+[ ASSET DASHBOARD ]
+- Equities: {eq_str}
+- FX/Rates: {fx_str}
+- Commodities: Gold {gold_sign}{gold_pct}% | Copper {copper_sign}{copper_pct}% | {fmt_ticker('Silver')}
+- Crypto (Spot & Flows): BTC ${btc_level:,.0f} ({btc_sign}{btc_pct}%) | {crypto_str}
+- Volatility: VIX {vix_level}
+[ QUANTITATIVE MATRIX ]
+SPX   | {spx_sign}{spx_pct}% | Heat: {part_type}
+VIX   | {vix_level} | Temp: {ext.get('temperature_state', 'UNKNOWN')}
+US10Y | {us10y}% | Crowd: {ext.get('crowded_state', 'UNKNOWN')}
+DXY   | {dxy_level} ({dxy_sign}{dxy_pct}%) | Credit: {credit_label}
+BTC   | {btc_level:,.0f} ({btc_sign}{btc_pct}%) | Crypto Flow: {raw.get('institutional_crypto_mfi', {}).get('flow_regime', 'UNKNOWN')}
+[ SYSTEM HEALTH ]
+Regime      : {regime}
+Max Prob    : {dominant_prob:.1f}% 
+Brier Score : {brier_score:.4f} ({'DEGRADED' if brier_score > 0.25 else 'CALIBRATED'})
+Conflict    : {tvd_score:.4f} TVD
+[ TACTICAL DIAGNOSTICS ]
+> Edge Setup: {setup_name}
+> Probability: {edge_prob:.1f}%
+> Escalation: {tier}
+> News Impact: {news_impact}
+{headlines_str}
+[ ALGORITHMIC SYNTHESIS ]
+State       : {synth['market_state']}
+Lean        : {synth['directional_lean']}
+Positioning : {synth['positioning']}
+Invalidation: {synth['invalidation']}
 ```
 """
         report_content = template

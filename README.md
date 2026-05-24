@@ -1,16 +1,16 @@
-# Macro Briefing Agent Setup Guide (v3.7.0)
+# Macro Briefing Agent Setup Guide (v4.0.0)
 
 This guide provides step-by-step instructions on how to set up the macro briefing agent, configure Discord notifications, and automate the execution using cron jobs.
 
 ## Project Structure Overview
-Following the v2.0 refactor, the project is organized into dedicated folders:
+Following the v4.0.0 fully-Python architecture refactor, the project is organized into dedicated folders:
 - **`config/`**: Contains your API keys and webhook configurations (`fred_api_key.txt`, `webhook_config.txt`, etc.).
-- **`src/`**: Houses the core Python code (`fetch_market_data.py`, `push_to_discord.py`, etc.).
-- **`docs/`**: Documentation and agent setup prompts.
+- **`src/`**: Houses the core Python code (`fetch_market_data.py`, `push_to_discord.py`, `build_report.py`, etc.).
+- **`docs/`**: Documentation and System Architecture Manuals (`macro_agent_setup4.0.0.md`).
 - **`data/`**: Local data files (e.g., market snapshots, models).
 - **`reports/`**: Generated macro updates and weekly syntheses.
 - **`logs/`**: Execution and error logs.
-- **`older_versions/`**: Archived agent setup instructions.
+- **`older_versions/`**: Archived agent setup instructions from the legacy LLM era.
 
 ## 1. Agent Setup
 
@@ -35,30 +35,16 @@ The agent requires a FRED (Federal Reserve Economic Data) API key to fetch speci
 
 ---
 
-## 2. How to Set Up the Agent .md File
+## 2. System Architecture & Technical Manual
 
-The core instructions for the macro analyst are stored in `docs/macro_agent_setup3.7.0.md`. This file contains the exact prompts, artifacts, and scheduling rules the agent follows. 
+The agent is now **fully Python-driven and 100% deterministic**, eliminating the need to feed large markdown setup prompts into an LLM.
 
-If you want an AI (like ChatGPT or Claude) to manually adopt this persona and run a cycle for you:
-1. Open your AI assistant of choice.
-2. Upload the `docs/macro_agent_setup3.7.0.md` file (or copy/paste its contents into the chat).
-3. Say: *"Please read this setup document and execute Task 1 (the 4-hour briefing) using the latest market data."*
-4. The AI will follow the exact structured analytical protocol outlined in the document.
+For a full breakdown of the mathematical engines, data ingestion layers, Kelly sizing decay penalties, and consensus logic, please refer to the **Technical Developer Manual** located at:
+`docs/macro_agent_setup4.0.0.md`
 
 ---
 
-## 3. How to Set Up Optional LLM
-
-By default, the agent runs deterministically using local Python templates (`src/build_report.py`). However, the agent can optionally use an LLM API to generate advanced, natural-language narrative reports instead.
-
-To enable the LLM generation:
-1. Get a Gemini API key from [Google AI Studio](https://aistudio.google.com/) (or an OpenAI/Anthropic key, depending on your script configuration).
-2. Create or open the file `config/gemini_api_key.txt` and paste your API key inside it.
-   *(If this file is missing or the API request fails, the agent will safely fall back to the standard deterministic templates).*
-
----
-
-## 4. Discord Push Setup
+## 3. Discord Push Setup
 
 The agent can push generated reports to a Discord channel using a webhook.
 
@@ -75,7 +61,7 @@ The agent can push generated reports to a Discord channel using a webhook.
 
 ---
 
-## 5. Cron Job Setup
+## 4. Cron Job Setup
 
 To fully automate the agent, you can schedule the bash scripts using your system's cron daemon. `cron` runs silently in the background and executes scripts at specific times or intervals.
 
@@ -121,7 +107,7 @@ If your Mac was asleep and missed a run, you can always catch up manually! Just 
 
 ---
 
-## 6. Offline Model Training & Backtesting
+## 5. Offline Model Training & Backtesting
 
 The agent's deep learning components (HMM and MLP Classifier) are not static. You must periodically retrain them on new market data to maintain their edge.
 
@@ -135,7 +121,7 @@ The agent's deep learning components (HMM and MLP Classifier) are not static. Yo
 
 ---
 
-## 7. Troubleshooting & Logs
+## 6. Troubleshooting & Logs
 
 Because Cron runs invisibly, you won't see pop-ups if it succeeds or fails. To check on it, you can view the log file. Both the Python scripts and your cron jobs will write out helpful error messages there.
 
@@ -145,8 +131,8 @@ tail -n 20 /Users/mac/agent/logs/cron.log
 ```
 This will show you the output of the most recent automated runs!
 
-## 8. Versioning System & Patch Notes
-Whenever changes are made to this setup document, automatically update the version number in the title and summarize the patch notes to the user.
+## 7. Versioning System & Patch Notes
+Whenever changes are made to the system architecture, automatically update the version number in the title and summarize the patch notes to the user.
 - **Big change** (e.g., major feature additions): Increment minor version (x.1 to 9). Example: v1.3.x -> v1.4.0
 - **Small change** (e.g., prompt tweak, new section): Increment patch version (x.x.1 to 9). Example: v1.3.1 -> v1.3.2
 - **Tiny change** (e.g., typo fix, formatting): Increment sub-patch version (x.x.x.1 to 9). Example: v1.3.1 -> v1.3.1.1

@@ -2,48 +2,31 @@ MACRO ANALYST AGENT - CONCEPT AND MODEL
 =======================================
 
 1. WHAT IT IS
-This is a 24/7 autonomous quantitative agent that monitors global markets, processes data through deep learning classifiers, and generates institutional-grade macro reports. It runs completely automatically in the background using your computer's scheduler. Its presentation layer uses an ultra-minimal "Brutalist Terminal" text-block layout to ensure a data-dense, cross-platform reading experience designed for instant mobile parsing (e.g., Discord/Telegram).
+This is a 24/7 autonomous quantitative agent that monitors global markets, processes data through deep learning classifiers, and generates institutional-grade macro reports. It runs completely automatically in the background using your computer's scheduler. The presentation layer uses an ultra-minimal "Brutalist Terminal" text-block layout to ensure a data-dense, cross-platform reading experience designed for instant mobile parsing.
 
-2. THE DUAL ARCHITECTURE: PYTHON (.py) vs MARKDOWN (.md)
-To achieve zero hallucinations, the agent's brain is split into two halves:
+2. THE FULLY-PYTHON DETERMINISTIC ARCHITECTURE
+Following the v4.0.0 upgrade, the agent is completely Python-driven and 100% deterministic. The system no longer requires feeding a "wall of text" prompt into a Large Language Model (LLM). Instead, the architecture relies on mathematical consensus logic. 
 
-THE QUANTITATIVE ENGINE (The .py Files)
-The Python scripts (e.g., fetch_market_data.py, build_report.py) act as the cold, emotionless math engine. 
-- They pull raw real-time data from Yahoo Finance, FRED, and the ECB.
-- They calculate complex metrics like the Macro Condition Score (MCS), Shannon Entropy, Brier Scores, and Fractional Kelly Sizing.
-- They run the Deep Learning models (HMM and MLP) to determine the market regime.
-- They deterministically assemble the raw numbers into the final "Brutalist UI" formatting.
-
-THE REASONING ENGINE (The .md Setup File)
-The markdown file (macro_agent_setup.md) is the strict "Instruction Manual" for the Large Language Model (the AI). 
-- It tells the AI exactly how to read the JSON output produced by the Python scripts.
-- It forces the AI through the 5-step Structured Analytical Protocol (SAP) to verify the math, look for contradictions, and identify a single root cause.
-- It governs the "AI Strategic Assumptions Layer" so the AI doesn't guess or speculate wildly.
+- Data Ingestion & Signal Layer: Real-time data is ingested via Yahoo Finance (equities, commodities, crypto flow, VVIX) and the FRED API (yields). An NLP NewsSignalVector ingests RSS feeds, interpreting sentiment purely as an absolute shock/volatility multiplier rather than directional bias.
+- Core Quantitative Engines: The Python pipeline tracks "Regime Persistence" (how long the market has spent in its current state) and a "Hidden Fragility Index" (monitoring VVIX/VIX expansion and SPX/DXY correlation).
+- The Consensus Engine: The script aggregates 5 distinct quantitative signals (Kalman State, MCS, Volume Heat, Kelly Size, Extremes) into `ModelResult` dataclasses and runs a conviction-weighted vote. If the models diverge wildly, the Shannon Entropy forces an automatic "NO PREDICT / STAND ASIDE" posture.
 
 3. THE END-TO-END WORKFLOW
-- Data Collection: Every cycle, the python scripts download real-time market data across global equities (NDX, DAX, FTSE, N225, HSI, SHANGHAI, KOSPI, TASI, DFM), global fiat FX pairs, commodities (Gold, Silver, Copper), and institutional crypto ETF/spot flows.
+- Data Collection: Every cycle, the python scripts download the massive data payload.
 - Mathematical Scoring: The python scripts score the market stress and momentum.
-- AI Logic Guardrails (SAP): Before the AI is allowed to write the narrative, the `.md` prompt forces it through the strict 5-step SAP logic test.
-- Report Generation & Delivery: The agent writes a clean, professional narrative. The final Brutalist-formatted report is instantly pushed to your Discord channel.
+- Automated Formatting: The Python scripts natively format the mathematical output into the Brutalist markdown layout.
+- Delivery: The final report is instantly pushed to your Discord channel.
 - Cryptographic Proof: Every report is digitally signed and "hash-chained" (TruChain) so that its history cannot be secretly altered later.
 
 4. THE MATH & MODELS BEHIND THE SCENES
-Instead of relying purely on an AI's text generation, the agent uses hard quantitative models to determine the true state of the market:
-
 - Macro Condition Score (MCS): A composite number measuring overall market stress based on stock momentum, interest rates, energy prices, and cross-asset behavior.
 - Hidden Markov Models (HMM) & Kalman Filters: These algorithms smooth out daily noise to figure out the "true" underlying regime (Risk-On, Risk-Off, or Transitional).
 - Deep Classifier (MLP): A trained neural network that double-checks the HMM. 
-- GARCH Volatility: Predicts upcoming volatility spikes before they happen.
-- Institutional Footprinting: Natively supports advanced institutional footprinting, including a 20-day rolling Volume Heat and Market Extremes diagnostic tracker.
-- Synthetic Corporate Credit: Mathematically estimates high-yield credit stress even when traditional data is delayed.
+- Institutional Footprinting: Natively supports advanced institutional footprinting, including a 20-day continuous Institutional Heat Index (IHI).
 
 5. ADVANCED MODEL GOVERNANCE & TACTICAL ASSUMPTIONS
-The agent uses advanced self-monitoring techniques to ensure it does not suffer from AI over-confidence:
-- KL Divergence & Structural Ambiguity Index (SAI): The agent mathematically measures the disagreement between its HMM and MLP models. High SAI triggers an automatic confidence downgrade.
-- Rolling Brier Score: A self-calibration tool that tracks if the agent's historical probability forecasts have been accurate.
+- Kelly Sizing Decay Penalty: The algorithm targets exposure using the Fractional Kelly Criterion, heavily penalized by historical Brier Score calibration. Furthermore, if a regime outlives its mathematical "half-life" (e.g., 11 days for RISK_ON), an exponential decay penalty forcefully scales the portfolio exposure down, enforcing systematic profit-taking before transitions occur.
 - 1.5 Std Dev Dynamic Boundaries: Continuously tracks volatility thresholds to automatically invalidate outdated narratives upon statistical sweeps.
-- Epistemic Sizing & Fractional Kelly: The system calculates pure Shannon Entropy to measure statistical chaos. Instead of a binary "trade/no-trade" decision, the agent uses a modified Fractional Kelly Criterion—penalized by its Brier score—to scale exposure based on its exact mathematical edge.
-- Statistical Noise Filtering: If the primary Kalman classifier drops below 60.0% probability, the system overrides the output with explicit "NO PREDICT / No Comment" tags to prevent trading on statistical coin flips.
 
 6. ESCALATION SYSTEM
 The agent respects your time and won't spam you with panicky alerts. It only flags urgency when the math demands it:
@@ -52,7 +35,7 @@ The agent respects your time and won't spam you with panicky alerts. It only fla
 - CRITICAL: Extreme mathematical stress (e.g., VIX > 30, simultaneous stock and bond crashes). Discord will ping you heavily for these.
 
 7. THE AUTOMATED SCHEDULE
-The agent manages three distinct workflows on its own:
+The agent manages three distinct workflows natively via bash scripts (run_4h.sh, run_daily.sh, run_weekly.sh) executed by cron:
 - The 4-Hour Briefing: A quick pulse-check of the active market session.
 - The Daily Roll: At midnight, it pushes a master document containing the last 72 hours of updates.
 - The Sunday Synthesis: A deep-dive research report summarizing the entire week and previewing the week ahead.
@@ -60,4 +43,4 @@ The agent manages three distinct workflows on its own:
 8. OFFLINE MODEL TRAINING & BACKTESTING
 The deep learning models (HMM and MLP) are not static. The agent includes an offline training pipeline (train_models.py) that allows you to periodically re-train the neural networks on fresh market data. Whenever you train the models, it automatically generates a Backtest Report (backtest_results.md) so you can empirically verify the agent's mathematical edge before it trades or analyzes live markets.
 
-By anchoring the AI to a rigid mathematical backbone, the agent provides institutional-quality insights with deterministic reliability.
+By anchoring the system to a rigid mathematical backbone, the pipeline provides institutional-quality insights with deterministic reliability, entirely free from LLM hallucinations.
