@@ -249,7 +249,7 @@ def compute_garch_volatility(ticker_symbol, lookback_days=250):
         logging.error(f"GARCH error for {ticker_symbol}: {e}")
         return None, None, None
 def load_mlp_model():
-    model_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'mlp_model.pkl')
+    model_path = os.path.join(os.path.dirname(__file__), '..', 'models', 'mlp_model.pkl')
     try:
         if os.path.exists(model_path):
             return joblib.load(model_path)
@@ -702,7 +702,7 @@ def main():
                 prior_cov = ks.get("covariance_matrix")
         except Exception:
             pass
-    hmm_model_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'hmm_model.pkl')
+    hmm_model_path = os.path.join(os.path.dirname(__file__), '..', 'models', 'hmm_model.pkl')
     hmm_package = joblib.load(hmm_model_path) if os.path.exists(hmm_model_path) else None
     mlp_package = load_mlp_model()
     logging.info("Fitting live GARCH vol models...")

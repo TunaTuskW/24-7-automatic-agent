@@ -73,4 +73,9 @@ The deep learning models (HMM and MLP) are not static. The agent includes a robu
   * Loads the active models and decodes 2 years of historical daily market features into their mapped state label sequences.
   * Measures the daily mean returns and annualizes SPX/WTI metrics across all 6 regimes, compiling a comprehensive, tabular performance audit (backtest_results.md) detailing frequencies, annualized returns, and yield moves (in basis points per day) to verify mathematical edge before live deployment.
 
+9. DATA PRIVACY & ZERO-SHARING SECURITY PROTOCOLS
+To protect proprietary quantitative intelligence and restrict leakage of sensitive credentials, the system enforces a local-only encapsulation boundary:
+- Strict Ignored Enclaves: The `.gitignore` config explicitly encapsulates all private asset snapshots (`market_snapshot.json`), forecast accuracies (`predictions_history.json`), model weights (`models/hmm_model.pkl`, `models/mlp_model.pkl`), run-time logs (`logs/`), and generated briefings (`reports/updates/`).
+- Decoupled Example Schemas: Default templates (e.g., `market_snapshot.example.json`) are committed to establish skeleton frameworks, which are duplicated locally to active formats. This ensures developers can execute backtests and inference entirely offline and locally with zero risk of committing operational intelligence or API credentials to public repositories.
+
 By anchoring the system to a rigid mathematical training and verification backbone, the pipeline provides institutional-quality insights with deterministic reliability, entirely free from LLM hallucinations.
