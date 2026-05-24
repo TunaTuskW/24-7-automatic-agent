@@ -5,11 +5,11 @@ MACRO ANALYST AGENT - CONCEPT AND MODEL
 This is a 24/7 autonomous quantitative agent that monitors global markets, processes data through deep learning classifiers, and generates institutional-grade macro reports. It runs completely automatically in the background using your computer's scheduler. The presentation layer uses an ultra-minimal "Brutalist Terminal" text-block layout to ensure a data-dense, cross-platform reading experience designed for instant mobile parsing.
 
 2. THE FULLY-PYTHON DETERMINISTIC ARCHITECTURE
-Following the v4.0.0 upgrade, the agent is completely Python-driven and 100% deterministic. The system no longer requires feeding a "wall of text" prompt into a Large Language Model (LLM). Instead, the architecture relies on mathematical consensus logic. 
+Following the v4.0.1 upgrade, the agent is completely Python-driven and 100% deterministic. The system no longer requires feeding a "wall of text" prompt into a Large Language Model (LLM). Instead, the architecture relies on mathematical consensus logic. 
 
-- Data Ingestion & Signal Layer: Real-time data is ingested via Yahoo Finance (equities, commodities, crypto flow, VVIX) and the FRED API (yields). An NLP NewsSignalVector ingests RSS feeds, interpreting sentiment purely as an absolute shock/volatility multiplier rather than directional bias.
+- Data Ingestion & Signal Layer: Real-time data is ingested via Yahoo Finance (equities, commodities, crypto flow, VVIX) and the FRED API (yields). In v4.0.1, raw headline lists are stripped from report layouts to maintain a professional quantitative aesthetic. Instead, the VADER sentiment engine runs in the background in "Stealth Mode," processing Yahoo Finance RSS feeds to scale the news_impact vector and dynamically scale consensus thresholds.
 - Core Quantitative Engines: The Python pipeline tracks "Regime Persistence" (how long the market has spent in its current state) and a "Hidden Fragility Index" (monitoring VVIX/VIX expansion and SPX/DXY correlation).
-- The Consensus Engine: The script aggregates 5 distinct quantitative signals (Kalman State, MCS, Volume Heat, Kelly Size, Extremes) into `ModelResult` dataclasses and runs a conviction-weighted vote. If the models diverge wildly, the Shannon Entropy forces an automatic "NO PREDICT / STAND ASIDE" posture.
+- The Consensus Engine: The script aggregates 5 distinct quantitative signals (Kalman State, MCS, Volume Heat, Kelly Size, Extremes) into `ModelResult` dataclasses and runs a conviction-weighted vote. The voting consensus threshold is dynamically conditioned by the background Stealth news shock vector (rising to 0.65 in high-uncertainty events). If the models diverge wildly, the Shannon Entropy forces an automatic "NO PREDICT / STAND ASIDE" posture.
 
 3. THE END-TO-END WORKFLOW
 - Data Collection: Every cycle, the python scripts download the massive data payload.
@@ -23,6 +23,15 @@ Following the v4.0.0 upgrade, the agent is completely Python-driven and 100% det
 - Hidden Markov Models (HMM) & Kalman Filters: These algorithms smooth out daily noise to figure out the "true" underlying regime (Risk-On, Risk-Off, or Transitional).
 - Deep Classifier (MLP): A trained neural network that double-checks the HMM. 
 - Institutional Footprinting: Natively supports advanced institutional footprinting, including a 20-day continuous Institutional Heat Index (IHI).
+- Stealth NLP NewsSignalVector (VADER Sentiment Engine): 
+  Operates autonomously in the background to scrape RSS news feeds and quantify market sentiment shocks without cluttering the brutalist visual interface.
+  * Priority-Weighted News Filter: Scrapes news articles and ranks them based on a continuous priority metric:
+    P = 0.40 * Authority + 0.35 * Recency + 0.25 * Relevance
+    where Recency follows an exponential decay: R = exp(-0.3 * age_hours), and Relevance is a binary indicator of core asset mentions (SPX, yields, gold, etc.).
+  * Sentiment Score Extraction: Runs the top 20 prioritized article headlines through the VADER (Valence Aware Dictionary and sEntiment Reasoner) sentiment engine to obtain a compound polarity score in [-1.0, 1.0].
+  * Absolute Volatility Shock Transformation: Discarding traditional directional bias since sentiment scores often exhibit non-linear or lagged relationships with price action, the model targets absolute variance: a sentiment shock is declared if the mean sentiment |μ| > 0.20 or standard deviation σ > 0.35.
+  * Macro Cluster Event Detection: Scrapes for macro, geopolitical, and earnings keywords. If >= 3 macro-cluster hits occur or "breaking" is detected, the event_flag is set to 1.
+  * Dynamic Consensus Threshold Conditioning: Integrates into the Consensus Engine. In normal regimes, the conviction threshold required for HMM/MCS/MLP consensus is 0.60. Under news shock or macro cluster events (event_flag == 1 or shock state), the threshold is dynamically raised to 0.65 to insulate the system from false breakout signals and high-volatility news noise.
 
 5. ADVANCED MODEL GOVERNANCE & TACTICAL ASSUMPTIONS
 - Kelly Sizing Decay Penalty: The algorithm targets exposure using the Fractional Kelly Criterion, heavily penalized by historical Brier Score calibration. Furthermore, if a regime outlives its mathematical "half-life" (e.g., 11 days for RISK_ON), an exponential decay penalty forcefully scales the portfolio exposure down, enforcing systematic profit-taking before transitions occur.
@@ -41,6 +50,27 @@ The agent manages three distinct workflows natively via bash scripts (run_4h.sh,
 - The Sunday Synthesis: A deep-dive research report summarizing the entire week and previewing the week ahead.
 
 8. OFFLINE MODEL TRAINING & BACKTESTING
-The deep learning models (HMM and MLP) are not static. The agent includes an offline training pipeline (train_models.py) that allows you to periodically re-train the neural networks on fresh market data. Whenever you train the models, it automatically generates a Backtest Report (backtest_results.md) so you can empirically verify the agent's mathematical edge before it trades or analyzes live markets.
+The deep learning models (HMM and MLP) are not static. The agent includes a robust, double-engine offline training pipeline (train_models.py) and historical backtesting engine (backtest.py) to periodically adapt to evolving market regimes:
 
-By anchoring the system to a rigid mathematical backbone, the pipeline provides institutional-quality insights with deterministic reliability, entirely free from LLM hallucinations.
+- The HMM Regime Training Pipeline:
+  * Ingests 5 years of daily historical data across Equities (SPX), Volatility (GARCH volatility proxy), FX/Treasuries (DXY, USDCAD, 10Y yields, 10Y-2Y yield spread), Commodities (WTI Crude, Gold, Silver), and a Liquidity/Crypto Flow proxy.
+  * Standardizes the aligned 10-dimensional feature vector using a StandardScaler.
+  * Fits a Gaussian Hidden Markov Model (GaussianHMM) configured with N_HIDDEN_STATES = 6, a full covariance matrix structure, and 500 maximum EM iterations.
+  * Dynamically maps states by checking their emission means across daily SPX returns, 10-year yield shifts, and WTI moves:
+    - RISK_ON_EXPANSION: Pos. SPX return (>0.3%) & rising yields (>0.01%).
+    - LIQUIDITY_DRIVEN_RALLY: Pos. SPX return (>0.3%) & falling yields (<-0.01%).
+    - STAGFLATION_STRESS: Neg. SPX return (<-0.2%) & rising energy price (>0.5%).
+    - RATE_SHOCK: Neg. SPX return (<-0.2%) & expanding bond yields (>0.02%).
+    - DEFLATION_FEAR: Neg. SPX return (<-0.2%) & falling energy price (<-0.3%).
+    - NEUTRAL_TRANSITIONAL: Stable market conditions.
+
+- The Supervised MLP Deep Classifier Pipeline:
+  * Targets a 5-day forward cumulative SPX return: Risk-On (y = 1, return > 1.5%), Risk-Off (y = 0, return < -1.5%), and Transitional (y = 2, otherwise).
+  * Train package runs a multi-layer perceptron neural network (MLPClassifier) with a (16, 8) hidden layer topology.
+  * Leverages a ReLU activation function, Adam optimization solver, and early stopping to protect against overfitting.
+
+- The Historical Backtest Engine (backtest.py):
+  * Loads the active models and decodes 2 years of historical daily market features into their mapped state label sequences.
+  * Measures the daily mean returns and annualizes SPX/WTI metrics across all 6 regimes, compiling a comprehensive, tabular performance audit (backtest_results.md) detailing frequencies, annualized returns, and yield moves (in basis points per day) to verify mathematical edge before live deployment.
+
+By anchoring the system to a rigid mathematical training and verification backbone, the pipeline provides institutional-quality insights with deterministic reliability, entirely free from LLM hallucinations.

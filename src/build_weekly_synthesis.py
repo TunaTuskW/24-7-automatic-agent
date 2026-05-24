@@ -76,26 +76,26 @@ def main():
         
         tier = data.get("data_driven_escalation", "ROUTINE")
         raw = data.get("raw_indicators", {})
-        vol_heat = raw.get("volume_activity_heat", {})
+        vol_heat = raw.get("volume_activity_heat") or {}
         part_type = vol_heat.get("participation_type", "UNKNOWN")
         ext = data.get("market_extremes_insight", {})
         
-        spx_pct = raw.get("SPX", {}).get("delta_pct", 0.0)
+        spx_pct = (raw.get("SPX") or {}).get("delta_pct", 0.0)
         spx_sign = "+" if spx_pct >= 0 else ""
         us10y = data.get("bonds", {}).get("US10Y", {}).get("current", 0.0) if data.get("bonds", {}).get("US10Y") else 0.0
-        wti_pct = raw.get("WTI", {}).get("delta_pct", 0.0)
+        wti_pct = (raw.get("WTI") or {}).get("delta_pct", 0.0)
         wti_sign = "+" if wti_pct >= 0 else ""
-        vix_level = raw.get("VIX", {}).get("current", 0.0)
-        dxy_level = raw.get("DXY", {}).get("current", 0.0)
-        dxy_pct = raw.get("DXY", {}).get("delta_pct", 0.0)
+        vix_level = (raw.get("VIX") or {}).get("current", 0.0)
+        dxy_level = (raw.get("DXY") or {}).get("current", 0.0)
+        dxy_pct = (raw.get("DXY") or {}).get("delta_pct", 0.0)
         dxy_sign = "+" if dxy_pct >= 0 else ""
-        gold_pct = raw.get("Gold", {}).get("delta_pct", 0.0)
+        gold_pct = (raw.get("Gold") or {}).get("delta_pct", 0.0)
         gold_sign = "+" if gold_pct >= 0 else ""
-        copper_pct = raw.get("Copper", {}).get("delta_pct", 0.0)
+        copper_pct = (raw.get("Copper") or {}).get("delta_pct", 0.0)
         copper_sign = "+" if copper_pct >= 0 else ""
-        btc_pct = raw.get("BTC", {}).get("delta_pct", 0.0)
+        btc_pct = (raw.get("BTC") or {}).get("delta_pct", 0.0)
         btc_sign = "+" if btc_pct >= 0 else ""
-        btc_level = raw.get("BTC", {}).get("current", 0.0)
+        btc_level = (raw.get("BTC") or {}).get("current", 0.0)
         
         def fmt_ticker(ticker_name):
             t_data = raw.get(ticker_name, {})
@@ -140,7 +140,7 @@ SPX   | {spx_sign}{spx_pct}% | Heat: {part_type}
 VIX   | {vix_level} | Temp: {ext.get('temperature_state', 'UNKNOWN')}
 US10Y | {us10y}% | Crowd: {ext.get('crowded_state', 'UNKNOWN')}
 DXY   | {dxy_level} ({dxy_sign}{dxy_pct}%) | Credit: {credit_label}
-BTC   | {btc_level:,.0f} ({btc_sign}{btc_pct}%) | Crypto Flow: {raw.get('institutional_crypto_mfi', {}).get('flow_regime', 'UNKNOWN')}
+BTC   | {btc_level:,.0f} ({btc_sign}{btc_pct}%) | Crypto Flow: {(raw.get('institutional_crypto_mfi') or {}).get('flow_regime', 'UNKNOWN')}
 [ SYSTEM HEALTH ]
 Regime      : {regime}
 Max Prob    : {dominant_prob:.1f}% 
@@ -151,7 +151,6 @@ Conflict    : {tvd_score:.4f} TVD
 > Probability: {edge_prob:.1f}%
 > Escalation: {tier}
 > News Impact: {news_impact}
-{headlines_str}
 [ ALGORITHMIC SYNTHESIS ]
 State       : {synth['market_state']}
 Lean        : {synth['directional_lean']}
