@@ -1,12 +1,12 @@
-# Macro Briefing Agent Setup Guide (v4.0.1)
+# Macro Briefing Agent Setup Guide (v4.1.0.1)
 
 This guide provides step-by-step instructions on how to set up the macro briefing agent, configure Discord notifications, and automate the execution using cron jobs.
 
 ## Project Structure Overview
-Following the v4.0.1 fully-Python architecture refactor, the project is organized into dedicated folders:
+Following the v4.1.0 fully-Python architecture refactor, the project is organized into dedicated folders:
 - **`config/`**: Contains your API keys and webhook configurations (`fred_api_key.txt`, `webhook_config.txt`, `gemini_api_key.txt`, etc.).
-- **`src/`**: Houses the core Python code (`fetch_market_data.py`, `push_to_discord.py`, `build_report.py`, etc.).
-- **`docs/`**: Documentation and System Architecture Manuals (`macro_agent_setup4.0.1.md`).
+- **`src/`**: Houses the core Python code (`fetch_market_data.py`, `push_to_discord.py`, `build_report.py`, etc., and the dual visualizer notebooks `visualize_math_4h.ipynb` and `visualize_math_1w.ipynb`).
+- **`docs/`**: Documentation and System Architecture Manuals (`macro_agent_setup4.1.0.md`).
 - **`data/`**: Local data files (e.g., market snapshots).
 - **`models/`**: Saved machine learning models.
 - **`reports/`**: Generated macro weekly syntheses, 72-hour rolling updates, and machine learning backtest results.
@@ -60,6 +60,12 @@ The Python architecture is organized as a modular quantitative pipeline. Below i
    - **Viterbi Decoding:** Loads the active models and decodes 2 years of daily market features into chronological state labels.
    - **Statistical Auditing:** Measures mean daily returns, annualizes SPX/WTI metrics, and compiles daily yield changes (in basis points) across all 6 regimes, outputting a clear performance audit (`reports/backtest_results.md`) to verify quantitative edge before live deployment.
 
+8. **`visualize_math_4h.ipynb` & `visualize_math_1w.ipynb` (Dual Interactive Math Visualizers)**
+   - **Visual Overlay:** Plots HMM state boundaries directly overlaid on the S&P 500 price chart.
+   - **Fragility Heatmap:** Visualizes structural fragility states (VVIX/VIX expansion, SPX/DXY correlation).
+   - **Kelly Sizing Curves:** Plots real-time allocation transitions and duration half-life decay patterns natively within VS Code.
+   - **Top-to-Bottom Report Injection:** Employs an automated cell (**Section 5: Generated Report Layout**) at the bottom of both notebooks that sweeps your local report directories to locate the most recent raw Markdown briefing (`4 hours update` or `macro weekly synthesis`) and renders it seamlessly directly below the charts.
+
 ## Data Privacy & Security Architecture
 
 To protect proprietary trading strategies, local model calibrations, and personal API keys, this repository implements a strict **zero-sharing security architecture**. All sensitive parameters, private execution logs, locally trained model binaries, and generated briefings are strictly ignored by `.gitignore` and kept local.
@@ -88,7 +94,7 @@ Ensure you have **Python 3** installed on your system. You will also need to ins
    ```
 2. Install the required dependencies:
    ```bash
-   pip3 install yfinance pandas numpy requests joblib arch
+   pip3 install yfinance pandas numpy requests joblib arch matplotlib seaborn jupyter
    ```
 
 ### API Keys
@@ -119,7 +125,7 @@ To enable high-fidelity automated narrative summaries in the weekly research rep
 The agent is now **fully Python-driven and 100% deterministic**, eliminating the need to feed large markdown setup prompts into an LLM.
 
 For a full breakdown of the mathematical engines, data ingestion layers, Kelly sizing decay penalties, and consensus logic, please refer to the **Technical Developer Manual** located at:
-`docs/macro_agent_setup4.0.1.md`
+`docs/macro_agent_setup4.1.0.md`
 
 ---
 
@@ -204,7 +210,25 @@ The agent's deep learning components (HMM and MLP Classifier) are not static. Yo
 
 ---
 
-## 6. Troubleshooting & Logs
+## 6. Interactive Mathematical Visualization (Jupyter)
+
+The agent includes interactive visual verification and analytics dashboards that run natively in your editor (e.g., VS Code with the Jupyter extension):
+
+1. Ensure the graphing and notebook packages are installed:
+   ```bash
+   pip3 install matplotlib seaborn jupyter
+   ```
+2. Open either **`src/visualize_math_4h.ipynb`** (for 4-hour briefings) or **`src/visualize_math_1w.ipynb`** (for weekly synthesis summaries) in your IDE.
+3. Click **"Run All"** to execute the analytics cells.
+4. The notebook will automatically query your active model weights and historical data to render publication-grade plots and text layouts:
+   - **HMM Regimes Overlay:** Highlights underlying market regimes directly onto the S&P 500 price chart.
+   - **Fragility Heatmap:** Visualizes structural fragility states (VVIX/VIX expansion, SPX/DXY correlation).
+   - **Kelly Sizing Curves:** Plots the Fractional Kelly size allocations, calibration degradation, and transition decay paths.
+   - **Seamless Report Injection (Section 5):** The notebook automatically hunts down and embeds the most recent raw markdown report generated by your catch-up pipelines directly inside the notebook below the charts, giving you a complete top-to-bottom mathematical-to-narrative presentation.
+
+---
+
+## 7. Troubleshooting & Logs
 
 Because Cron runs invisibly, you won't see pop-ups if it succeeds or fails. To check on it, you can view the log file. Both the Python scripts and your cron jobs will write out helpful error messages there.
 
@@ -214,13 +238,22 @@ tail -n 20 /Users/mac/agent/logs/cron.log
 ```
 This will show you the output of the most recent automated runs!
 
-## 7. Versioning System & Patch Notes
+---
+
+## 8. Versioning System & Patch Notes
 Whenever changes are made to the system architecture, automatically update the version number in the title and summarize the patch notes to the user.
 - **Big change** (e.g., major feature additions): Increment minor version (x.1 to 9). Example: v1.3.x -> v1.4.0
 - **Small change** (e.g., prompt tweak, new section): Increment patch version (x.x.1 to 9). Example: v1.3.1 -> v1.3.2
 - **Tiny change** (e.g., typo fix, formatting): Increment sub-patch version (x.x.x.1 to 9). Example: v1.3.1 -> v1.3.1.1
 
 ### Patch Notes:
+- **v4.1.0.1** (Path Tweak):
+  - **[FIXED]** Patched the 4-hour visualizer notebook (`visualize_math_4h.ipynb`) directory pointer from `../reports` to `../reports/updates` to correctly scan and render the latest 4-hour briefings.
+- **v4.1.0** (Math Visualization Update):
+  - **[ADDED]** Created interactive dual Jupyter Notebooks `src/visualize_math_4h.ipynb` and `src/visualize_math_1w.ipynb` to support native mathematical and regime visual verification in VS Code.
+  - **[ADDED]** Added a dynamic report injection section (**Section 5: Generated Report Layout**) to automatically locate and inject the most recent polished Markdown briefing directly below the mathematical graphs.
+  - **[ADDED]** Graphing and notebook dependencies (`matplotlib`, `seaborn`, `jupyter`) integrated into prerequisites.
+  - **[ADDED]** Real-time visualization of HMM S&P 500 regime overlays, Fragility heatmaps, and Fractional Kelly transition curves.
 - **v4.0.1** (Stealth NLP Update):
   - **[REMOVED]** Raw NLP headline lists are stripped from reports (`build_report.py` and `build_weekly_synthesis.py`) to maintain a professional, minimalist, data-dense brutalist aesthetic.
   - **[ADDED]** Shifted NLP analysis to **Background Stealth Persistence mode**. Yahoo Finance RSS news feeds are autonomously fetched and scored using VADER sentiment analysis.
@@ -229,7 +262,9 @@ Whenever changes are made to the system architecture, automatically update the v
 
 *Note to agent: After every change, ensure the title reflects the new version and summarize the patch notes to the user.*
 
-## 8. Instant Quick-Start (Offline Skeleton Mode)
+---
+
+## 9. Instant Quick-Start (Offline Skeleton Mode)
 
 If you are a new user and want to immediately test the report generation interface offline without fetching live Yahoo Finance/FRED APIs or setting up API keys, follow these two steps:
 

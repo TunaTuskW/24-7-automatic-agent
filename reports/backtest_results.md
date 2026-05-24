@@ -2,9 +2,9 @@
 
 | Regime | Days | Freq % | Ann. SPX Return | Ann. WTI Return | Avg 10Y Δ (bps/day) |
 |--------|------|--------|-----------------|-----------------|----------------------|
-| NEUTRAL_TRANSITIONAL_5 | 154 | 71.0% | 17.47% | 29.29% | 0.49 bps |
-| NEUTRAL_TRANSITIONAL | 30 | 13.8% | 18.46% | -50.92% | 1.67 bps |
-| NEUTRAL_TRANSITIONAL_3 | 17 | 7.8% | 243.78% | -96.73% | -3.18 bps |
-| NEUTRAL_TRANSITIONAL_2 | 10 | 4.6% | 23.85% | 1038.27% | -0.2 bps |
-| RISK_ON_EXPANSION | 5 | 2.3% | 17.66% | 4161.99% | -1.2 bps |
-| NEUTRAL_TRANSITIONAL_1 | 1 | 0.5% | -49.48% | -99.56% | 2.0 bps |
+| NEUTRAL_TRANSITIONAL | 136 | 63.0% | 14.17% | 55.92% | 0.69 bps |
+| NEUTRAL_TRANSITIONAL_5 | 47 | 21.8% | 8.57% | -16.76% | 0.91 bps |
+| NEUTRAL_TRANSITIONAL_2 | 12 | 5.6% | -16.45% | -99.14% | -6.5 bps |
+| NEUTRAL_TRANSITIONAL_3 | 10 | 4.6% | 53.61% | -62.02% | 0.2 bps |
+| LIQUIDITY_DRIVEN_RALLY | 10 | 4.6% | 2235.16% | 664.84% | -0.2 bps |
+| NEUTRAL_TRANSITIONAL_1 | 1 | 0.5% | -84.54% | -89.82% | 4.0 bps |
