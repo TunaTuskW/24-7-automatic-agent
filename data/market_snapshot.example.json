@@ -1,0 +1,472 @@
+{
+  "generated_utc": "2026-05-24T09:00:14.142309+00:00",
+  "raw_indicators": {
+    "SPX": {
+      "current": 7473.4702,
+      "prev": 7445.7202,
+      "delta": 27.75,
+      "delta_pct": 0.373,
+      "mean_5d": 7421.7641,
+      "std_5d": 45.739,
+      "z_score": 0.492,
+      "momentum": "up",
+      "vol_regime": "NORMAL",
+      "forecast_vol": 0.7456
+    },
+    "NDX": {
+      "current": 29481.6406,
+      "prev": 29357.2695,
+      "delta": 124.3711,
+      "delta_pct": 0.424,
+      "mean_5d": 29189.9637,
+      "std_5d": 274.1641,
+      "z_score": 1.064,
+      "momentum": "up"
+    },
+    "DAX": {
+      "current": 24888.5605,
+      "prev": 24606.7695,
+      "delta": 281.791,
+      "delta_pct": 1.145,
+      "mean_5d": 24588.2281,
+      "std_5d": 237.9633,
+      "z_score": 1.262,
+      "momentum": "up"
+    },
+    "FTSE": {
+      "current": 10466.2998,
+      "prev": 10443.5,
+      "delta": 22.7998,
+      "delta_pct": 0.218,
+      "mean_5d": 10399.2998,
+      "std_5d": 66.9918,
+      "z_score": 1.0,
+      "momentum": "up"
+    },
+    "N225": {
+      "current": 63339.0703,
+      "prev": 61684.1406,
+      "delta": 1654.9297,
+      "delta_pct": 2.683,
+      "mean_5d": 61238.832,
+      "std_5d": 1352.7171,
+      "z_score": 1.553,
+      "momentum": "up"
+    },
+    "HSI": {
+      "current": 25606.0293,
+      "prev": 25386.5195,
+      "delta": 219.5098,
+      "delta_pct": 0.865,
+      "mean_5d": 25623.3395,
+      "std_5d": 150.2467,
+      "z_score": -0.115,
+      "momentum": "down"
+    },
+    "SHANGHAI": {
+      "current": 4112.8989,
+      "prev": 4077.2771,
+      "delta": 35.6218,
+      "delta_pct": 0.874,
+      "mean_5d": 4130.6854,
+      "std_5d": 37.6539,
+      "z_score": -0.472,
+      "momentum": "down"
+    },
+    "KOSPI": {
+      "current": 7847.71,
+      "prev": 7815.5898,
+      "delta": 32.1201,
+      "delta_pct": 0.411,
+      "mean_5d": 7531.99,
+      "std_5d": 296.8538,
+      "z_score": 1.064,
+      "momentum": "up"
+    },
+    "TASI": {
+      "current": 11027.54,
+      "prev": 10985.5596,
+      "delta": 41.9805,
+      "delta_pct": 0.382,
+      "mean_5d": 10983.8879,
+      "std_5d": 27.0986,
+      "z_score": 1.611,
+      "momentum": "up"
+    },
+    "DFM": {
+      "current": 5692.8198,
+      "prev": 5660.6899,
+      "delta": 32.1299,
+      "delta_pct": 0.568,
+      "mean_5d": 5650.38,
+      "std_5d": 32.6175,
+      "z_score": 1.301,
+      "momentum": "up"
+    },
+    "WTI": {
+      "current": 96.6,
+      "prev": 96.35,
+      "delta": 0.25,
+      "delta_pct": 0.259,
+      "mean_5d": 101.528,
+      "std_5d": 6.1564,
+      "z_score": 0.058,
+      "momentum": "down",
+      "vol_regime": "ELEVATED",
+      "forecast_vol": 4.2472
+    },
+    "Brent": {
+      "current": 100.21,
+      "prev": 102.58,
+      "delta": -2.37,
+      "delta_pct": -2.31,
+      "mean_5d": 106.238,
+      "std_5d": 5.2675,
+      "z_score": -1.144,
+      "momentum": "down"
+    },
+    "TTF": {
+      "current": 48.683,
+      "prev": 49.408,
+      "delta": -0.725,
+      "delta_pct": -1.467,
+      "mean_5d": 49.9164,
+      "std_5d": 1.198,
+      "z_score": -1.03,
+      "momentum": "down"
+    },
+    "Gold": {
+      "current": 4523.2002,
+      "prev": 4539.7998,
+      "delta": -16.5996,
+      "delta_pct": -0.366,
+      "mean_5d": 4530.6199,
+      "std_5d": 17.3925,
+      "z_score": -0.427,
+      "momentum": "down"
+    },
+    "Silver": {
+      "current": 76.199,
+      "prev": 76.414,
+      "delta": -0.215,
+      "delta_pct": -0.281,
+      "mean_5d": 76.073,
+      "std_5d": 0.8264,
+      "z_score": 0.152,
+      "momentum": "down"
+    },
+    "Copper": {
+      "current": 6.379,
+      "prev": 6.257,
+      "delta": 0.122,
+      "delta_pct": 1.95,
+      "mean_5d": 6.2727,
+      "std_5d": 0.0766,
+      "z_score": 1.388,
+      "momentum": "up"
+    },
+    "DXY": {
+      "current": 99.32,
+      "prev": 99.19,
+      "delta": 0.13,
+      "delta_pct": 0.131,
+      "mean_5d": 99.178,
+      "std_5d": 0.1441,
+      "z_score": 0.406,
+      "momentum": "up",
+      "vol_regime": "LOW",
+      "forecast_vol": 0.3166
+    },
+    "EURUSD": {
+      "current": 1.1605,
+      "prev": 1.1625,
+      "delta": -0.002,
+      "delta_pct": -0.175,
+      "mean_5d": 1.1621,
+      "std_5d": 0.002,
+      "z_score": -0.802,
+      "momentum": "down"
+    },
+    "GBPUSD": {
+      "current": 1.3434,
+      "prev": 1.3433,
+      "delta": 0.0001,
+      "delta_pct": 0.009,
+      "mean_5d": 1.3426,
+      "std_5d": 0.0017,
+      "z_score": 0.49,
+      "momentum": "up"
+    },
+    "JPYUSD": {
+      "current": 0.0063,
+      "prev": 0.0063,
+      "delta": -0.0,
+      "delta_pct": -0.168,
+      "mean_5d": 0.0063,
+      "std_5d": 0.0,
+      "z_score": -1.478,
+      "momentum": "down"
+    },
+    "CHFUSD": {
+      "current": 1.2744,
+      "prev": 1.2715,
+      "delta": 0.0029,
+      "delta_pct": 0.229,
+      "mean_5d": 1.2718,
+      "std_5d": 0.0029,
+      "z_score": 0.89,
+      "momentum": "up"
+    },
+    "USDCAD": {
+      "current": 1.382,
+      "prev": 1.3776,
+      "delta": 0.0044,
+      "delta_pct": 0.32,
+      "mean_5d": 1.3766,
+      "std_5d": 0.0033,
+      "z_score": 1.622,
+      "momentum": "up"
+    },
+    "VIX": {
+      "current": 16.7,
+      "prev": 16.76,
+      "delta": -0.06,
+      "delta_pct": -0.358,
+      "mean_5d": 17.356,
+      "std_5d": 0.6131,
+      "z_score": -1.07,
+      "momentum": "down"
+    },
+    "VVIX": {
+      "current": 91.16,
+      "prev": 91.88,
+      "delta": -0.72,
+      "delta_pct": -0.784,
+      "mean_5d": 93.056,
+      "std_5d": 2.3681,
+      "z_score": -0.801,
+      "momentum": "down"
+    },
+    "BTC": {
+      "current": 76737.3906,
+      "prev": 76673.3672,
+      "delta": 64.0234,
+      "delta_pct": 0.084,
+      "mean_5d": 76779.1891,
+      "std_5d": 824.2481,
+      "z_score": -0.051,
+      "momentum": "down"
+    },
+    "IBIT": {
+      "current": 42.96,
+      "prev": 44.0,
+      "delta": -1.04,
+      "delta_pct": -2.364,
+      "mean_5d": 43.596,
+      "std_5d": 0.4291,
+      "z_score": -1.482,
+      "momentum": "down"
+    },
+    "ETHA": {
+      "current": 15.57,
+      "prev": 16.15,
+      "delta": -0.58,
+      "delta_pct": -3.591,
+      "mean_5d": 15.958,
+      "std_5d": 0.2362,
+      "z_score": -1.643,
+      "momentum": "down"
+    },
+    "COIN": {
+      "current": 184.99,
+      "prev": 193.56,
+      "delta": -8.57,
+      "delta_pct": -4.428,
+      "mean_5d": 190.546,
+      "std_5d": 3.5413,
+      "z_score": -1.569,
+      "momentum": "down"
+    },
+    "volume_activity_heat": {
+      "participation_type": "RETAIL_DRIFT",
+      "institutional_heat_index": -0.336
+    },
+    "gold_to_silver_ratio": {
+      "current": 59.36,
+      "prev": 59.411,
+      "delta_pct": -0.085,
+      "signal": "NEUTRAL"
+    },
+    "institutional_crypto_mfi": {
+      "composite_z": -1.562,
+      "flow_regime": "OUTFLOW"
+    },
+    "credit_stress_proxy": null,
+    "spx_weekly_boundaries": {
+      "pwh": 7517.12,
+      "pwl": 7338.54,
+      "swept_pwl_flag": false,
+      "swept_pwh_flag": false,
+      "intraday_range_pct": 0.577
+    },
+    "tactical_setup": {
+      "matched_setup": "NONE",
+      "regime_conditioned_probability": 0.5
+    }
+  },
+  "market_extremes_insight": {
+    "temperature_zscore": -0.836,
+    "temperature_state": "NORMAL",
+    "crowded_state": "SHORT_TRADE_TOO_CROWDED",
+    "fragility_score": 0.0,
+    "vvix_vix_ratio": 5.46
+  },
+  "bonds": {
+    "US2Y": {
+      "current": 4.08,
+      "prev": 4.04,
+      "delta": 0.04,
+      "delta_pct": 0.99,
+      "mean_5d": 4.082,
+      "std_5d": 0.0327,
+      "z_score": -0.061,
+      "momentum": "down"
+    },
+    "US10Y": {
+      "current": 4.57,
+      "prev": 4.57,
+      "delta": 0.0,
+      "delta_pct": 0.0,
+      "mean_5d": 4.602,
+      "std_5d": 0.0415,
+      "z_score": -0.772,
+      "momentum": "down"
+    },
+    "spread_2s10s": 0.49
+  },
+  "data_science_layer": {
+    "ordered_features_list": [
+      "SPX_ret",
+      "DXY_ret",
+      "VIX_zscore",
+      "WTI_ret",
+      "GoldSilverRatio_ret",
+      "US10Y_delta",
+      "US_2s10s_spread",
+      "CryptoMFI_zscore",
+      "VolumeHeat_ihi",
+      "USDCAD_ret"
+    ],
+    "features_vector": [
+      0.373,
+      0.131,
+      -1.07,
+      0.259,
+      -0.085,
+      0.0,
+      0.49,
+      -1.562,
+      -0.336,
+      0.32
+    ],
+    "features_dict": {
+      "SPX_ret": 0.373,
+      "DXY_ret": 0.131,
+      "VIX_zscore": -1.07,
+      "WTI_ret": 0.259,
+      "GoldSilverRatio_ret": -0.085,
+      "US10Y_delta": 0.0,
+      "US_2s10s_spread": 0.49,
+      "CryptoMFI_zscore": -1.562,
+      "VolumeHeat_ihi": -0.336,
+      "USDCAD_ret": 0.32
+    },
+    "epistemic_metrics": {
+      "shannon_entropy": 1.36,
+      "kelly_exposure_fraction": 0.068,
+      "is_high_risk_edge": true
+    }
+  },
+  "mcs": {
+    "score": 38.82,
+    "label": "NEUTRAL",
+    "sub_components": {
+      "equity_momentum": 8.601,
+      "rate_pressure": -0.125,
+      "energy_stress": 4.525,
+      "cross_asset_coherence": 25.0
+    }
+  },
+  "regime": {
+    "current": "NEUTRAL_TRANSITIONAL",
+    "prior": "NEUTRAL_TRANSITIONAL",
+    "changed_this_cycle": false,
+    "confirmed_change": false,
+    "probabilities": null,
+    "transition_risk": null,
+    "start_utc": "2026-05-24T08:57:47.166081+00:00",
+    "duration_days": 0.0,
+    "stability_half_life": 2.5,
+    "transition_velocity": 0.0
+  },
+  "kalman_state": {
+    "risk_on": 0.605,
+    "risk_off": 0.176,
+    "transitional": 0.219,
+    "dominant_state": "risk_on",
+    "dominant_prob": 0.605,
+    "uncertainty": 0.0652,
+    "is_ambiguous": false,
+    "covariance_matrix": [
+      [
+        0.021738895449797024,
+        0.000713676226878491,
+        0.0007136762268784914
+      ],
+      [
+        0.000713676226878491,
+        0.02173889544979702,
+        0.000713676226878491
+      ],
+      [
+        0.0007136762268784911,
+        0.000713676226878491,
+        0.02173889544979702
+      ]
+    ],
+    "tvd": 0.0,
+    "brier_score_calibration": 0.3508
+  },
+  "mlp_deep_state": {
+    "risk_off": 0.078,
+    "risk_on": 0.385,
+    "transitional": 0.537,
+    "dominant_state": "transitional",
+    "dominant_prob": 0.537
+  },
+  "news_signal": {
+    "sentiment_mean": 0.127,
+    "sentiment_std": 0.323,
+    "sentiment_momentum": 0.0,
+    "event_flag": 1,
+    "event_type": "macro_cluster",
+    "source_authority_mean": 0.932,
+    "article_volume": 30,
+    "directional_bias": "normal",
+    "top_headlines": [
+      "Is This S&P 500 Dividend Stock a Smart Buy in 2026?",
+      "Hedge Fund Greenvale Exited Its Position in Payoneer Stock. What Does That Mean for Investors?",
+      "Is Now the Time to Buy MercadoLibre Stock After Hedge Fund Linonia Initiated a Position Worth Over $225 Million?"
+    ]
+  },
+  "invalidation_boundaries": {
+    "us10y_invalidation_level": 4.575,
+    "vix_invalidation_level": 18.28
+  },
+  "data_driven_escalation": "ROUTINE",
+  "truchain_metadata": {
+    "signature": "869da217428f5a2743da06b8ca701c681d0c91eccc3408b631565531f2fe6d78",
+    "is_valid": true,
+    "blockchain_log": "logs/immutable_chain.log"
+  }
+}
