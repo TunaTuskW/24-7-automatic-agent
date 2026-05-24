@@ -1,12 +1,12 @@
-# Macro Briefing Agent Setup Guide (v4.1.0.1)
+# Macro Briefing Agent Setup Guide (v4.2.0)
 
 This guide provides step-by-step instructions on how to set up the macro briefing agent, configure Discord notifications, and automate the execution using cron jobs.
 
 ## Project Structure Overview
-Following the v4.1.0 fully-Python architecture refactor, the project is organized into dedicated folders:
-- **`config/`**: Contains your API keys and webhook configurations (`fred_api_key.txt`, `webhook_config.txt`, `gemini_api_key.txt`, etc.).
-- **`src/`**: Houses the core Python code (`fetch_market_data.py`, `push_to_discord.py`, `build_report.py`, etc., and the dual visualizer notebooks `visualize_math_4h.ipynb` and `visualize_math_1w.ipynb`).
-- **`docs/`**: Documentation and System Architecture Manuals (`macro_agent_setup4.1.0.md`).
+Following the v4.2.0 fully-Python & LLM Hybrid architecture refactor, the project is organized into dedicated folders:
+- **`config/`**: Contains your API keys and webhook configurations (`fred_api_key.txt`, `webhook_config.txt`, `api_keys.json`, `tuning_configs.json`, etc.).
+- **`src/`**: Houses the core Python code (`fetch_market_data.py`, `push_to_discord.py`, `build_report.py`, `tune_hyperparameters.py`, and the visualizer notebooks `visualize_math_4h.ipynb`, `visualize_math_1w.ipynb`).
+- **`docs/`**: Documentation and System Architecture Manuals (`macro_agent_setup_v4.2.0.md`).
 - **`data/`**: Local data files (e.g., market snapshots).
 - **`models/`**: Saved machine learning models.
 - **`reports/`**: Generated macro weekly syntheses, 72-hour rolling updates, and machine learning backtest results.
@@ -19,17 +19,16 @@ Following the v4.1.0 fully-Python architecture refactor, the project is organize
 The Python architecture is organized as a modular quantitative pipeline. Below is the operational workflow and structural breakdown of the scripts housed in `src/`:
 
 1. **`fetch_market_data.py` (Data Ingestion & Signal Layer)**
-   - **Data Fetching:** Downloads parallel asset pricing (30+ tickers) via `yfinance` covering Equities, Volatility, Commodities, FX, and Spot Crypto flow. Connects to the FRED API to fetch US2Y and US10Y yields.
-   - **Volatility Modeling:** Fits dynamic GARCH(1,1) conditional volatility models on equities.
-   - **Quantitative Engines:** Packs a 10-dimensional scaled market vector and executes forward inference across two key models:
-     * A 6-state Gaussian Hidden Markov Model (HMM) to determine underlying market regimes.
-     * A Deep neural Multi-Layer Perceptron (MLP) Classifier to double-check structural regime probabilities.
-   - **Stealth news parsing:** Scrapes Yahoo Finance RSS feeds using the VADER sentiment engine to calculate background compound sentiment averages, strictly treating sentiment as absolute volatility shocks rather than directional price predictors.
-   - **Model Calibration:** Tracks rolling Brier Score calibration statistics and computes a continuous Institutional Heat Index (IHI). Signs snapshots using a cryptographic TruChain ledger.
+   - **Asset Fetching:** Thread-safe parallel ingestion of 30+ tickers via `yfinance` covering Equities, Volatility (`VIX9D`, `VIX`, `VIX3M`, `VVIX`), Commodities, FX, and Crypto spot flow. Connects to FRED to fetch treasury yields.
+   - **Multi-Fractal Timeframe Execution:** Executes parallel Gaussian HMM model tracks across two concurrent horizons: Structural Macro Data (Daily interval) and Tactical Micro Data (Hourly interval).
+   - **Volatility Term Structure:** Analyzes term structure curves; penalizes fragility indexes if `VIX9D > VIX` indicating dynamic Backwardation/market stress.
+   - **Semantic Gemini NLP Shock Processor:** Employs a strict JSON-constrained Google Gemini LLM API pipeline to parse headlines for `liquidity_drain_probability` and `geopolitical_shock_magnitude`, replacing legacy VADER heuristic dictionaries.
+   - **Dynamic Hyperparameter Ingestion:** Core constant boundaries and decay half-lives are loaded dynamically from the `tuning_configs.json` outputted by the hyperparameter tuning meta-agent.
 
 2. **`build_report.py` (Consensus Engine & 4-Hour Compiler)**
-   - **Deterministic Voting:** Aggregates outputs from 5 quantitative signals (Kalman State, MCS, Volume Heat, Kelly Sizing, Extremes) into `ModelResult` dataclasses and computes conviction-weighted votes.
-   - **Consensus Threshold Scaling:** Under normal regimes, voting consensus requires a 0.60 conviction threshold. Shocks detected by the stealth news vector dynamically scale the required threshold to 0.65 to filter out high-volatility news noise.
+   - **Deterministic Voting:** Aggregates quantitative indicators into `ModelResult` dataclasses and computes conviction-weighted votes.
+   - **Gemini NLP Threshold Conditioning:** Dynamic consensus voting thresholds are scaled automatically based on the Gemini semantically-decoded shock probabilities.
+   - **Timeframe Conflict Resolution:** Automatically slashes the HMM Kalman conviction weight by 50% if the Tactical Hourly HMM contradicts the Structural Daily HMM.
    - **Epistemic Kelly Sizing:** Scales target portfolio exposure using the Fractional Kelly Criterion, heavily penalized by historical Brier Score calibration and exponential regime duration decay.
    - **Presentation:** Formats the mathematical state matrices into the minimalist, Brutalist Markdown template, logs session updates, and triggers the Discord webhook pusher.
 
@@ -60,9 +59,14 @@ The Python architecture is organized as a modular quantitative pipeline. Below i
    - **Viterbi Decoding:** Loads the active models and decodes 2 years of daily market features into chronological state labels.
    - **Statistical Auditing:** Measures mean daily returns, annualizes SPX/WTI metrics, and compiles daily yield changes (in basis points) across all 6 regimes, outputting a clear performance audit (`reports/backtest_results.md`) to verify quantitative edge before live deployment.
 
-8. **`visualize_math_4h.ipynb` & `visualize_math_1w.ipynb` (Dual Interactive Math Visualizers)**
+8. **`tune_hyperparameters.py` (Hyperparameter Tuning Meta-Agent)**
+   - **Macro Calibration:** A standalone scheduled python script that analyzes central bank summaries, FOMC minutes, or Beige Books via the Gemini LLM.
+   - **JSON Configuration Injection:** Outputs structural macroeconomic velocity metrics into a local configuration schema (`tuning_configs.json`), allowing `fetch_market_data.py` to adapt dynamic half-life variables automatically.
+
+9. **`visualize_math_4h.ipynb` & `visualize_math_1w.ipynb` (Dual Interactive Math Visualizers)**
    - **Visual Overlay:** Plots HMM state boundaries directly overlaid on the S&P 500 price chart.
-   - **Fragility Heatmap:** Visualizes structural fragility states (VVIX/VIX expansion, SPX/DXY correlation).
+   - **Fragility & Backwardation Heatmap:** Visualizes structural fragility states, including Volatility Term Structure backwards curves (VIX9D vs VIX).
+   - **Gemini Geopolitical Shock Visualizer:** Plots semantic shock decodes against a horizontal red line representing the critical **0.70 Geopolitical Shock Trigger** boundary.
    - **Kelly Sizing Curves:** Plots real-time allocation transitions and duration half-life decay patterns natively within VS Code.
    - **Top-to-Bottom Report Injection:** Employs an automated cell (**Section 5: Generated Report Layout**) at the bottom of both notebooks that sweeps your local report directories to locate the most recent raw Markdown briefing (`4 hours update` or `macro weekly synthesis`) and renders it seamlessly directly below the charts.
 
@@ -76,6 +80,8 @@ To set up the agent locally without exposing your personal keys or data, copy th
 - `fred_api_key.example.txt` -> `fred_api_key.txt` (Holds Federal Reserve API keys)
 - `gemini_api_key.example.txt` -> `gemini_api_key.txt` (Holds Gemini LLM API keys)
 - `webhook_config.example.txt` -> `webhook_config.txt` (Holds Discord webhook channel URLs)
+- `api_keys.example.json` -> `api_keys.json` (Holds Google Gemini API keys for hyperparameter tuning & news processing)
+- `tuning_configs.json` (Generated locally by the hyperparameter meta-agent)
 
 ### Offline Data Templates (`data/`)
 - `market_snapshot.example.json` -> `market_snapshot.json` (Local market metric skeleton)
@@ -97,35 +103,45 @@ Ensure you have **Python 3** installed on your system. You will also need to ins
    pip3 install yfinance pandas numpy requests joblib arch matplotlib seaborn jupyter
    ```
 
-### API Keys
-The agent requires a FRED (Federal Reserve Economic Data) API key to fetch specific market data (like treasury yields).
+### API Keys & Configuration Setup
+To configure operational parameters, API keys, and configurations:
 
-1. Go to the [FRED website](https://fred.stlouisfed.org/) and create an account to get a free API key.
-2. Copy the pre-packaged example configuration file to its active name:
-   ```bash
-   cp config/fred_api_key.example.txt config/fred_api_key.txt
-   ```
-3. Open `config/fred_api_key.txt` and paste your API key inside it.
-   - Alternatively, you can set it as an environment variable: `export FRED_API_KEY="your_key"`
+1. **FRED API Yield Feeds:**
+   - Go to the [FRED website](https://fred.stlouisfed.org/) and register to get a free FRED API key.
+   - Duplicate the FRED API example configuration file:
+     ```bash
+     cp config/fred_api_key.example.txt config/fred_api_key.txt
+     ```
+   - Open `config/fred_api_key.txt` and paste your API key. (Or `export FRED_API_KEY="your_key"`).
 
-### Gemini API Key (For Weekly LLM Synthesis)
-To enable high-fidelity automated narrative summaries in the weekly research reports:
+2. **Gemini LLM Integrations (News Parsing & Hyperparameter Tuning):**
+   - Obtain a Gemini API key from Google AI Studio.
+   - Duplicate the Gemini API JSON-keys example template:
+     ```bash
+     cp config/api_keys.example.json config/api_keys.json
+     ```
+   - Open `config/api_keys.json` and paste your Gemini API key:
+     ```json
+     {
+       "GEMINI_API_KEY": "your_actual_key_here"
+     }
+     ```
 
-1. Obtain a Gemini API key from Google AI Studio.
-2. Copy the pre-packaged example configuration file to its active name:
-   ```bash
-   cp config/gemini_api_key.example.txt config/gemini_api_key.txt
-   ```
-3. Open `config/gemini_api_key.txt` and paste your Gemini API key inside it.
+3. **Weekly LLM Synthesis (Optional):**
+   - Duplicate the Gemini weekly synthesizer text key:
+     ```bash
+     cp config/gemini_api_key.example.txt config/gemini_api_key.txt
+     ```
+   - Open `config/gemini_api_key.txt` and paste your key.
 
 ---
 
 ## 2. System Architecture & Technical Manual
 
-The agent is now **fully Python-driven and 100% deterministic**, eliminating the need to feed large markdown setup prompts into an LLM.
+The agent is now a **Deterministic & LLM Hybrid model**, mathematically executing core indicators while relying on Gemini semantic filters and dynamic parameter calibrations.
 
 For a full breakdown of the mathematical engines, data ingestion layers, Kelly sizing decay penalties, and consensus logic, please refer to the **Technical Developer Manual** located at:
-`docs/macro_agent_setup4.1.0.md`
+`docs/macro_agent_setup_v4.2.0.md`
 
 ---
 
@@ -222,7 +238,8 @@ The agent includes interactive visual verification and analytics dashboards that
 3. Click **"Run All"** to execute the analytics cells.
 4. The notebook will automatically query your active model weights and historical data to render publication-grade plots and text layouts:
    - **HMM Regimes Overlay:** Highlights underlying market regimes directly onto the S&P 500 price chart.
-   - **Fragility Heatmap:** Visualizes structural fragility states (VVIX/VIX expansion, SPX/DXY correlation).
+   - **Fragility & Backwardation Heatmap:** Visualizes structural fragility states, including Volatility Term Structure backwards curves (VIX9D vs VIX).
+   - **Gemini Geopolitical Shock Visualizer:** Plots semantic shock decodes against a horizontal red line representing the critical **0.70 Geopolitical Shock Trigger** boundary.
    - **Kelly Sizing Curves:** Plots the Fractional Kelly size allocations, calibration degradation, and transition decay paths.
    - **Seamless Report Injection (Section 5):** The notebook automatically hunts down and embeds the most recent raw markdown report generated by your catch-up pipelines directly inside the notebook below the charts, giving you a complete top-to-bottom mathematical-to-narrative presentation.
 
@@ -247,6 +264,13 @@ Whenever changes are made to the system architecture, automatically update the v
 - **Tiny change** (e.g., typo fix, formatting): Increment sub-patch version (x.x.x.1 to 9). Example: v1.3.1 -> v1.3.1.1
 
 ### Patch Notes:
+- **v4.2.0** (Multi-Fractal & LLM Hybrid Upgrade):
+  - **[ADDED]** Integrated Volatility Term Structure utilizing `VIX9D` and `VIX3M` to calculate backwardation stress and penalize structural fragility.
+  - **[ADDED]** Multi-Fractal timeframe execution running structural (Daily) and tactical (Hourly) Hidden Markov Models concurrently.
+  - **[ADDED]** Consensus conflict resolution rules to automatically slash HMM conviction scores by 50% on Daily vs Hourly regime contradictions.
+  - **[MODIFIED]** Replaced VADER sentiment scoring with a structured, JSON-constrained Google Gemini LLM news processor (`api_keys.json`) to analyze semantic risk limits.
+  - **[ADDED]** Hyperparameter Tuning Meta-Agent (`tune_hyperparameters.py`) to extract central bank transcripts and Beige Books to dynamically overwrite mathematical half-lives (`tuning_configs.json`).
+  - **[ADDED]** Section 6 visual overlay plotting Volatility Term Structure and Gemini Geopolitical Shock boundaries (0.70 red line).
 - **v4.1.0.1** (Path Tweak):
   - **[FIXED]** Patched the 4-hour visualizer notebook (`visualize_math_4h.ipynb`) directory pointer from `../reports` to `../reports/updates` to correctly scan and render the latest 4-hour briefings.
 - **v4.1.0** (Math Visualization Update):

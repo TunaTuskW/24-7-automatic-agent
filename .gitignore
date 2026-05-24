@@ -13,3 +13,5 @@ data/hmm_scaler.pkl
 config/gemini_api_key.txt
 models/mlp_model.pkl
 data/predictions_history.json
+config/api_keys.json
+config/tuning_configs.json

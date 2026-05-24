@@ -4,12 +4,12 @@ MACRO ANALYST AGENT - CONCEPT AND MODEL
 1. WHAT IT IS
 This is a 24/7 autonomous quantitative agent that monitors global markets, processes data through deep learning classifiers, and generates institutional-grade macro reports. It runs completely automatically in the background using your computer's scheduler. The presentation layer uses an ultra-minimal "Brutalist Terminal" text-block layout to ensure a data-dense, cross-platform reading experience designed for instant mobile parsing.
 
-2. THE FULLY-PYTHON DETERMINISTIC ARCHITECTURE
-Following the v4.1.0 upgrade, the agent is completely Python-driven, 100% deterministic, and features local interactive visual dashboards. The system no longer requires feeding a "wall of text" prompt into a Large Language Model (LLM). Instead, the architecture relies on mathematical consensus logic and interactive plotting of live market factors. 
+2. THE DETERMINISTIC & LLM HYBRID ARCHITECTURE
+Following the v4.2.0 upgrade, the agent merges mathematical quant pipelines with semantic LLM intelligence. The architecture relies on deterministic multi-fractal consensus calculations alongside structured Google Gemini semantic risk limits.
 
-- Data Ingestion & Signal Layer: Real-time data is ingested via Yahoo Finance (equities, commodities, crypto flow, VVIX) and the FRED API (yields). In v4.1.0, raw headline lists are stripped from report layouts to maintain a professional quantitative aesthetic. Instead, the VADER sentiment engine runs in the background in "Stealth Mode," processing Yahoo Finance RSS feeds to scale the news_impact vector and dynamically scale consensus thresholds, while matplotlib and seaborn render high-fidelity, publication-grade analytical dashboards.
-- Core Quantitative Engines: The Python pipeline tracks "Regime Persistence" (how long the market has spent in its current state) and a "Hidden Fragility Index" (monitoring VVIX/VIX expansion and SPX/DXY correlation).
-- The Consensus Engine: The script aggregates 5 distinct quantitative signals (Kalman State, MCS, Volume Heat, Kelly Size, Extremes) into `ModelResult` dataclasses and runs a conviction-weighted vote. The voting consensus threshold is dynamically conditioned by the background Stealth news shock vector (rising to 0.65 in high-uncertainty events). If the models diverge wildly, the Shannon Entropy forces an automatic "NO PREDICT / STAND ASIDE" posture.
+- Data Ingestion & Signal Layer: Real-time data is ingested via yfinance covering Equities, Commodities, spot Crypto flow, FRED treasury yields, and the Volatility Term Structure (VIX9D, VIX, VIX3M, VVIX). It executes concurrent tracks over Daily (Structural) and Hourly (Tactical) horizons. Gemini LLM parses RSS news feeds to extract strict shock probabilities, replacing legacy VADER.
+- Core Quantitative Engines: Tracks Volatility Term Structure Backwardation (VIX9D > VIX), Regime Persistence (using dynamically tuned half-lives), and Hidden Fragility (VVIX/VIX ratio and SPX/DXY correlation).
+- The Consensus Engine: Aggregates quantitative signals into dataclasses and runs a conviction-weighted vote. It conditions voting thresholds based on Gemini shock magnitude decodes. If the Tactical HMM contradicts the Structural HMM, it slashes Kalman conviction by 50%. Shannon Entropy governs noise/chaos limits, triggering a "NO PREDICT" posture if entropy scales too high.
 
 3. THE END-TO-END WORKFLOW
 - Data Collection: Every cycle, the python scripts download the massive data payload.
@@ -23,15 +23,14 @@ Following the v4.1.0 upgrade, the agent is completely Python-driven, 100% determ
 - Hidden Markov Models (HMM) & Kalman Filters: These algorithms smooth out daily noise to figure out the "true" underlying regime (Risk-On, Risk-Off, or Transitional).
 - Deep Classifier (MLP): A trained neural network that double-checks the HMM. 
 - Institutional Footprinting: Natively supports advanced institutional footprinting, including a 20-day continuous Institutional Heat Index (IHI).
-- Stealth NLP NewsSignalVector (VADER Sentiment Engine): 
-  Operates autonomously in the background to scrape RSS news feeds and quantify market sentiment shocks without cluttering the brutalist visual interface.
-  * Priority-Weighted News Filter: Scrapes news articles and ranks them based on a continuous priority metric:
-    P = 0.40 * Authority + 0.35 * Recency + 0.25 * Relevance
-    where Recency follows an exponential decay: R = exp(-0.3 * age_hours), and Relevance is a binary indicator of core asset mentions (SPX, yields, gold, etc.).
-  * Sentiment Score Extraction: Runs the top 20 prioritized article headlines through the VADER (Valence Aware Dictionary and sEntiment Reasoner) sentiment engine to obtain a compound polarity score in [-1.0, 1.0].
-  * Absolute Volatility Shock Transformation: Discarding traditional directional bias since sentiment scores often exhibit non-linear or lagged relationships with price action, the model targets absolute variance: a sentiment shock is declared if the mean sentiment |μ| > 0.20 or standard deviation σ > 0.35.
-  * Macro Cluster Event Detection: Scrapes for macro, geopolitical, and earnings keywords. If >= 3 macro-cluster hits occur or "breaking" is detected, the event_flag is set to 1.
-  * Dynamic Consensus Threshold Conditioning: Integrates into the Consensus Engine. In normal regimes, the conviction threshold required for HMM/MCS/MLP consensus is 0.60. Under news shock or macro cluster events (event_flag == 1 or shock state), the threshold is dynamically raised to 0.65 to insulate the system from false breakout signals and high-volatility news noise.
+- Semantic NLP NewsSignalVector (Google Gemini LLM Engine): 
+  Operates autonomously via a structured, JSON-constrained Gemini API pipeline to parse live news headlines for strict quantitative shock boundaries.
+  * Parameter Decoding: Gemini parses headlines and outputs strict JSON limits: `liquidity_drain_probability` and `geopolitical_shock_magnitude` (floats in [0.0, 1.0]).
+  * Shock Assignment: Discourages naive directional bias, translating geopolitical shock magnitude into compound volatility shocks (VIX impact) and liquidity drain probabilities into conditional noise multipliers.
+  * Geopolitical Event Flag: Event flag pings are automatically set to 1 if the geopolitical shock magnitude sweeps past the critical **0.70 boundary**, scaling active consensus requirements to 0.65.
+- Hyperparameter Tuning Meta-Agent (tune_hyperparameters.py):
+  * Dynamic Parameter Tuning: A standalone meta-agent scheduled to run weekly. It feeds massive macroeconomic text blocks (such as FOMC meeting minutes or Beige Books) to the Gemini LLM.
+  * Configuration Tuning: Translates central bank transcripts into concrete mathematical half-life decay thresholds and calibration scalars, dynamically overwriting active constants in `fetch_market_data.py` via the local `tuning_configs.json` configuration file.
 
 5. ADVANCED MODEL GOVERNANCE & TACTICAL ASSUMPTIONS
 - Kelly Sizing Decay Penalty: The algorithm targets exposure using the Fractional Kelly Criterion, heavily penalized by historical Brier Score calibration. Furthermore, if a regime outlives its mathematical "half-life" (e.g., 11 days for RISK_ON), an exponential decay penalty forcefully scales the portfolio exposure down, enforcing systematic profit-taking before transitions occur.
@@ -75,13 +74,14 @@ The deep learning models (HMM and MLP) are not static. The agent includes a robu
 - The Interactive Math Visualizers (visualize_math_4h.ipynb & visualize_math_1w.ipynb):
   * Displays dynamic visual analysis overlaid natively in VS Code, allowing visual audit of the quantitative engines for 4-Hour Briefings and Weekly Synthesis cycles.
   * Overlays HMM-inferred market regimes directly onto the S&P 500 price index.
-  * Plots heatmaps of cross-asset structural stress vectors (VVIX/VIX volatility and SPX/DXY correlations) to expose hidden fragility points.
+  * Plots heatmaps of cross-asset structural stress vectors, including the **Volatility Term Structure** (VIX9D vs VIX curves) to expose backwardation points.
+  * **Gemini Geopolitical Shock Plots (Section 6):** Dynamically plots semantic news shocks against a horizontal red line indicating the critical **0.70 Geopolitical Shock Trigger** boundary.
   * Visualizes the Epistemic Kelly sizing allocation curves and active exponential half-life duration decay factors.
   * Embeds dynamic live report rendering (Section 5) directly inside VS Code below the mathematical charts.
 
 9. DATA PRIVACY & ZERO-SHARING SECURITY PROTOCOLS
 To protect proprietary quantitative intelligence and restrict leakage of sensitive credentials, the system enforces a local-only encapsulation boundary:
-- Strict Ignored Enclaves: The `.gitignore` config explicitly encapsulates all private asset snapshots (`market_snapshot.json`), forecast accuracies (`predictions_history.json`), model weights (`models/hmm_model.pkl`, `models/mlp_model.pkl`), run-time logs (`logs/`), and generated briefings (`reports/updates/`).
-- Decoupled Example Schemas: Default templates (e.g., `market_snapshot.example.json`) are committed to establish skeleton frameworks, which are duplicated locally to active formats. This ensures developers can execute backtests and inference entirely offline and locally with zero risk of committing operational intelligence or API credentials to public repositories.
+- Strict Ignored Enclaves: The `.gitignore` config explicitly encapsulates all private credentials (`api_keys.json`), tuned configurations (`tuning_configs.json`), private asset snapshots (`market_snapshot.json`), forecast accuracies (`predictions_history.json`), model weights (`models/hmm_model.pkl`, `models/mlp_model.pkl`), run-time logs (`logs/`), and generated briefings (`reports/updates/`).
+- Decoupled Example Schemas: Default templates (e.g., `api_keys.example.json`, `market_snapshot.example.json`) are committed to establish skeleton frameworks, which are duplicated locally to active formats. This ensures developers can execute backtests, Gemini news analysis, and offline hyperparameter tuning entirely offline and locally with zero risk of committing operational intelligence or API credentials to public repositories.
 
 By anchoring the system to a rigid mathematical training and verification backbone, the pipeline provides institutional-quality insights with deterministic reliability, entirely free from LLM hallucinations.

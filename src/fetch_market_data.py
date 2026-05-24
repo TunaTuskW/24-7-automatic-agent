@@ -18,7 +18,6 @@ import pandas as pd
 from datetime import datetime, timezone, timedelta
 from dataclasses import dataclass, asdict
 import feedparser
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 try:
     import yfinance as yf
 except ImportError:
@@ -39,9 +38,10 @@ ALL_YF_TICKERS = {
     "DXY": "DX-Y.NYB", "EURUSD": "EURUSD=X", "GBPUSD": "GBPUSD=X", 
     "JPYUSD": "JPYUSD=X", "CHFUSD": "CHFUSD=X", "USDCAD": "USDCAD=X",
     # Volatility
+    "VIX9D": "^VIX9D",
     "VIX": "^VIX",
+    "VIX3M": "^VIX3M",
     "VVIX": "^VVIX",
-    "VIX": "^VIX",
     # Institutional Digital Asset Flow & Spot
     "BTC": "BTC-USD",
     "IBIT": "IBIT",      
@@ -191,7 +191,7 @@ def compute_volume_heat(spx_series, spx_vol_series):
     except Exception as e:
         return {"participation_type": "UNKNOWN", "institutional_heat_index": 0.0}
 
-def compute_market_extremes(spx_series, vix_series, vvix_series=None, dxy_series=None):
+def compute_market_extremes(spx_series, vix_series, vvix_series=None, dxy_series=None, vix9d_series=None):
     try:
         spx_returns = spx_series.pct_change().dropna().tail(10) * 100
         vix_returns = vix_series.pct_change().dropna().tail(10) * 100
@@ -218,6 +218,11 @@ def compute_market_extremes(spx_series, vix_series, vvix_series=None, dxy_series
             # If SPX and DXY are highly positively correlated, liquidity is draining
             if cross_corr > 0.4:
                 fragility_score += 0.6
+                
+        # 3. Volatility Term Structure
+        if vix9d_series is not None and not vix9d_series.empty:
+            term_structure_inversion = 1.0 if float(vix9d_series.iloc[-1]) > float(vix_series.iloc[-1]) else 0.0
+            fragility_score += (0.5 * term_structure_inversion)
                 
         return {
             "temperature_zscore": round(temperature_z, 3),
@@ -594,93 +599,59 @@ def compute_kelly_sizing(max_prob, brier_score, duration_days=0.0, half_life=99.
     return round(max(0.0, min(1.0, final_fraction)), 3)
 
 def fetch_market_news(prior_sentiment=0.0):
-    analyzer = SentimentIntensityAnalyzer()
-    articles = []
-    
-    earnings = ["earnings", "eps", "revenue", "guidance", "beat", "miss"]
-    macro = ["fed", "inflation", "gdp", "rate", "cpi", "fomc", "central bank", "powell", "jobs", "payroll"]
-    geo = ["war", "sanction", "tariff", "election", "conflict", "geopolitical", "strike", "missile"]
-    
-    now = datetime.now(timezone.utc)
-    
-    for src_name, config in SOURCES.items():
-        try:
-            feed = feedparser.parse(config["url"])
-            for entry in feed.entries[:15]: 
-                title = entry.get("title", "")
-                published = entry.get("published_parsed")
-                if published:
-                    dt = datetime(*published[:6]).replace(tzinfo=timezone.utc)
-                    age_hours = (now - dt).total_seconds() / 3600.0
-                else:
-                    age_hours = 0.5
+    try:
+        from google import genai
+        import os
+        import json
+        config_path = os.path.join(os.path.dirname(__file__), '..', 'config', 'api_keys.json')
+        api_key = None
+        if os.path.exists(config_path):
+            with open(config_path, 'r') as f:
+                api_key = json.load(f).get('GEMINI_API_KEY')
                 
-                sentiment = analyzer.polarity_scores(title)["compound"]
-                authority = config["authority"]
-                recency = np.exp(-0.3 * max(0, age_hours))
+        articles = []
+        for src_name, config in SOURCES.items():
+            try:
+                feed = feedparser.parse(config["url"])
+                for entry in feed.entries[:5]:
+                    articles.append(entry.get("title", ""))
+            except Exception:
+                pass
                 
-                title_lower = title.lower()
-                rel_score = 0.0
-                if any(k in title_lower for k in ["spx", "s&p", "stock", "market", "yield", "bitcoin", "oil", "gold"]):
-                    rel_score = 1.0
-                
-                priority = (0.4 * authority) + (0.35 * recency) + (0.25 * rel_score)
-                
-                e_type = "none"
-                if any(k in title_lower for k in earnings): e_type = "earnings"
-                elif any(k in title_lower for k in macro): e_type = "macro"
-                elif any(k in title_lower for k in geo): e_type = "geopolitical"
-                
-                articles.append({
-                    "title": title,
-                    "sentiment": sentiment,
-                    "priority": priority,
-                    "authority": authority,
-                    "event_type": e_type
-                })
-        except Exception as e:
-            logging.error(f"News fetch error for {src_name}: {e}")
+        if not api_key:
+            logging.warning("No Gemini API key. Skipping LLM news processor.")
+            return {"sentiment_mean": 0.0, "sentiment_std": 0.0, "momentum": 0.0, "event_flag": 0, "event_type": "none", "highest_priority": 0.0, "total_articles": len(articles), "directional_bias": "neutral", "top_headlines": articles[:3]}
             
-    if not articles:
-        return NewsSignalVector(0.0, 0.0, 0.0, 0, "none", 0.0, 0, "neutral", []).to_dict()
+        client = genai.Client(api_key=api_key)
+        headlines_text = "\n".join(articles[:20])
+        prompt = f'''You are a quantitative data parser. Analyze these headlines and output strictly valid JSON with no markdown:
+{{"liquidity_drain_probability": 0.0, "geopolitical_shock_magnitude": 0.0}}
+Ensure values are floats between 0.0 and 1.0.
+Headlines:
+{headlines_text}'''
         
-    articles.sort(key=lambda x: x["priority"], reverse=True)
-    top_articles = articles[:20] 
-    
-    sentiments = [a["sentiment"] for a in top_articles]
-    authorities = [a["authority"] for a in top_articles]
-    
-    mean_sent = float(np.mean(sentiments))
-    std_sent = float(np.std(sentiments)) if len(sentiments) > 1 else 0.0
-    mean_auth = float(np.mean(authorities))
-    
-    event_type = "none"
-    # Requires multiple hits or specific keywords to trigger high-uncertainty event flag
-    macro_hits = sum(1 for a in top_articles if a["event_type"] in ["macro", "geopolitical"])
-    event_flag = 1 if macro_hits >= 3 or any("breaking" in a["title"].lower() for a in top_articles) else 0
-    event_type = "macro_cluster" if macro_hits >= 3 else "none"
-            
-    # Swap out Vader Directional Bias for Absolute Shock Magnitude
-    # Vader is mathematically inverse to finance, so we only use absolute variance.
-    bias = "normal"
-    if abs(mean_sent) > 0.20 or std_sent > 0.35: 
-        bias = "shock"
-    
-    momentum = mean_sent - prior_sentiment
-    headlines = [a["title"] for a in top_articles[:3]]
-    
-    vector = NewsSignalVector(
-        sentiment_mean=round(mean_sent, 3),
-        sentiment_std=round(std_sent, 3),
-        sentiment_momentum=round(momentum, 3),
-        event_flag=event_flag,
-        event_type=event_type,
-        source_authority_mean=round(mean_auth, 3),
-        article_volume=len(articles),
-        directional_bias=bias,
-        top_headlines=headlines
-    )
-    return vector.to_dict()
+        response = client.models.generate_content(model='gemini-2.5-pro', contents=prompt)
+        raw_text = response.text.replace("```json", "").replace("```", "").strip()
+        llm_response = json.loads(raw_text)
+        
+        geo_mag = llm_response.get("geopolitical_shock_magnitude", 0.0)
+        liq_prob = llm_response.get("liquidity_drain_probability", 0.0)
+        event_flag = 1 if geo_mag > 0.7 else 0
+        
+        return {
+            "sentiment_mean": -geo_mag,
+            "sentiment_std": liq_prob,
+            "momentum": 0.0,
+            "event_flag": event_flag,
+            "event_type": "geopolitical_shock" if event_flag else "none",
+            "highest_priority": geo_mag,
+            "total_articles": len(articles),
+            "directional_bias": "shock" if event_flag else "normal",
+            "top_headlines": articles[:3]
+        }
+    except Exception as e:
+        logging.error(f"LLM news processing failed: {e}")
+        return {"sentiment_mean": 0.0, "sentiment_std": 0.0, "momentum": 0.0, "event_flag": 0, "event_type": "none", "highest_priority": 0.0, "total_articles": 0, "directional_bias": "neutral", "top_headlines": []}
 
 def main():
     logging.info("=== fetch_market_data.py v3.9.0 starting ===")
@@ -710,9 +681,20 @@ def main():
     for name, ticker in garch_targets.items():
         cond_vol, vol_regime, forecast_vol = compute_garch_volatility(ticker, lookback_days=250)
         garch_layer[name] = {"conditional_vol": cond_vol, "vol_regime": vol_regime, "forecast_vol": forecast_vol}
-    logging.info("Parallel downloading complete ticker universe...")
+    logging.info("Parallel downloading complete ticker universe (Daily)...")
     tickers_list = list(ALL_YF_TICKERS.values())
-    raw_data = yf.download(tickers_list, period="30d", interval="1d", group_by="ticker", progress=False)
+    raw_data_daily = yf.download(tickers_list, period="30d", interval="1d", group_by="ticker", progress=False, threads=True)
+    raw_data = raw_data_daily # backwards compatibility
+    
+    logging.info("Parallel downloading tactical micro data (Hourly)...")
+    raw_data_hourly = yf.download(["^GSPC", "^VIX"], period="5d", interval="1h", group_by="ticker", progress=False, threads=True)
+    hourly_assets = {}
+    if "^GSPC" in raw_data_hourly.columns.get_level_values(0):
+        h_spx = raw_data_hourly["^GSPC"]["Close"].dropna()
+        if len(h_spx) >= 2: hourly_assets["SPX"] = compute_stats(h_spx)
+    if "^VIX" in raw_data_hourly.columns.get_level_values(0):
+        h_vix = raw_data_hourly["^VIX"]["Close"].dropna()
+        if len(h_vix) >= 2: hourly_assets["VIX"] = compute_stats(h_vix)
     parsed_assets = {}
     for name, symbol in ALL_YF_TICKERS.items():
         try:
@@ -742,7 +724,8 @@ def main():
             vix_series = raw_data["^VIX"]["Close"].dropna()
             vvix_series = raw_data["^VVIX"]["Close"].dropna() if "^VVIX" in raw_data.columns.get_level_values(0) else None
             dxy_series = raw_data["DX-Y.NYB"]["Close"].dropna() if "DX-Y.NYB" in raw_data.columns.get_level_values(0) else None
-            market_extremes = compute_market_extremes(spx_series, vix_series, vvix_series, dxy_series)
+            vix9d_series = raw_data["^VIX9D"]["Close"].dropna() if "^VIX9D" in raw_data.columns.get_level_values(0) else None
+            market_extremes = compute_market_extremes(spx_series, vix_series, vvix_series, dxy_series, vix9d_series)
             
     parsed_assets["volume_activity_heat"] = vol_heat_stats
     # Gold-to-Silver Ratio
@@ -788,8 +771,10 @@ def main():
     vix_invalidation_level = round(vix_mean + 1.5 * vix_std, 2)
     # Ingest baseline MCS score & HMM inference
     mcs, sub_components = compute_mcs(parsed_assets, bonds, parsed_assets)
-    hmm_regime_probs, hmm_dominant, transition_risk, _ = run_hmm_inference(parsed_assets, bonds, parsed_assets, parsed_assets, garch_layer, hmm_package)
-    current_regime = hmm_dominant if hmm_dominant else "NEUTRAL_TRANSITIONAL"
+    hmm_beta_probs, hmm_beta_dom, transition_risk, _ = run_hmm_inference(parsed_assets, bonds, parsed_assets, parsed_assets, garch_layer, hmm_package)
+    hmm_alpha_probs, hmm_alpha_dom, _, _ = run_hmm_inference(hourly_assets, bonds, parsed_assets, parsed_assets, garch_layer, hmm_package)
+    current_regime = hmm_beta_dom if hmm_beta_dom else "NEUTRAL_TRANSITIONAL"
+    hmm_regime_probs = hmm_beta_probs
     regime_changed = current_regime != prior_regime
     
     now_utc = datetime.now(timezone.utc)
@@ -814,16 +799,28 @@ def main():
         regime_start_utc = prior_start_str
         duration_days = (now_utc - prior_start).total_seconds() / 86400.0
 
-    # Hardcoded Stability Constants
+
+    # === NEW: Load Tuned Hyperparameters ===
+    config_path = os.path.join(os.path.dirname(__file__), '..', 'config', 'tuning_configs.json')
     half_life_map = {
         "RISK_ON": 11.0,
         "NEUTRAL_TRANSITIONAL": 2.5,
         "RISK_OFF": 1.2
     }
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, 'r') as f:
+                tuned = json.load(f)
+                if "RISK_ON_HALF_LIFE_DAYS" in tuned:
+                    half_life_map["RISK_ON"] = float(tuned["RISK_ON_HALF_LIFE_DAYS"])
+        except Exception as e:
+            logging.error(f"Failed to load tuning configs: {e}")
+
     stability_half_life = half_life_map.get(current_regime, 2.5)
 
     regime_data = {
-        "current": current_regime, 
+        "current": current_regime,
+        "tactical_alpha_regime": hmm_alpha_dom, 
         "prior": prior_regime, 
         "changed_this_cycle": regime_changed,
         "confirmed_change": regime_changed and prior_regime is not None, 

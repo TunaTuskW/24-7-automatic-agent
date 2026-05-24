@@ -17,13 +17,22 @@ class ModelResult:
     is_noise: bool        
     regime: str           
 
-def run_consensus_engine(kalman, volume_heat, extremes, mcs_score, epistemic, news_signal, current_regime):
+def run_consensus_engine(kalman, volume_heat, extremes, mcs_score, epistemic, news_signal, current_regime, tactical_alpha_regime=None):
     models = []
     
     dom_state = kalman.get("dominant_state", "")
     k_signal = "long" if dom_state == "risk_on" else "short" if dom_state == "risk_off" else "flat"
     k_noise = kalman.get("is_ambiguous", False) or kalman.get("tvd", 0) > 0.10
-    models.append(ModelResult("HMM_Kalman", k_signal, kalman.get("dominant_prob", 0.0), k_noise, current_regime))
+    k_conviction = kalman.get("dominant_prob", 0.0)
+    
+    # 50% Conviction Slash if Tactical Alpha Contradicts Structural Beta
+    if tactical_alpha_regime:
+        is_alpha_risk_on = "RISK_ON" in tactical_alpha_regime
+        is_beta_risk_on = "RISK_ON" in current_regime
+        if is_alpha_risk_on != is_beta_risk_on:
+            k_conviction *= 0.5
+            
+    models.append(ModelResult("HMM_Kalman", k_signal, k_conviction, k_noise, current_regime))
     
     m_signal = "long" if mcs_score > 10 else "short" if mcs_score < -10 else "flat"
     models.append(ModelResult("MCS", m_signal, min(abs(mcs_score)/100.0, 1.0), False, current_regime))
@@ -210,7 +219,8 @@ def main():
     epistemic = data.get("epistemic_metrics", {})
     news_signal = data.get("news_signal", {})
     
-    direction, clean_count, news_impact = run_consensus_engine(kalman, vol_heat, ext, mcs_score, epistemic, news_signal, regime)
+    tactical_alpha_regime = data.get("regime", {}).get("tactical_alpha_regime")
+    direction, clean_count, news_impact = run_consensus_engine(kalman, vol_heat, ext, mcs_score, epistemic, news_signal, regime, tactical_alpha_regime)
     
     synth = compute_deterministic_synthesis(kalman, vol_heat, ext, epistemic, direction, news_impact)
     
