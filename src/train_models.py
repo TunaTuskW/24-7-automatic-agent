@@ -27,8 +27,8 @@ logging.basicConfig(
 TRAINING_YEARS   = 5
 N_HIDDEN_STATES  = 6
 N_ITERATIONS     = 500
-OUTPUT_PATH_HMM  = os.path.join(os.path.dirname(__file__), '..', 'data', 'hmm_model.pkl')
-OUTPUT_PATH_MLP  = os.path.join(os.path.dirname(__file__), '..', 'data', 'mlp_model.pkl')
+OUTPUT_PATH_HMM  = os.path.join(os.path.dirname(__file__), '..', 'models', 'hmm_model.pkl')
+OUTPUT_PATH_MLP  = os.path.join(os.path.dirname(__file__), '..', 'models', 'mlp_model.pkl')
 def get_fred_key():
     key = os.environ.get("FRED_API_KEY")
     if key:

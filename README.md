@@ -4,11 +4,13 @@ This guide provides step-by-step instructions on how to set up the macro briefin
 
 ## Project Structure Overview
 Following the v4.0.1 fully-Python architecture refactor, the project is organized into dedicated folders:
-- **`config/`**: Contains your API keys and webhook configurations (`fred_api_key.txt`, `webhook_config.txt`, etc.).
+- **`config/`**: Contains your API keys and webhook configurations (`fred_api_key.txt`, `webhook_config.txt`, `gemini_api_key.txt`, etc.).
 - **`src/`**: Houses the core Python code (`fetch_market_data.py`, `push_to_discord.py`, `build_report.py`, etc.).
 - **`docs/`**: Documentation and System Architecture Manuals (`macro_agent_setup4.0.1.md`).
-- **`data/`**: Local data files (e.g., market snapshots, models).
-- **`reports/`**: Generated macro updates and weekly syntheses.
+- **`data/`**: Local data files (e.g., market snapshots).
+- **`models/`**: Saved machine learning models.
+- **`reports/`**: Generated macro weekly syntheses, 72-hour rolling updates, and machine learning backtest results.
+- **`reports/updates/`**: Contains the individual, 4-hour session briefing snapshots (e.g., `4 hours update (*).md`).
 - **`logs/`**: Execution and error logs.
 - **`older_versions/`**: Archived agent setup instructions from the legacy LLM era.
 
@@ -52,11 +54,28 @@ The Python architecture is organized as a modular quantitative pipeline. Below i
 6. **`train_models.py` (Offline Machine Learning Training Pipeline)**
    - **Data Compiling:** Pulls 5 years of historical multi-asset data and fits GARCH volatility layers.
    - **HMM Calibration:** Standardizes the 10 aligned feature dimensions and fits a 6-state `GaussianHMM` with full covariance matrices over 500 EM iterations. Assigns state labels deterministically based on empirical SPX, yields, and oil emission means.
-   - **MLP Calibration:** Trains a multi-layer perceptron neural network using a `(16, 8)` hidden layer topology with ReLU activation and Adam solver, mapping features to a 5-day forward cumulative return target (0=Risk-Off, 1=Risk-On, 2=Transitional). Saves both model binaries to `data/`.
+   - **MLP Calibration:** Trains a multi-layer perceptron neural network using a `(16, 8)` hidden layer topology with ReLU activation and Adam solver, mapping features to a 5-day forward cumulative return target (0=Risk-Off, 1=Risk-On, 2=Transitional). Saves both model binaries to `models/`.
 
 7. **`backtest.py` (Empirical Backtest Audit Engine)**
    - **Viterbi Decoding:** Loads the active models and decodes 2 years of daily market features into chronological state labels.
    - **Statistical Auditing:** Measures mean daily returns, annualizes SPX/WTI metrics, and compiles daily yield changes (in basis points) across all 6 regimes, outputting a clear performance audit (`reports/backtest_results.md`) to verify quantitative edge before live deployment.
+
+## Data Privacy & Security Architecture
+
+To protect proprietary trading strategies, local model calibrations, and personal API keys, this repository implements a strict **zero-sharing security architecture**. All sensitive parameters, private execution logs, locally trained model binaries, and generated briefings are strictly ignored by `.gitignore` and kept local.
+
+To set up the agent locally without exposing your personal keys or data, copy the provided skeleton templates to their active counterparts:
+
+### Configuration Templates (`config/`)
+- `fred_api_key.example.txt` -> `fred_api_key.txt` (Holds Federal Reserve API keys)
+- `gemini_api_key.example.txt` -> `gemini_api_key.txt` (Holds Gemini LLM API keys)
+- `webhook_config.example.txt` -> `webhook_config.txt` (Holds Discord webhook channel URLs)
+
+### Offline Data Templates (`data/`)
+- `market_snapshot.example.json` -> `market_snapshot.json` (Local market metric skeleton)
+- `predictions_history.example.json` -> `predictions_history.json` (Past inference accuracy tracker)
+
+This architecture guarantees that all private API credentials, locally computed GARCH volatilities, model weights, and session briefings are completely insulated, preventing accidental leaks to public code repositories.
 
 ## 1. Agent Setup
 
@@ -76,8 +95,22 @@ Ensure you have **Python 3** installed on your system. You will also need to ins
 The agent requires a FRED (Federal Reserve Economic Data) API key to fetch specific market data (like treasury yields).
 
 1. Go to the [FRED website](https://fred.stlouisfed.org/) and create an account to get a free API key.
-2. Open the `config/fred_api_key.txt` file and paste your API key inside it.
+2. Copy the pre-packaged example configuration file to its active name:
+   ```bash
+   cp config/fred_api_key.example.txt config/fred_api_key.txt
+   ```
+3. Open `config/fred_api_key.txt` and paste your API key inside it.
    - Alternatively, you can set it as an environment variable: `export FRED_API_KEY="your_key"`
+
+### Gemini API Key (For Weekly LLM Synthesis)
+To enable high-fidelity automated narrative summaries in the weekly research reports:
+
+1. Obtain a Gemini API key from Google AI Studio.
+2. Copy the pre-packaged example configuration file to its active name:
+   ```bash
+   cp config/gemini_api_key.example.txt config/gemini_api_key.txt
+   ```
+3. Open `config/gemini_api_key.txt` and paste your Gemini API key inside it.
 
 ---
 
@@ -101,9 +134,13 @@ The agent can push generated reports to a Discord channel using a webhook.
 4. Name your webhook and click **Copy Webhook URL**.
 
 ### Configure the Agent
-1. Open `config/webhook_config.txt` in the agent folder.
-2. Paste your copied Webhook URL into this file and save it.
-3. (Optional) If you want to ping a specific role for Elevated/Critical alerts, open `config/role_config.txt` and paste the Discord Role ID (e.g., `<@&1234567890>`). If left empty, it defaults to `@here`.
+1. Copy the pre-packaged webhook example file to its active name:
+   ```bash
+   cp config/webhook_config.example.txt config/webhook_config.txt
+   ```
+2. Open `config/webhook_config.txt` in the agent folder.
+3. Paste your copied Webhook URL into this file and save it.
+4. (Optional) If you want to ping a specific role for Elevated/Critical alerts, open `config/role_config.txt` and paste the Discord Role ID (e.g., `<@&1234567890>`). If left empty, it defaults to `@here`.
 
 ---
 

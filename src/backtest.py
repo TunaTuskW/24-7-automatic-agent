@@ -112,7 +112,7 @@ def fetch_data_for_backtest(years=2):
     return df
 
 def run_backtest():
-    model_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'hmm_model.pkl')
+    model_path = os.path.join(os.path.dirname(__file__), '..', 'models', 'hmm_model.pkl')
     if not os.path.exists(model_path):
         logging.error("HMM model not found. Run train_models.py first.")
         return
