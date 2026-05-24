@@ -138,3 +138,20 @@ Whenever changes are made to the system architecture, automatically update the v
 - **Tiny change** (e.g., typo fix, formatting): Increment sub-patch version (x.x.x.1 to 9). Example: v1.3.1 -> v1.3.1.1
 
 *Note to agent: After every change, ensure the title reflects the new version and summarize the patch notes to the user.*
+
+## 8. Instant Quick-Start (Offline Skeleton Mode)
+
+If you are a new user and want to immediately test the report generation interface offline without fetching live Yahoo Finance/FRED APIs or setting up API keys, follow these two steps:
+
+1. Copy the pre-packaged skeleton files in the `data/` directory to their active file names:
+   ```bash
+   cp data/market_snapshot.example.json data/market_snapshot.json
+   cp data/predictions_history.example.json data/predictions_history.json
+   ```
+2. Manually generate a test report instantly by running the report compiler:
+   ```bash
+   python3 src/build_report.py
+   ```
+
+The script will instantly parse the offline skeleton metrics, execute the voting consensus matrices, and produce a beautifully structured, institutional-grade market briefing under `reports/updates/`—working entirely offline!
+

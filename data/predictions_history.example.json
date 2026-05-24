@@ -1,0 +1,14 @@
+[
+  {
+    "timestamp_utc": "2026-05-24T08:57:47.341741+00:00",
+    "predicted_risk_on": 0.385,
+    "target_graded": true,
+    "actual_outcome": 1,
+    "squared_error": 0.378225
+  },
+  {
+    "timestamp_utc": "2026-05-24T09:00:10.981043+00:00",
+    "predicted_risk_on": 0.385,
+    "target_graded": false
+  }
+]
