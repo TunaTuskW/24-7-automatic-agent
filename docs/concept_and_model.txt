@@ -5,9 +5,9 @@ MACRO ANALYST AGENT - CONCEPT AND MODEL
 This is a 24/7 autonomous quantitative agent that monitors global markets, processes data through deep learning classifiers, and generates institutional-grade macro reports. It runs completely automatically in the background using your computer's scheduler. The presentation layer uses an ultra-minimal "Brutalist Terminal" text-block layout to ensure a data-dense, cross-platform reading experience designed for instant mobile parsing.
 
 2. THE FULLY-PYTHON DETERMINISTIC ARCHITECTURE
-Following the v4.0.1 upgrade, the agent is completely Python-driven and 100% deterministic. The system no longer requires feeding a "wall of text" prompt into a Large Language Model (LLM). Instead, the architecture relies on mathematical consensus logic. 
+Following the v4.1.0 upgrade, the agent is completely Python-driven, 100% deterministic, and features local interactive visual dashboards. The system no longer requires feeding a "wall of text" prompt into a Large Language Model (LLM). Instead, the architecture relies on mathematical consensus logic and interactive plotting of live market factors. 
 
-- Data Ingestion & Signal Layer: Real-time data is ingested via Yahoo Finance (equities, commodities, crypto flow, VVIX) and the FRED API (yields). In v4.0.1, raw headline lists are stripped from report layouts to maintain a professional quantitative aesthetic. Instead, the VADER sentiment engine runs in the background in "Stealth Mode," processing Yahoo Finance RSS feeds to scale the news_impact vector and dynamically scale consensus thresholds.
+- Data Ingestion & Signal Layer: Real-time data is ingested via Yahoo Finance (equities, commodities, crypto flow, VVIX) and the FRED API (yields). In v4.1.0, raw headline lists are stripped from report layouts to maintain a professional quantitative aesthetic. Instead, the VADER sentiment engine runs in the background in "Stealth Mode," processing Yahoo Finance RSS feeds to scale the news_impact vector and dynamically scale consensus thresholds, while matplotlib and seaborn render high-fidelity, publication-grade analytical dashboards.
 - Core Quantitative Engines: The Python pipeline tracks "Regime Persistence" (how long the market has spent in its current state) and a "Hidden Fragility Index" (monitoring VVIX/VIX expansion and SPX/DXY correlation).
 - The Consensus Engine: The script aggregates 5 distinct quantitative signals (Kalman State, MCS, Volume Heat, Kelly Size, Extremes) into `ModelResult` dataclasses and runs a conviction-weighted vote. The voting consensus threshold is dynamically conditioned by the background Stealth news shock vector (rising to 0.65 in high-uncertainty events). If the models diverge wildly, the Shannon Entropy forces an automatic "NO PREDICT / STAND ASIDE" posture.
 
@@ -72,6 +72,12 @@ The deep learning models (HMM and MLP) are not static. The agent includes a robu
 - The Historical Backtest Engine (backtest.py):
   * Loads the active models and decodes 2 years of historical daily market features into their mapped state label sequences.
   * Measures the daily mean returns and annualizes SPX/WTI metrics across all 6 regimes, compiling a comprehensive, tabular performance audit (backtest_results.md) detailing frequencies, annualized returns, and yield moves (in basis points per day) to verify mathematical edge before live deployment.
+- The Interactive Math Visualizers (visualize_math_4h.ipynb & visualize_math_1w.ipynb):
+  * Displays dynamic visual analysis overlaid natively in VS Code, allowing visual audit of the quantitative engines for 4-Hour Briefings and Weekly Synthesis cycles.
+  * Overlays HMM-inferred market regimes directly onto the S&P 500 price index.
+  * Plots heatmaps of cross-asset structural stress vectors (VVIX/VIX volatility and SPX/DXY correlations) to expose hidden fragility points.
+  * Visualizes the Epistemic Kelly sizing allocation curves and active exponential half-life duration decay factors.
+  * Embeds dynamic live report rendering (Section 5) directly inside VS Code below the mathematical charts.
 
 9. DATA PRIVACY & ZERO-SHARING SECURITY PROTOCOLS
 To protect proprietary quantitative intelligence and restrict leakage of sensitive credentials, the system enforces a local-only encapsulation boundary:
