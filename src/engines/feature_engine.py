@@ -33,7 +33,10 @@ ALL_YF_TICKERS = {
     "BTC": "BTC-USD",
     "IBIT": "IBIT",      
     "ETHA": "ETHA",      
-    "COIN": "COIN"       
+    "COIN": "COIN",
+    # Credit Stress Proxy
+    "HYG": "HYG",
+    "LQD": "LQD"
 }
 
 garch_targets = {

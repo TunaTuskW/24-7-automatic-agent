@@ -128,7 +128,20 @@ def main():
     etha = clean_daily.get("ETHA")
     if ibit and etha and ibit.get("z_score") is not None and etha.get("z_score") is not None:
         mfi_z = (ibit["z_score"] + etha["z_score"]) / 2
-        clean_daily["institutional_crypto_mfi"] = {"composite_z": round(mfi_z, 3)}
+        clean_daily["institutional_crypto_mfi"] = {
+            "composite_z": round(mfi_z, 3),
+            "flow_regime": "INFLOW" if mfi_z > 1.0 else "OUTFLOW" if mfi_z < -1.0 else "FLAT"
+        }
+        
+    # Keyless Credit ETF stress proxy
+    hyg = clean_daily.get("HYG")
+    lqd = clean_daily.get("LQD")
+    if hyg and lqd and hyg.get("z_score") is not None and lqd.get("z_score") is not None:
+        credit_z = (hyg["z_score"] + lqd["z_score"]) / 2
+        clean_daily["credit_stress_proxy"] = {
+            "composite_z": round(credit_z, 3), 
+            "label": "CRITICAL" if credit_z < -2.0 else "ELEVATED" if credit_z < -1.0 else "NORMAL"
+        }
         
     # Features vector
     ordered_feature_keys = [

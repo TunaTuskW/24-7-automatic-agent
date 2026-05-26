@@ -1,5 +1,5 @@
 {
-    "generated_utc": "2026-05-26T10:52:11.286286+00:00",
+    "generated_utc": "2026-05-26T11:41:06.198775+00:00",
     "raw_indicators": {
         "SPX": {
             "current": 7473.4702,
@@ -22,23 +22,23 @@
             "momentum": "up"
         },
         "DAX": {
-            "current": 25296.6191,
+            "current": 25267.9609,
             "prev": 25389.0996,
-            "delta": -92.4805,
-            "delta_pct": -0.364,
-            "mean_5d": 24983.6578,
-            "std_5d": 344.2883,
-            "z_score": 0.909,
+            "delta": -121.1387,
+            "delta_pct": -0.477,
+            "mean_5d": 24977.9262,
+            "std_5d": 337.956,
+            "z_score": 0.858,
             "momentum": "up"
         },
         "FTSE": {
-            "current": 10547.3203,
+            "current": 10530.29,
             "prev": 10466.2998,
-            "delta": 81.0205,
-            "delta_pct": 0.774,
-            "mean_5d": 10444.0039,
-            "std_5d": 77.7322,
-            "z_score": 1.329,
+            "delta": 63.9902,
+            "delta_pct": 0.611,
+            "mean_5d": 10440.5979,
+            "std_5d": 72.2533,
+            "z_score": 1.241,
             "momentum": "up"
         },
         "N225": {
@@ -102,23 +102,23 @@
             "momentum": "up"
         },
         "WTI": {
-            "current": 91.92,
+            "current": 92.44,
             "prev": 96.6,
-            "delta": -4.68,
-            "delta_pct": -4.845,
-            "mean_5d": 98.18,
-            "std_5d": 5.8525,
-            "z_score": -1.07,
+            "delta": -4.16,
+            "delta_pct": -4.306,
+            "mean_5d": 98.284,
+            "std_5d": 5.7165,
+            "z_score": -1.022,
             "momentum": "down"
         },
         "Brent": {
-            "current": 95.41,
+            "current": 95.81,
             "prev": 103.54,
-            "delta": -8.13,
-            "delta_pct": -7.852,
-            "mean_5d": 103.566,
-            "std_5d": 5.6814,
-            "z_score": -1.436,
+            "delta": -7.73,
+            "delta_pct": -7.466,
+            "mean_5d": 103.646,
+            "std_5d": 5.5389,
+            "z_score": -1.415,
             "momentum": "down"
         },
         "TTF": {
@@ -132,83 +132,83 @@
             "momentum": "down"
         },
         "Gold": {
-            "current": 4534.2998,
+            "current": 4519.8999,
             "prev": 4521.0,
-            "delta": 13.2998,
-            "delta_pct": 0.294,
-            "mean_5d": 4526.5398,
-            "std_5d": 13.2198,
-            "z_score": 0.587,
+            "delta": -1.1001,
+            "delta_pct": -0.024,
+            "mean_5d": 4523.6599,
+            "std_5d": 12.6634,
+            "z_score": -0.297,
             "momentum": "up"
         },
         "Silver": {
-            "current": 76.715,
+            "current": 76.41,
             "prev": 75.893,
-            "delta": 0.822,
-            "delta_pct": 1.083,
-            "mean_5d": 75.9402,
-            "std_5d": 0.7197,
-            "z_score": 1.077,
+            "delta": 0.517,
+            "delta_pct": 0.681,
+            "mean_5d": 75.8792,
+            "std_5d": 0.6469,
+            "z_score": 0.821,
             "momentum": "up"
         },
         "Copper": {
-            "current": 6.3845,
+            "current": 6.382,
             "prev": 6.342,
-            "delta": 0.0425,
-            "delta_pct": 0.67,
-            "mean_5d": 6.2878,
-            "std_5d": 0.0841,
-            "z_score": 1.149,
+            "delta": 0.04,
+            "delta_pct": 0.631,
+            "mean_5d": 6.2873,
+            "std_5d": 0.0834,
+            "z_score": 1.135,
             "momentum": "up"
         },
         "DXY": {
-            "current": 99.055,
+            "current": 99.046,
             "prev": 99.32,
-            "delta": -0.265,
-            "delta_pct": -0.267,
-            "mean_5d": 99.195,
-            "std_5d": 0.1157,
-            "z_score": -1.211,
+            "delta": -0.274,
+            "delta_pct": -0.276,
+            "mean_5d": 99.1932,
+            "std_5d": 0.1184,
+            "z_score": -1.243,
             "momentum": "down"
         },
         "EURUSD": {
-            "current": 1.1646,
+            "current": 1.164,
             "prev": 1.1642,
-            "delta": 0.0003,
-            "delta_pct": 0.028,
-            "mean_5d": 1.1628,
-            "std_5d": 0.0016,
-            "z_score": 1.09,
+            "delta": -0.0002,
+            "delta_pct": -0.019,
+            "mean_5d": 1.1627,
+            "std_5d": 0.0014,
+            "z_score": 0.892,
             "momentum": "up"
         },
         "GBPUSD": {
-            "current": 1.3485,
+            "current": 1.3476,
             "prev": 1.3482,
-            "delta": 0.0004,
-            "delta_pct": 0.027,
-            "mean_5d": 1.3446,
-            "std_5d": 0.0038,
-            "z_score": 1.049,
+            "delta": -0.0006,
+            "delta_pct": -0.044,
+            "mean_5d": 1.3444,
+            "std_5d": 0.0035,
+            "z_score": 0.9,
             "momentum": "up"
         },
         "JPYUSD": {
             "current": 0.0063,
             "prev": 0.0063,
             "delta": -0.0,
-            "delta_pct": -0.124,
+            "delta_pct": -0.152,
             "mean_5d": 0.0063,
             "std_5d": 0.0,
-            "z_score": -1.419,
+            "z_score": -1.528,
             "momentum": "down"
         },
         "CHFUSD": {
-            "current": 1.2752,
-            "prev": 1.2783,
-            "delta": -0.0031,
-            "delta_pct": -0.245,
-            "mean_5d": 1.2727,
-            "std_5d": 0.0041,
-            "z_score": 0.605,
+            "current": 1.2783,
+            "prev": 1.2715,
+            "delta": 0.0068,
+            "delta_pct": 0.538,
+            "mean_5d": 1.2726,
+            "std_5d": 0.004,
+            "z_score": 1.41,
             "momentum": "up"
         },
         "USDCAD": {
@@ -232,13 +232,13 @@
             "momentum": "down"
         },
         "VIX": {
-            "current": 16.6,
+            "current": 16.61,
             "prev": 16.59,
-            "delta": 0.01,
-            "delta_pct": 0.06,
-            "mean_5d": 16.818,
-            "std_5d": 0.3549,
-            "z_score": -0.614,
+            "delta": 0.02,
+            "delta_pct": 0.121,
+            "mean_5d": 16.82,
+            "std_5d": 0.3533,
+            "z_score": -0.594,
             "momentum": "down"
         },
         "VIX3M": {
@@ -262,13 +262,13 @@
             "momentum": "down"
         },
         "BTC": {
-            "current": 77385.2031,
+            "current": 77162.8125,
             "prev": 77279.9297,
-            "delta": 105.2734,
-            "delta_pct": 0.136,
-            "mean_5d": 76761.5734,
-            "std_5d": 764.0293,
-            "z_score": 0.816,
+            "delta": -117.1172,
+            "delta_pct": -0.152,
+            "mean_5d": 76717.0953,
+            "std_5d": 724.077,
+            "z_score": 0.616,
             "momentum": "up"
         },
         "IBIT": {
@@ -301,17 +301,42 @@
             "z_score": -1.569,
             "momentum": "down"
         },
+        "HYG": {
+            "current": 79.91,
+            "prev": 79.9,
+            "delta": 0.01,
+            "delta_pct": 0.013,
+            "mean_5d": 79.712,
+            "std_5d": 0.2535,
+            "z_score": 0.781,
+            "momentum": "up"
+        },
+        "LQD": {
+            "current": 108.37,
+            "prev": 108.17,
+            "delta": 0.2,
+            "delta_pct": 0.185,
+            "mean_5d": 107.854,
+            "std_5d": 0.4878,
+            "z_score": 1.058,
+            "momentum": "up"
+        },
         "volume_activity_heat": {
             "participation_type": "RETAIL_DRIFT",
             "institutional_heat_index": -0.336
         },
         "gold_to_silver_ratio": {
-            "current": 59.106,
+            "current": 59.153,
             "prev": 59.571,
-            "delta_pct": -0.78
+            "delta_pct": -0.701
         },
         "institutional_crypto_mfi": {
-            "composite_z": -1.562
+            "composite_z": -1.562,
+            "flow_regime": "OUTFLOW"
+        },
+        "credit_stress_proxy": {
+            "composite_z": 0.919,
+            "label": "NORMAL"
         }
     },
     "bonds": {
@@ -324,7 +349,7 @@
         "spread_2s10s": 0.0
     },
     "market_extremes_insight": {
-        "temperature_zscore": -0.778,
+        "temperature_zscore": -0.779,
         "temperature_state": "NORMAL",
         "crowded_state": "SHORT_TRADE_TOO_CROWDED",
         "fragility_score": 0.0,
@@ -352,31 +377,31 @@
         },
         "transition_risk": 0.0139,
         "start_utc": "2026-05-26T10:40:06.658044+00:00",
-        "duration_days": 0.01
+        "duration_days": 0.04
     },
     "kalman_state": {
-        "risk_on": 0.401,
-        "risk_off": 0.401,
+        "risk_on": 0.4,
+        "risk_off": 0.4,
         "transitional": 0.199,
         "dominant_state": "risk_on",
-        "dominant_prob": 0.401,
-        "uncertainty": 0.0654,
+        "dominant_prob": 0.4,
+        "uncertainty": 0.0652,
         "is_ambiguous": true,
         "covariance_matrix": [
             [
-                0.02179444238399995,
-                0.0007212197708841899,
-                0.0007212197708841898
+                0.021740019924333977,
+                0.0007139569383417767,
+                0.0007139569383417763
             ],
             [
-                0.0007212197708841898,
-                0.02179444238399995,
-                0.0007212197708841896
+                0.0007139569383417769,
+                0.021740019924333987,
+                0.0007139569383417769
             ],
             [
-                0.0007212197708841892,
-                0.0007212197708841893,
-                0.02179444238399994
+                0.0007139569383417766,
+                0.0007139569383417767,
+                0.02174001992433398
             ]
         ],
         "tvd": 0.0,
@@ -398,10 +423,10 @@
         ],
         "features_vector": [
             0.373,
-            -0.267,
-            -0.614,
-            -4.845,
-            -0.78,
+            -0.276,
+            -0.594,
+            -4.306,
+            -0.701,
             0.0,
             0.0,
             -1.562,
@@ -410,10 +435,10 @@
         ],
         "features_dict": {
             "SPX_ret": 0.373,
-            "DXY_ret": -0.267,
-            "VIX_zscore": -0.614,
-            "WTI_ret": -4.845,
-            "GoldSilverRatio_ret": -0.78,
+            "DXY_ret": -0.276,
+            "VIX_zscore": -0.594,
+            "WTI_ret": -4.306,
+            "GoldSilverRatio_ret": -0.701,
             "US10Y_delta": 0.0,
             "US_2s10s_spread": 0.0,
             "CryptoMFI_zscore": -1.562,
@@ -422,17 +447,17 @@
         },
         "epistemic_metrics": {
             "shannon_entropy": 0.389,
-            "kelly_exposure_fraction": 0.002,
+            "kelly_exposure_fraction": 0.0,
             "is_high_risk_edge": false
         }
     },
     "mcs": {
-        "score": 37.98,
+        "score": 37.66,
         "label": "NEUTRAL",
         "components": {
-            "equity_momentum": 9.065,
+            "equity_momentum": 8.989,
             "rate_pressure": -6.25,
-            "energy_stress": 10.442,
+            "energy_stress": 10.154,
             "cross_asset_coherence": 25.0
         }
     },
@@ -447,10 +472,10 @@
         "total_articles": 10,
         "directional_bias": "neutral",
         "top_headlines": [
+            "Stocks making the biggest moves premarket: Ferrari, Lear, Intuitive Machines, Micron Technology and more",
             "Huawei plans new smartphone chips this fall as rivalry with Nvidia and Apple heats up",
-            "China tech plays to ride out macro volatility",
-            "Three signs from APEC that the U.S. and China remain far apart on trade"
+            "China tech plays to ride out macro volatility"
         ]
     },
-    "timestamp": "2026-05-26T10:52:12.562816+00:00"
+    "timestamp": "2026-05-26T11:41:07.705040+00:00"
 }

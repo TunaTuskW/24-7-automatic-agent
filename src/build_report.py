@@ -52,7 +52,7 @@ def run_consensus_engine(kalman, volume_heat, extremes, mcs_score, epistemic, ne
     
     clean_models = [m for m in models if not m.is_noise]
     if len(clean_models) <= 2:
-        return "FLAT (Too much noise)", len(clean_models), "Neutral Impact (Insufficient Valid Models)"
+        return "FLAT (Too much noise)", len(clean_models), "Neutral Impact (Low Conviction Market)"
         
     long_score = sum(m.conviction for m in clean_models if m.signal == "long")
     short_score = sum(m.conviction for m in clean_models if m.signal == "short")
