@@ -1,6 +1,16 @@
 # Macro Briefing Agent Setup Guide (v4.5.0)
 
-This guide provides step-by-step instructions on how to set up the macro briefing agent, configure Discord notifications, and automate the execution using cron jobs.
+Welcome to the **Macro Briefing Agent (v4.5.0)**—a 24/7 autonomous quantitative intelligence and execution pipeline. This project decouples data ingestion, partitioned storage, and mathematical engines into an enterprise-grade framework.
+
+### 📚 Documentation Navigation Ledger
+
+| Document | Purpose | Target Audience | Key Sections |
+| :--- | :--- | :--- | :--- |
+| **[README.md](file:///Users/mac/agent/README.md)** | Master operational dashboard & orchestration map. | Users, Operators, Developers | Project Layout, Setup Guide, Cron Automation, Visualization |
+| **[docs/concept_and_model.txt](file:///Users/mac/agent/docs/concept_and_model.txt)** | Mathematical, statistical, and neural network blueprints. | Quants, Researchers | Hybrid Architecture, HMM & Kalman math, GARCH, Kelly Sizing, Escalation Logic |
+| **[docs/macro_agent_setup_v4.5.0.md](file:///Users/mac/agent/docs/macro_agent_setup_v4.5.0.md)** | Developer manual detailing the v4.5.0 modular refactor. | Software Engineers | Decoupled blueprint, Dependency Injection, Data Lake partitions, Logging |
+| **[docs/CRON_SETUP.md](file:///Users/mac/agent/docs/CRON_SETUP.md)** | Complete Unix/macOS automation guide. | Operators, DevOps | Cron syntax, Mac sleep guidelines, catch-up commands, troubleshooting |
+
 
 ## Project Structure Overview
 Following the v4.5.0 Enterprise Architecture refactor, the project is organized into a highly decoupled, professional modular pipeline:
