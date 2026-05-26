@@ -1,0 +1,456 @@
+{
+    "generated_utc": "2026-05-26T10:52:11.286286+00:00",
+    "raw_indicators": {
+        "SPX": {
+            "current": 7473.4702,
+            "prev": 7445.7202,
+            "delta": 27.75,
+            "delta_pct": 0.373,
+            "mean_5d": 7421.7641,
+            "std_5d": 45.739,
+            "z_score": 1.13,
+            "momentum": "up"
+        },
+        "NDX": {
+            "current": 29481.6406,
+            "prev": 29357.2695,
+            "delta": 124.3711,
+            "delta_pct": 0.424,
+            "mean_5d": 29189.9637,
+            "std_5d": 274.1641,
+            "z_score": 1.064,
+            "momentum": "up"
+        },
+        "DAX": {
+            "current": 25296.6191,
+            "prev": 25389.0996,
+            "delta": -92.4805,
+            "delta_pct": -0.364,
+            "mean_5d": 24983.6578,
+            "std_5d": 344.2883,
+            "z_score": 0.909,
+            "momentum": "up"
+        },
+        "FTSE": {
+            "current": 10547.3203,
+            "prev": 10466.2998,
+            "delta": 81.0205,
+            "delta_pct": 0.774,
+            "mean_5d": 10444.0039,
+            "std_5d": 77.7322,
+            "z_score": 1.329,
+            "momentum": "up"
+        },
+        "N225": {
+            "current": 64996.0898,
+            "prev": 65158.1914,
+            "delta": -162.1016,
+            "delta_pct": -0.249,
+            "mean_5d": 62996.3805,
+            "std_5d": 2274.8818,
+            "z_score": 0.879,
+            "momentum": "up"
+        },
+        "HSI": {
+            "current": 25599.4492,
+            "prev": 25606.0293,
+            "delta": -6.5801,
+            "delta_pct": -0.026,
+            "mean_5d": 25608.1934,
+            "std_5d": 147.5064,
+            "z_score": -0.059,
+            "momentum": "down"
+        },
+        "SHANGHAI": {
+            "current": 4145.373,
+            "prev": 4152.5679,
+            "delta": -7.1948,
+            "delta_pct": -0.173,
+            "mean_5d": 4130.0604,
+            "std_5d": 34.8341,
+            "z_score": 0.44,
+            "momentum": "up"
+        },
+        "KOSPI": {
+            "current": 8047.5098,
+            "prev": 7847.71,
+            "delta": 199.7998,
+            "delta_pct": 2.546,
+            "mean_5d": 7638.284,
+            "std_5d": 374.6675,
+            "z_score": 1.092,
+            "momentum": "up"
+        },
+        "TASI": {
+            "current": 11027.54,
+            "prev": 10985.5596,
+            "delta": 41.9805,
+            "delta_pct": 0.382,
+            "mean_5d": 10983.8879,
+            "std_5d": 27.0986,
+            "z_score": 1.611,
+            "momentum": "up"
+        },
+        "DFM": {
+            "current": 5757.48,
+            "prev": 5660.6899,
+            "delta": 96.79,
+            "delta_pct": 1.71,
+            "mean_5d": 5663.312,
+            "std_5d": 57.2029,
+            "z_score": 1.646,
+            "momentum": "up"
+        },
+        "WTI": {
+            "current": 91.92,
+            "prev": 96.6,
+            "delta": -4.68,
+            "delta_pct": -4.845,
+            "mean_5d": 98.18,
+            "std_5d": 5.8525,
+            "z_score": -1.07,
+            "momentum": "down"
+        },
+        "Brent": {
+            "current": 95.41,
+            "prev": 103.54,
+            "delta": -8.13,
+            "delta_pct": -7.852,
+            "mean_5d": 103.566,
+            "std_5d": 5.6814,
+            "z_score": -1.436,
+            "momentum": "down"
+        },
+        "TTF": {
+            "current": 47.6,
+            "prev": 48.683,
+            "delta": -1.083,
+            "delta_pct": -2.225,
+            "mean_5d": 49.3864,
+            "std_5d": 1.5485,
+            "z_score": -1.154,
+            "momentum": "down"
+        },
+        "Gold": {
+            "current": 4534.2998,
+            "prev": 4521.0,
+            "delta": 13.2998,
+            "delta_pct": 0.294,
+            "mean_5d": 4526.5398,
+            "std_5d": 13.2198,
+            "z_score": 0.587,
+            "momentum": "up"
+        },
+        "Silver": {
+            "current": 76.715,
+            "prev": 75.893,
+            "delta": 0.822,
+            "delta_pct": 1.083,
+            "mean_5d": 75.9402,
+            "std_5d": 0.7197,
+            "z_score": 1.077,
+            "momentum": "up"
+        },
+        "Copper": {
+            "current": 6.3845,
+            "prev": 6.342,
+            "delta": 0.0425,
+            "delta_pct": 0.67,
+            "mean_5d": 6.2878,
+            "std_5d": 0.0841,
+            "z_score": 1.149,
+            "momentum": "up"
+        },
+        "DXY": {
+            "current": 99.055,
+            "prev": 99.32,
+            "delta": -0.265,
+            "delta_pct": -0.267,
+            "mean_5d": 99.195,
+            "std_5d": 0.1157,
+            "z_score": -1.211,
+            "momentum": "down"
+        },
+        "EURUSD": {
+            "current": 1.1646,
+            "prev": 1.1642,
+            "delta": 0.0003,
+            "delta_pct": 0.028,
+            "mean_5d": 1.1628,
+            "std_5d": 0.0016,
+            "z_score": 1.09,
+            "momentum": "up"
+        },
+        "GBPUSD": {
+            "current": 1.3485,
+            "prev": 1.3482,
+            "delta": 0.0004,
+            "delta_pct": 0.027,
+            "mean_5d": 1.3446,
+            "std_5d": 0.0038,
+            "z_score": 1.049,
+            "momentum": "up"
+        },
+        "JPYUSD": {
+            "current": 0.0063,
+            "prev": 0.0063,
+            "delta": -0.0,
+            "delta_pct": -0.124,
+            "mean_5d": 0.0063,
+            "std_5d": 0.0,
+            "z_score": -1.419,
+            "momentum": "down"
+        },
+        "CHFUSD": {
+            "current": 1.2752,
+            "prev": 1.2783,
+            "delta": -0.0031,
+            "delta_pct": -0.245,
+            "mean_5d": 1.2727,
+            "std_5d": 0.0041,
+            "z_score": 0.605,
+            "momentum": "up"
+        },
+        "USDCAD": {
+            "current": 1.3802,
+            "prev": 1.3776,
+            "delta": 0.0026,
+            "delta_pct": 0.19,
+            "mean_5d": 1.3762,
+            "std_5d": 0.0026,
+            "z_score": 1.512,
+            "momentum": "up"
+        },
+        "VIX9D": {
+            "current": 14.07,
+            "prev": 14.08,
+            "delta": -0.01,
+            "delta_pct": -0.071,
+            "mean_5d": 15.358,
+            "std_5d": 1.3453,
+            "z_score": -0.957,
+            "momentum": "down"
+        },
+        "VIX": {
+            "current": 16.6,
+            "prev": 16.59,
+            "delta": 0.01,
+            "delta_pct": 0.06,
+            "mean_5d": 16.818,
+            "std_5d": 0.3549,
+            "z_score": -0.614,
+            "momentum": "down"
+        },
+        "VIX3M": {
+            "current": 20.03,
+            "prev": 20.0,
+            "delta": 0.03,
+            "delta_pct": 0.15,
+            "mean_5d": 20.566,
+            "std_5d": 0.519,
+            "z_score": -1.033,
+            "momentum": "down"
+        },
+        "VVIX": {
+            "current": 91.16,
+            "prev": 91.88,
+            "delta": -0.72,
+            "delta_pct": -0.784,
+            "mean_5d": 93.056,
+            "std_5d": 2.3681,
+            "z_score": -0.801,
+            "momentum": "down"
+        },
+        "BTC": {
+            "current": 77385.2031,
+            "prev": 77279.9297,
+            "delta": 105.2734,
+            "delta_pct": 0.136,
+            "mean_5d": 76761.5734,
+            "std_5d": 764.0293,
+            "z_score": 0.816,
+            "momentum": "up"
+        },
+        "IBIT": {
+            "current": 42.96,
+            "prev": 44.0,
+            "delta": -1.04,
+            "delta_pct": -2.364,
+            "mean_5d": 43.596,
+            "std_5d": 0.4291,
+            "z_score": -1.482,
+            "momentum": "down"
+        },
+        "ETHA": {
+            "current": 15.57,
+            "prev": 16.15,
+            "delta": -0.58,
+            "delta_pct": -3.591,
+            "mean_5d": 15.958,
+            "std_5d": 0.2362,
+            "z_score": -1.643,
+            "momentum": "down"
+        },
+        "COIN": {
+            "current": 184.99,
+            "prev": 193.56,
+            "delta": -8.57,
+            "delta_pct": -4.428,
+            "mean_5d": 190.546,
+            "std_5d": 3.5413,
+            "z_score": -1.569,
+            "momentum": "down"
+        },
+        "volume_activity_heat": {
+            "participation_type": "RETAIL_DRIFT",
+            "institutional_heat_index": -0.336
+        },
+        "gold_to_silver_ratio": {
+            "current": 59.106,
+            "prev": 59.571,
+            "delta_pct": -0.78
+        },
+        "institutional_crypto_mfi": {
+            "composite_z": -1.562
+        }
+    },
+    "bonds": {
+        "US2Y": {
+            "current": 0.0
+        },
+        "US10Y": {
+            "current": 0.0
+        },
+        "spread_2s10s": 0.0
+    },
+    "market_extremes_insight": {
+        "temperature_zscore": -0.778,
+        "temperature_state": "NORMAL",
+        "crowded_state": "SHORT_TRADE_TOO_CROWDED",
+        "fragility_score": 0.0,
+        "vvix_vix_ratio": 5.49
+    },
+    "regime": {
+        "current": "NEUTRAL_TRANSITIONAL_1",
+        "dominant_regime": "NEUTRAL_TRANSITIONAL_1",
+        "tactical_alpha_regime": "NEUTRAL_TRANSITIONAL_1",
+        "probabilities": {
+            "NEUTRAL_TRANSITIONAL": 0.0096,
+            "NEUTRAL_TRANSITIONAL_1": 0.9519,
+            "NEUTRAL_TRANSITIONAL_2": 0.0096,
+            "NEUTRAL_TRANSITIONAL_3": 0.0096,
+            "LIQUIDITY_DRIVEN_RALLY": 0.0096,
+            "NEUTRAL_TRANSITIONAL_5": 0.0096
+        },
+        "tactical_alpha_probabilities": {
+            "NEUTRAL_TRANSITIONAL": 0.0096,
+            "NEUTRAL_TRANSITIONAL_1": 0.9519,
+            "NEUTRAL_TRANSITIONAL_2": 0.0096,
+            "NEUTRAL_TRANSITIONAL_3": 0.0096,
+            "LIQUIDITY_DRIVEN_RALLY": 0.0096,
+            "NEUTRAL_TRANSITIONAL_5": 0.0096
+        },
+        "transition_risk": 0.0139,
+        "start_utc": "2026-05-26T10:40:06.658044+00:00",
+        "duration_days": 0.01
+    },
+    "kalman_state": {
+        "risk_on": 0.401,
+        "risk_off": 0.401,
+        "transitional": 0.199,
+        "dominant_state": "risk_on",
+        "dominant_prob": 0.401,
+        "uncertainty": 0.0654,
+        "is_ambiguous": true,
+        "covariance_matrix": [
+            [
+                0.02179444238399995,
+                0.0007212197708841899,
+                0.0007212197708841898
+            ],
+            [
+                0.0007212197708841898,
+                0.02179444238399995,
+                0.0007212197708841896
+            ],
+            [
+                0.0007212197708841892,
+                0.0007212197708841893,
+                0.02179444238399994
+            ]
+        ],
+        "tvd": 0.0,
+        "brier_score_calibration": 0.15
+    },
+    "mlp_deep_state": null,
+    "data_science_layer": {
+        "ordered_features_list": [
+            "SPX_ret",
+            "DXY_ret",
+            "VIX_zscore",
+            "WTI_ret",
+            "GoldSilverRatio_ret",
+            "US10Y_delta",
+            "US_2s10s_spread",
+            "CryptoMFI_zscore",
+            "VolumeHeat_ihi",
+            "USDCAD_ret"
+        ],
+        "features_vector": [
+            0.373,
+            -0.267,
+            -0.614,
+            -4.845,
+            -0.78,
+            0.0,
+            0.0,
+            -1.562,
+            -0.336,
+            0.19
+        ],
+        "features_dict": {
+            "SPX_ret": 0.373,
+            "DXY_ret": -0.267,
+            "VIX_zscore": -0.614,
+            "WTI_ret": -4.845,
+            "GoldSilverRatio_ret": -0.78,
+            "US10Y_delta": 0.0,
+            "US_2s10s_spread": 0.0,
+            "CryptoMFI_zscore": -1.562,
+            "VolumeHeat_ihi": -0.336,
+            "USDCAD_ret": 0.19
+        },
+        "epistemic_metrics": {
+            "shannon_entropy": 0.389,
+            "kelly_exposure_fraction": 0.002,
+            "is_high_risk_edge": false
+        }
+    },
+    "mcs": {
+        "score": 37.98,
+        "label": "NEUTRAL",
+        "components": {
+            "equity_momentum": 9.065,
+            "rate_pressure": -6.25,
+            "energy_stress": 10.442,
+            "cross_asset_coherence": 25.0
+        }
+    },
+    "data_driven_escalation": "ROUTINE",
+    "news_signal": {
+        "sentiment_mean": 0.0,
+        "sentiment_std": 0.0,
+        "momentum": 0.0,
+        "event_flag": 0,
+        "event_type": "none",
+        "highest_priority": 0.0,
+        "total_articles": 10,
+        "directional_bias": "neutral",
+        "top_headlines": [
+            "Huawei plans new smartphone chips this fall as rivalry with Nvidia and Apple heats up",
+            "China tech plays to ride out macro volatility",
+            "Three signs from APEC that the U.S. and China remain far apart on trade"
+        ]
+    },
+    "timestamp": "2026-05-26T10:52:12.562816+00:00"
+}

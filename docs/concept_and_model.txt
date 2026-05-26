@@ -4,23 +4,29 @@ MACRO ANALYST AGENT - CONCEPT AND MODEL
 1. WHAT IT IS
 This is a 24/7 autonomous quantitative agent that monitors global markets, processes data through deep learning classifiers, and generates institutional-grade macro reports. It runs completely automatically in the background using your computer's scheduler. The presentation layer uses an ultra-minimal "Brutalist Terminal" text-block layout to ensure a data-dense, cross-platform reading experience designed for instant mobile parsing.
 
-2. THE DETERMINISTIC & LLM HYBRID ARCHITECTURE
-Following the v4.2.0 upgrade, the agent merges mathematical quant pipelines with semantic LLM intelligence. The architecture relies on deterministic multi-fractal consensus calculations alongside structured Google Gemini semantic risk limits.
+2. THE ENTERPRISE DECOUPLED ARCHITECTURE (v4.5.0 Upgrade)
+Following the v4.5.0 Enterprise upgrade, the agent is refactored from a monolithic script into a clean, decoupled pipeline that integrates abstract interfaces, specialized adapters, a partitioned data lake, and isolated math engines:
 
-- Data Ingestion & Signal Layer: Real-time data is ingested via yfinance covering Equities, Commodities, spot Crypto flow, FRED treasury yields, and the Volatility Term Structure (VIX9D, VIX, VIX3M, VVIX). It executes concurrent tracks over Daily (Structural) and Hourly (Tactical) horizons. Gemini LLM parses RSS news feeds to extract strict shock probabilities, replacing legacy VADER.
-- Core Quantitative Engines: Tracks Volatility Term Structure Backwardation (VIX9D > VIX), Regime Persistence (using dynamically tuned half-lives), and Hidden Fragility (VVIX/VIX ratio and SPX/DXY correlation).
-- The Consensus Engine: Aggregates quantitative signals into dataclasses and runs a conviction-weighted vote. It conditions voting thresholds based on Gemini shock magnitude decodes. If the Tactical HMM contradicts the Structural HMM, it slashes Kalman conviction by 50%. Shannon Entropy governs noise/chaos limits, triggering a "NO PREDICT" posture if entropy scales too high.
+- Core Interfaces: Strict contracts (`DataBroker` and `LLMProvider` under `src/interfaces/`) enforce structural modularity and prevent vendor lock-in.
+- Modular Adapters: Implementing providers (`YahooAdapter` and `GeminiAdapter` under `src/adapters/`) ingest price series, bond yields, and semantically score news headlines.
+- Partitioned Data Lake: The database manager (`LakeManager` under `src/data_lake/`) writes tabular Parquet tables and unstructured JSONL snapshots to daily partitioned directories (`data/raw/YYYY/MM/DD/`).
+- Decoupled engines: Logic is isolated into standalone calculators under `src/engines/` (`feature_engine.py` for indicators, `hmm_engine.py` for HMM regime scoring, and `risk_engine.py` for Kalman/Entropy/Kelly sizing).
+- Contextual Observability: A structured console and JSONL logging framework (`src/observability/logger.py`) maps operations across distinct components, piping events to `data/logs/system_events.jsonl`.
+- Consensus Conductor: The central orchestrator (`src/fetch_market_data.py`) leverages dependency injection to initialize adapters, engines, and managers, executing the sequence smoothly.
 
 3. THE END-TO-END WORKFLOW
-- Data Collection: Every cycle, the python scripts download the massive data payload.
-- Mathematical Scoring: The python scripts score the market stress and momentum.
-- Automated Formatting: The Python scripts natively format the mathematical output into the Brutalist markdown layout.
-- Delivery: The final report is instantly pushed to your Discord channel.
-- Cryptographic Proof: Every report is digitally signed and "hash-chained" (TruChain) so that its history cannot be secretly altered later.
+- Context Logging: Conductor initializes, spinning up custom component-level loggers to write system events.
+- Ingestion & Parquet Partitioning: YahooAdapter fetches historical price/yield series. Conductor invokes LakeManager to save daily and hourly series directly to the Data Lake as partitioned Parquet tables (`raw_daily_ohlcv.parquet` and `raw_hourly_ohlcv.parquet`).
+- Feature Construction: FeatureEngine computes stats, GARCH conditional volatility, Gold-to-Silver momentum, Institutional Crypto MFI, and MCS stress metrics.
+- Mathematical Scoring: Conductor pipes feature vectors to HMMEngine and RiskEngine to determine regime probabilities, update Kalman filter matrices, measure Shannon entropy, and calculate exposure targets using Fractional Kelly.
+- NLP News Scoring: GeminiAdapter fetches RSS headlines and semantically decodes geopolitical shock and liquidity drain probabilities via JSON-constrained LLM parsing.
+- Snapshot Lake Log: Conductor packages the complete market state into `data/market_snapshot.json` and writes it as an unstructured daily-partitioned log (`market_snapshot.jsonl`) to the Data Lake.
+- Presentation & Delivery: Report compilers parse the snapshot into Brutalist markdown and push the briefing to Discord/Telegram.
+- Cryptographic Proof: Snapshots are signed and appended to `logs/immutable_chain.log` (TruChain) to guarantee historical audit integrity.
 
 4. THE MATH & MODELS BEHIND THE SCENES
-- Macro Condition Score (MCS): A composite number measuring overall market stress based on stock momentum, interest rates, energy prices, and cross-asset behavior.
-- Hidden Markov Models (HMM) & Kalman Filters: These algorithms smooth out daily noise to figure out the "true" underlying regime (Risk-On, Risk-Off, or Transitional).
+- Macro Condition Score (MCS): A composite number measuring overall market stress based on stock momentum, interest rates, energy prices, and cross-asset behavior (FeatureEngine).
+- Hidden Markov Models (HMM) & Kalman Filters: These algorithms smooth out daily noise to figure out the "true" underlying regime (HMMEngine & RiskEngine).
 - Deep Classifier (MLP): A trained neural network that double-checks the HMM. 
 - Institutional Footprinting: Natively supports advanced institutional footprinting, including a 20-day continuous Institutional Heat Index (IHI).
 - Semantic NLP NewsSignalVector (Google Gemini LLM Engine): 
