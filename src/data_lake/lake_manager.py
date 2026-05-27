@@ -39,6 +39,38 @@ class LakeManager:
         except Exception as e:
             logger.error(f"Failed to save tabular data {filename}: {e}")
 
+    def log_event(self, event_type: str, payload: any):
+        """Callback to intercept EventBus events and append them to events.jsonl"""
+        try:
+            part_dir = self._get_daily_partition_dir()
+            full_path = os.path.join(part_dir, "events.jsonl")
+            
+            # Extract dict if it's a Pydantic BaseModel
+            if hasattr(payload, "model_dump"):
+                payload_dict = payload.model_dump()
+            elif hasattr(payload, "dict"):
+                payload_dict = payload.dict()
+            elif isinstance(payload, dict):
+                # Handle DataFrames inside dict payload
+                payload_dict = {}
+                for k, v in payload.items():
+                    if isinstance(v, pd.DataFrame):
+                        payload_dict[k] = "DataFrame_Omitted_from_Logs"
+                    else:
+                        payload_dict[k] = v
+            else:
+                payload_dict = {"data": str(payload)}
+                
+            event_obj = {
+                "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+                "event_type": event_type,
+                "payload": payload_dict
+            }
+            with open(full_path, "a") as f:
+                f.write(json.dumps(event_obj) + "\n")
+        except Exception as e:
+            logger.error(f"Failed to log event {event_type}: {e}")
+
     def save_unstructured(self, data: dict, filename: str):
         if not data:
             logger.warning(f"Attempted to save empty unstructured data: {filename}")

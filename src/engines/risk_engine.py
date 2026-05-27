@@ -2,15 +2,16 @@ import numpy as np
 import math
 from typing import Dict, Any
 from src.observability.logger import get_logger
+from src.schemas.models import KalmanState
 
 logger = get_logger("risk-engine")
 
 class RiskEngine:
-    def run_kalman_filter(self, mcs: float, sub_components: Dict, hmm_regime_probs: Dict, prior_state=None, prior_cov=None) -> Dict[str, Any]:
+    def run_kalman_filter(self, mcs: float, sub_components: Dict, hmm_regime_probs: Dict, prior_state=None, prior_cov=None) -> KalmanState:
         logger.info("Running Kalman Filter")
         try:
             n = 3
-            x = np.array([1/3, 1/3, 1/3]) if prior_state is None else np.array([prior_state.get(k, 1/3) for k in ["risk_on", "risk_off", "transitional"]])
+            x = np.array([1/3, 1/3, 1/3]) if prior_state is None else np.array(prior_state)
             P = np.eye(n) * 0.1 if prior_cov is None else np.array(prior_cov).reshape(n, n)
             Q = np.eye(n) * 0.02
             F = np.array([[0.92, 0.04, 0.04], [0.04, 0.92, 0.04], [0.04, 0.04, 0.92]])
@@ -36,7 +37,6 @@ class RiskEngine:
             x_updated /= x_updated.sum()
             
             P_updated = (np.eye(n) - K @ H) @ P_pred
-            uncertainty = float(np.trace(P_updated))
             
             max_prob = float(np.max(x_updated))
             is_ambiguous = max_prob < 0.60
@@ -44,19 +44,19 @@ class RiskEngine:
             states = ["risk_on", "risk_off", "transitional"]
             dominant_idx = int(np.argmax(x_updated))
             
-            return {
-                "risk_on":          round(float(x_updated[0]), 3),
-                "risk_off":         round(float(x_updated[1]), 3),
-                "transitional":     round(float(x_updated[2]), 3),
-                "dominant_state":   states[dominant_idx],
-                "dominant_prob":    round(float(x_updated[dominant_idx]), 3),
-                "uncertainty":      round(uncertainty, 4),
-                "is_ambiguous":     bool(is_ambiguous),
-                "covariance_matrix": P_updated.tolist()
-            }
+            return KalmanState(
+                risk_on=round(float(x_updated[0]), 3),
+                risk_off=round(float(x_updated[1]), 3),
+                transitional=round(float(x_updated[2]), 3),
+                dominant_state=states[dominant_idx],
+                dominant_prob=round(float(x_updated[dominant_idx]), 3),
+                is_ambiguous=bool(is_ambiguous),
+                covariance_matrix=P_updated.tolist(),
+                probabilities=x_updated.tolist()
+            )
         except Exception as e:
             logger.error(f"Kalman filter failed: {e}")
-            return {}
+            return KalmanState()
 
     def compute_shannon_entropy(self, probs: np.ndarray) -> float:
         try:
