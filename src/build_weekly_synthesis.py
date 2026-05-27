@@ -36,13 +36,37 @@ Synthesize this data into a professional weekly institutional report.
         return None
 
 def main():
-    snapshot_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'market_snapshot.json')
-    if not os.path.exists(snapshot_path):
-        print(f"Error: {snapshot_path} not found. Run fetch_market_data.py first.")
+    events_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'raw')
+    part_dirs = []
+    if os.path.exists(events_path):
+        for year in os.listdir(events_path):
+            year_path = os.path.join(events_path, year)
+            if not os.path.isdir(year_path): continue
+            for month in os.listdir(year_path):
+                month_path = os.path.join(year_path, month)
+                for day in os.listdir(month_path):
+                    day_path = os.path.join(month_path, day)
+                    part_dirs.append(day_path)
+    if not part_dirs:
+        print("Error: No event data found.")
         return
-
-    with open(snapshot_path, 'r') as f:
-        data = json.load(f)
+    latest_part = sorted(part_dirs)[-1]
+    events_file = os.path.join(latest_part, "events.jsonl")
+    if not os.path.exists(events_file): return
+    last_snapshot_payload = None
+    import json
+    with open(events_file, 'r') as f:
+        for line in f:
+            if not line.strip(): continue
+            try:
+                evt = json.loads(line)
+                if evt.get("event_type") == "PipelineComplete":
+                    last_snapshot_payload = evt.get("payload")
+            except: pass
+    if not last_snapshot_payload: return
+    from src.schemas.models import MarketSnapshot
+    snapshot = MarketSnapshot.model_validate(last_snapshot_payload)
+    data = snapshot.model_dump()
 
     now_utc = datetime.now(timezone.utc)
     timestamp_str = now_utc.strftime("%Y-%m-%d UTC")

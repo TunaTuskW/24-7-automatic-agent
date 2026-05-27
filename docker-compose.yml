@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  quant_os:
+    build: .
+    container_name: quant_os
+    environment:
+      - FRED_API_KEY=${FRED_API_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+      - ./logs:/app/logs
+      - ./reports:/app/reports
+    command: python3 src/fetch_market_data.py

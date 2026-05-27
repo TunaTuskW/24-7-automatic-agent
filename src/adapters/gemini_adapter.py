@@ -2,6 +2,7 @@ import json
 import os
 from typing import Dict, Any, List
 from src.interfaces.llm_provider import LLMProvider
+from src.schemas.models import NewsSignal
 from src.observability.logger import get_logger
 
 logger = get_logger("gemini-adapter")
@@ -29,15 +30,10 @@ class GeminiAdapter(LLMProvider):
         else:
             self.client = None
             
-    def parse_news(self, headlines: List[str]) -> Dict[str, Any]:
+    def parse_news(self, headlines: List[str]) -> NewsSignal:
         if not self.client or not headlines:
             logger.warning("No Gemini client or empty headlines. Returning default news struct.")
-            return {
-                "sentiment_mean": 0.0, "sentiment_std": 0.0, "momentum": 0.0,
-                "event_flag": 0, "event_type": "none", "highest_priority": 0.0,
-                "total_articles": len(headlines), "directional_bias": "neutral",
-                "top_headlines": headlines[:3] if headlines else []
-            }
+            return NewsSignal()
             
         headlines_text = "\n".join(headlines[:20])
         prompt = f"""You are a quantitative data parser. Analyze these headlines and output strictly valid JSON with no markdown:
@@ -55,25 +51,12 @@ Headlines:
             liq_prob = llm_response.get("liquidity_drain_probability", 0.0)
             event_flag = 1 if geo_mag > 0.7 else 0
             
-            result = {
-                "sentiment_mean": -geo_mag,
-                "sentiment_std": liq_prob,
-                "momentum": 0.0,
-                "event_flag": event_flag,
-                "event_type": "geopolitical_shock" if event_flag else "none",
-                "highest_priority": geo_mag,
-                "total_articles": len(headlines),
-                "directional_bias": "shock" if event_flag else "normal",
-                "top_headlines": headlines[:3]
-            }
-            logger.info(f"Gemini processed {len(headlines)} headlines. Event Flag: {event_flag}")
-            return result
+            return NewsSignal(
+                signal="FLAT" if event_flag == 0 else "SHORT",
+                conviction=geo_mag,
+                impact="Geopolitical Shock" if event_flag else "Routine"
+            )
             
         except Exception as e:
             logger.error(f"LLM news processing failed: {e}")
-            return {
-                "sentiment_mean": 0.0, "sentiment_std": 0.0, "momentum": 0.0,
-                "event_flag": 0, "event_type": "none", "highest_priority": 0.0,
-                "total_articles": len(headlines), "directional_bias": "neutral",
-                "top_headlines": headlines[:3]
-            }
+            return NewsSignal()

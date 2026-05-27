@@ -1,5 +1,5 @@
 {
-    "generated_utc": "2026-05-26T11:41:06.198775+00:00",
+    "generated_utc": "2026-05-26T12:29:02.300270+00:00",
     "raw_indicators": {
         "SPX": {
             "current": 7473.4702,
@@ -22,23 +22,23 @@
             "momentum": "up"
         },
         "DAX": {
-            "current": 25267.9609,
+            "current": 25273.2891,
             "prev": 25389.0996,
-            "delta": -121.1387,
-            "delta_pct": -0.477,
-            "mean_5d": 24977.9262,
-            "std_5d": 337.956,
-            "z_score": 0.858,
+            "delta": -115.8105,
+            "delta_pct": -0.456,
+            "mean_5d": 24978.9918,
+            "std_5d": 339.1056,
+            "z_score": 0.868,
             "momentum": "up"
         },
         "FTSE": {
-            "current": 10530.29,
+            "current": 10520.4297,
             "prev": 10466.2998,
-            "delta": 63.9902,
-            "delta_pct": 0.611,
-            "mean_5d": 10440.5979,
-            "std_5d": 72.2533,
-            "z_score": 1.241,
+            "delta": 54.1299,
+            "delta_pct": 0.517,
+            "mean_5d": 10438.6258,
+            "std_5d": 69.2661,
+            "z_score": 1.181,
             "momentum": "up"
         },
         "N225": {
@@ -102,23 +102,23 @@
             "momentum": "up"
         },
         "WTI": {
-            "current": 92.44,
+            "current": 92.59,
             "prev": 96.6,
-            "delta": -4.16,
-            "delta_pct": -4.306,
-            "mean_5d": 98.284,
-            "std_5d": 5.7165,
-            "z_score": -1.022,
+            "delta": -4.01,
+            "delta_pct": -4.151,
+            "mean_5d": 98.314,
+            "std_5d": 5.6784,
+            "z_score": -1.008,
             "momentum": "down"
         },
         "Brent": {
-            "current": 95.81,
+            "current": 96.02,
             "prev": 103.54,
-            "delta": -7.73,
-            "delta_pct": -7.466,
-            "mean_5d": 103.646,
-            "std_5d": 5.5389,
-            "z_score": -1.415,
+            "delta": -7.52,
+            "delta_pct": -7.263,
+            "mean_5d": 103.688,
+            "std_5d": 5.4649,
+            "z_score": -1.403,
             "momentum": "down"
         },
         "TTF": {
@@ -132,93 +132,93 @@
             "momentum": "down"
         },
         "Gold": {
-            "current": 4519.8999,
+            "current": 4513.0,
             "prev": 4521.0,
-            "delta": -1.1001,
-            "delta_pct": -0.024,
-            "mean_5d": 4523.6599,
-            "std_5d": 12.6634,
-            "z_score": -0.297,
+            "delta": -8.0,
+            "delta_pct": -0.177,
+            "mean_5d": 4522.2799,
+            "std_5d": 13.5224,
+            "z_score": -0.686,
             "momentum": "up"
         },
         "Silver": {
-            "current": 76.41,
+            "current": 76.365,
             "prev": 75.893,
-            "delta": 0.517,
-            "delta_pct": 0.681,
-            "mean_5d": 75.8792,
-            "std_5d": 0.6469,
-            "z_score": 0.821,
+            "delta": 0.472,
+            "delta_pct": 0.622,
+            "mean_5d": 75.8702,
+            "std_5d": 0.6379,
+            "z_score": 0.776,
             "momentum": "up"
         },
         "Copper": {
-            "current": 6.382,
+            "current": 6.3875,
             "prev": 6.342,
-            "delta": 0.04,
-            "delta_pct": 0.631,
-            "mean_5d": 6.2873,
-            "std_5d": 0.0834,
-            "z_score": 1.135,
+            "delta": 0.0455,
+            "delta_pct": 0.717,
+            "mean_5d": 6.2884,
+            "std_5d": 0.085,
+            "z_score": 1.166,
             "momentum": "up"
         },
         "DXY": {
-            "current": 99.046,
+            "current": 99.112,
             "prev": 99.32,
-            "delta": -0.274,
-            "delta_pct": -0.276,
-            "mean_5d": 99.1932,
-            "std_5d": 0.1184,
-            "z_score": -1.243,
+            "delta": -0.208,
+            "delta_pct": -0.209,
+            "mean_5d": 99.2064,
+            "std_5d": 0.1002,
+            "z_score": -0.942,
             "momentum": "down"
         },
         "EURUSD": {
-            "current": 1.164,
+            "current": 1.1639,
             "prev": 1.1642,
-            "delta": -0.0002,
-            "delta_pct": -0.019,
+            "delta": -0.0004,
+            "delta_pct": -0.03,
             "mean_5d": 1.1627,
             "std_5d": 0.0014,
-            "z_score": 0.892,
+            "z_score": 0.834,
             "momentum": "up"
         },
         "GBPUSD": {
-            "current": 1.3476,
+            "current": 1.3474,
             "prev": 1.3482,
-            "delta": -0.0006,
-            "delta_pct": -0.044,
+            "delta": -0.0007,
+            "delta_pct": -0.054,
             "mean_5d": 1.3444,
             "std_5d": 0.0035,
-            "z_score": 0.9,
+            "z_score": 0.878,
             "momentum": "up"
         },
         "JPYUSD": {
             "current": 0.0063,
             "prev": 0.0063,
             "delta": -0.0,
-            "delta_pct": -0.152,
+            "delta_pct": -0.165,
             "mean_5d": 0.0063,
             "std_5d": 0.0,
-            "z_score": -1.528,
+            "z_score": -1.563,
             "momentum": "down"
         },
         "CHFUSD": {
-            "current": 1.2783,
-            "prev": 1.2715,
-            "delta": 0.0068,
-            "delta_pct": 0.538,
-            "mean_5d": 1.2726,
-            "std_5d": 0.004,
-            "z_score": 1.41,
+            "current": 1.2737,
+            "prev": 1.2783,
+            "delta": -0.0046,
+            "delta_pct": -0.357,
+            "mean_5d": 1.2724,
+            "std_5d": 0.0039,
+            "z_score": 0.34,
             "momentum": "up"
         },
         "USDCAD": {
-            "current": 1.3802,
-            "prev": 1.3776,
-            "delta": 0.0026,
-            "delta_pct": 0.19,
-            "mean_5d": 1.3762,
-            "std_5d": 0.0026,
-            "z_score": 1.512,
+            "current": 1.3812,
+            "prev": 1.3802,
+            "delta": 0.001,
+            "delta_pct": 0.072,
+            "mean_5d": 1.3777,
+            "std_5d": 0.003,
+            "z_score": 1.167,
             "momentum": "up"
         },
         "VIX9D": {
@@ -232,13 +232,13 @@
             "momentum": "down"
         },
         "VIX": {
-            "current": 16.61,
+            "current": 16.73,
             "prev": 16.59,
-            "delta": 0.02,
-            "delta_pct": 0.121,
-            "mean_5d": 16.82,
-            "std_5d": 0.3533,
-            "z_score": -0.594,
+            "delta": 0.14,
+            "delta_pct": 0.844,
+            "mean_5d": 16.844,
+            "std_5d": 0.3393,
+            "z_score": -0.336,
             "momentum": "down"
         },
         "VIX3M": {
@@ -262,13 +262,13 @@
             "momentum": "down"
         },
         "BTC": {
-            "current": 77162.8125,
+            "current": 76876.3516,
             "prev": 77279.9297,
-            "delta": -117.1172,
-            "delta_pct": -0.152,
-            "mean_5d": 76717.0953,
-            "std_5d": 724.077,
-            "z_score": 0.616,
+            "delta": -403.5781,
+            "delta_pct": -0.522,
+            "mean_5d": 76659.8031,
+            "std_5d": 690.55,
+            "z_score": 0.314,
             "momentum": "up"
         },
         "IBIT": {
@@ -326,9 +326,9 @@
             "institutional_heat_index": -0.336
         },
         "gold_to_silver_ratio": {
-            "current": 59.153,
+            "current": 59.098,
             "prev": 59.571,
-            "delta_pct": -0.701
+            "delta_pct": -0.794
         },
         "institutional_crypto_mfi": {
             "composite_z": -1.562,
@@ -349,11 +349,11 @@
         "spread_2s10s": 0.0
     },
     "market_extremes_insight": {
-        "temperature_zscore": -0.779,
+        "temperature_zscore": -0.786,
         "temperature_state": "NORMAL",
         "crowded_state": "SHORT_TRADE_TOO_CROWDED",
         "fragility_score": 0.0,
-        "vvix_vix_ratio": 5.49
+        "vvix_vix_ratio": 5.45
     },
     "regime": {
         "current": "NEUTRAL_TRANSITIONAL_1",
@@ -377,37 +377,42 @@
         },
         "transition_risk": 0.0139,
         "start_utc": "2026-05-26T10:40:06.658044+00:00",
-        "duration_days": 0.04
+        "duration_days": 0.07562939813657407
     },
     "kalman_state": {
-        "risk_on": 0.4,
-        "risk_off": 0.4,
-        "transitional": 0.199,
+        "dominant_prob": 0.435,
         "dominant_state": "risk_on",
-        "dominant_prob": 0.4,
-        "uncertainty": 0.0652,
-        "is_ambiguous": true,
+        "tvd": 0.0,
+        "brier_score_calibration": 0.15,
+        "structural_ambiguity_index": 0.0,
+        "probabilities": [
+            0.43460610393263305,
+            0.43460610393263305,
+            0.13078779213473396
+        ],
         "covariance_matrix": [
             [
-                0.021740019924333977,
-                0.0007139569383417767,
-                0.0007139569383417763
+                0.021738980108303795,
+                0.0007137038232948905,
+                0.0007137038232948903
             ],
             [
-                0.0007139569383417769,
-                0.021740019924333987,
-                0.0007139569383417769
+                0.0007137038232948905,
+                0.02173898010830379,
+                0.0007137038232948903
             ],
             [
-                0.0007139569383417766,
-                0.0007139569383417767,
-                0.02174001992433398
+                0.0007137038232948905,
+                0.0007137038232948905,
+                0.02173898010830379
             ]
         ],
-        "tvd": 0.0,
-        "brier_score_calibration": 0.15
+        "is_ambiguous": true,
+        "risk_on": 0.435,
+        "risk_off": 0.435,
+        "transitional": 0.131
     },
-    "mlp_deep_state": null,
+    "mlp_deep_state": {},
     "data_science_layer": {
         "ordered_features_list": [
             "SPX_ret",
@@ -423,59 +428,49 @@
         ],
         "features_vector": [
             0.373,
-            -0.276,
-            -0.594,
-            -4.306,
-            -0.701,
+            -0.209,
+            -0.336,
+            -4.151,
+            -0.794,
             0.0,
             0.0,
             -1.562,
             -0.336,
-            0.19
+            0.072
         ],
         "features_dict": {
             "SPX_ret": 0.373,
-            "DXY_ret": -0.276,
-            "VIX_zscore": -0.594,
-            "WTI_ret": -4.306,
-            "GoldSilverRatio_ret": -0.701,
+            "DXY_ret": -0.209,
+            "VIX_zscore": -0.336,
+            "WTI_ret": -4.151,
+            "GoldSilverRatio_ret": -0.794,
             "US10Y_delta": 0.0,
             "US_2s10s_spread": 0.0,
             "CryptoMFI_zscore": -1.562,
             "VolumeHeat_ihi": -0.336,
-            "USDCAD_ret": 0.19
+            "USDCAD_ret": 0.072
         },
         "epistemic_metrics": {
             "shannon_entropy": 0.389,
-            "kelly_exposure_fraction": 0.0,
+            "kelly_exposure_fraction": 0.058,
             "is_high_risk_edge": false
         }
     },
     "mcs": {
-        "score": 37.66,
+        "score": 37.59,
         "label": "NEUTRAL",
         "components": {
-            "equity_momentum": 8.989,
+            "equity_momentum": 9.004,
             "rate_pressure": -6.25,
-            "energy_stress": 10.154,
+            "energy_stress": 10.046,
             "cross_asset_coherence": 25.0
         }
     },
     "data_driven_escalation": "ROUTINE",
     "news_signal": {
-        "sentiment_mean": 0.0,
-        "sentiment_std": 0.0,
-        "momentum": 0.0,
-        "event_flag": 0,
-        "event_type": "none",
-        "highest_priority": 0.0,
-        "total_articles": 10,
-        "directional_bias": "neutral",
-        "top_headlines": [
-            "Stocks making the biggest moves premarket: Ferrari, Lear, Intuitive Machines, Micron Technology and more",
-            "Huawei plans new smartphone chips this fall as rivalry with Nvidia and Apple heats up",
-            "China tech plays to ride out macro volatility"
-        ]
+        "signal": "FLAT",
+        "conviction": 0.0,
+        "impact": "Neutral Impact (Fallback)"
     },
-    "timestamp": "2026-05-26T11:41:07.705040+00:00"
+    "timestamp": "2026-05-26T12:29:02.302220+00:00"
 }
