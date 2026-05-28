@@ -16,12 +16,18 @@ class RiskEngine:
             Q = np.eye(n) * 0.02
             F = np.array([[0.92, 0.04, 0.04], [0.04, 0.92, 0.04], [0.04, 0.04, 0.92]])
             
-            z = np.array([
-                hmm_regime_probs.get("RISK_ON", 0.33),
-                hmm_regime_probs.get("RISK_OFF", 0.33),
-                hmm_regime_probs.get("NEUTRAL_TRANSITIONAL", 0.33)
-            ])
-            z /= z.sum()
+            hmm_risk_on = hmm_regime_probs.get("RISK_ON_EXPANSION", 0.0) + hmm_regime_probs.get("LIQUIDITY_DRIVEN_RALLY", 0.0)
+            hmm_risk_off = (hmm_regime_probs.get("STAGFLATION_STRESS", 0.0) + 
+                            hmm_regime_probs.get("RATE_SHOCK", 0.0) + 
+                            hmm_regime_probs.get("DEFLATION_FEAR", 0.0) + 
+                            hmm_regime_probs.get("CRISIS_DISLOCATION", 0.0))
+            hmm_trans = max(0.0, 1.0 - hmm_risk_on - hmm_risk_off)
+            
+            z = np.array([hmm_risk_on, hmm_risk_off, hmm_trans])
+            if z.sum() > 0:
+                z /= z.sum()
+            else:
+                z = np.array([1/3, 1/3, 1/3])
             
             x_pred = F @ x
             P_pred = F @ P @ F.T + Q
@@ -66,7 +72,7 @@ class RiskEngine:
         except Exception:
             return 1.58
 
-    def compute_kelly_sizing(self, max_prob: float, brier_score: float, duration_days: float = 0.0, half_life: float = 99.0) -> float:
+    def compute_kelly_sizing(self, max_prob: float, brier_score: float, duration_days: float = 0.0, half_life: float = 99.0, sentiment_multiplier: float = 1.0) -> float:
         logger.info(f"Computing Kelly size (prob: {max_prob}, brier: {brier_score})")
         edge = max_prob - 0.333
         if edge <= 0: return 0.0
@@ -85,4 +91,6 @@ class RiskEngine:
             decay_factor = math.exp(-0.2 * (duration_days - half_life))
             final_fraction *= max(0.2, decay_factor)
             
-        return round(max(0.0, min(1.0, final_fraction)), 3)
+        final_fraction *= sentiment_multiplier
+            
+        return round(max(0.0, min(1.2, final_fraction)), 3)

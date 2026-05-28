@@ -29,7 +29,7 @@ Here is the log of all developments across the past 7 days:
 
 Synthesize this data into a professional weekly institutional report.
 """
-        response = client.models.generate_content(model='gemini-2.5-pro', contents=prompt)
+        response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
         return response.text
     except Exception as e:
         print(f"LLM Generation failed: {e}. Falling back to deterministic template.")

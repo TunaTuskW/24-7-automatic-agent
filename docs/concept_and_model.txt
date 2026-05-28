@@ -2,44 +2,45 @@ MACRO ANALYST AGENT - CONCEPT AND MODEL
 =======================================
 
 1. WHAT IT IS
-This is a 24/7 autonomous quantitative agent that monitors global markets, processes data through deep learning classifiers, and generates institutional-grade macro reports. It runs completely automatically in the background using your computer's scheduler. The presentation layer uses an ultra-minimal "Brutalist Terminal" text-block layout to ensure a data-dense, cross-platform reading experience designed for instant mobile parsing.
+This is a 24/7 autonomous quantitative agent that monitors global markets, processes data through deep learning classifiers, and generates institutional-grade macro reports. It runs completely automatically in the background using your computer's scheduler or inside isolated Docker microservices. The presentation layer uses an ultra-minimal "Brutalist Terminal" text-block layout to ensure a data-dense, cross-platform reading experience designed for instant mobile parsing.
 
-2. THE ENTERPRISE DECOUPLED ARCHITECTURE (v4.5.0 Upgrade)
-Following the v4.5.0 Enterprise upgrade, the agent is refactored from a monolithic script into a clean, decoupled pipeline that integrates abstract interfaces, specialized adapters, a partitioned data lake, and isolated math engines:
+2. THE MULTIMODAL GLOBAL MACRO OS (v4.7.0 Evolution)
+Following the v4.7.0 upgrades, the agent operates as a containerized, event-driven Multimodal Global Macro OS. The architecture shifts from a US-centric text-parsing model into a highly structured global pipeline:
 
-- Core Interfaces: Strict contracts (`DataBroker` and `LLMProvider` under `src/interfaces/`) enforce structural modularity and prevent vendor lock-in.
-- Modular Adapters: Implementing providers (`YahooAdapter` and `GeminiAdapter` under `src/adapters/`) ingest price series, bond yields, and semantically score news headlines.
-- Partitioned Data Lake: The database manager (`LakeManager` under `src/data_lake/`) writes tabular Parquet tables and unstructured JSONL snapshots to daily partitioned directories (`data/raw/YYYY/MM/DD/`).
-- Decoupled engines: Logic is isolated into standalone calculators under `src/engines/` (`feature_engine.py` for indicators, `hmm_engine.py` for HMM regime scoring, and `risk_engine.py` for Kalman/Entropy/Kelly sizing).
-- Contextual Observability: A structured console and JSONL logging framework (`src/observability/logger.py`) maps operations across distinct components, piping events to `data/logs/system_events.jsonl`.
-- Consensus Conductor: The central orchestrator (`src/fetch_market_data.py`) leverages dependency injection to initialize adapters, engines, and managers, executing the sequence smoothly.
+- Event-Driven Pub-Sub Architecture: Standardizes pipeline execution via an in-memory `EventBus` (`src/observability/event_bus.py`). Triggers sequential, decoupled callbacks across five lifecycle phases.
+- Pydantic Validation Schemas: Enforces strict type-safety and structural data contracts utilizing Pydantic models (`src/schemas/models.py`) such as `MarketSnapshot` to eliminate data schema breaks.
+- Global Equity Scan Overhaul: Expands tracking from S&P 500-only to a global scanner tracing major indices: SPX, Nasdaq, N225 (Nikkei), KOSPI, Beijing/SSE (Shanghai), and DAX.
+- Yield Curve Proxy Fallbacks: Implements fallback mechanisms to bypass Federal Reserve FRED API key omissions, dynamically pulling proxy yields (`^TNX` for the 10Y and `^FVX` for the 5Y) directly from Yahoo Finance.
+- Multimodal Prompt & Context Ingestion: Feeds hard quantitative market indicators directly into `GeminiAdapter`'s prompt payload. The Gemini model (`gemini-2.5-flash`) acts as an apex intelligence layer, verifying narrative headlines against statistical quant reality.
+- Containerized OS: Standardizes execution in isolated containerized environments using Docker and Docker-Compose.
 
 3. THE END-TO-END WORKFLOW
-- Context Logging: Conductor initializes, spinning up custom component-level loggers to write system events.
-- Ingestion & Parquet Partitioning: YahooAdapter fetches historical price/yield series. Conductor invokes LakeManager to save daily and hourly series directly to the Data Lake as partitioned Parquet tables (`raw_daily_ohlcv.parquet` and `raw_hourly_ohlcv.parquet`).
-- Feature Construction: FeatureEngine computes stats, GARCH conditional volatility, Gold-to-Silver momentum, Institutional Crypto MFI, and MCS stress metrics.
-- Mathematical Scoring: Conductor pipes feature vectors to HMMEngine and RiskEngine to determine regime probabilities, update Kalman filter matrices, measure Shannon entropy, and calculate exposure targets using Fractional Kelly.
-- NLP News Scoring: GeminiAdapter fetches RSS headlines and semantically decodes geopolitical shock and liquidity drain probabilities via JSON-constrained LLM parsing.
-- Snapshot Lake Log: Conductor packages the complete market state into `data/market_snapshot.json` and writes it as an unstructured daily-partitioned log (`market_snapshot.jsonl`) to the Data Lake.
-- Presentation & Delivery: Report compilers parse the snapshot into Brutalist markdown and push the briefing to Discord/Telegram.
-- Cryptographic Proof: Snapshots are signed and appended to `logs/immutable_chain.log` (TruChain) to guarantee historical audit integrity.
+- Stage 1: `SystemStart` Event: The orchestrator Conductor (`src/fetch_market_data.py`) fires the start sequence, logging operational startup context.
+- Stage 2: `DataFetched` Event: Ingests global index prices, commodities, and yields. If the FRED key is missing, dynamically fetches yfinance bond proxies. Conductor invokes `LakeManager` to save raw Parquet dataframes.
+- Stage 3: `FeaturesEngineered` Event: FeatureEngine processes stats, GARCH conditional volatility, volume heat, Gold-to-Silver ratio, and composite Credit Stress z-scores.
+- Stage 4: `EnginesCompleted` Event: HMMEngine runs inference to map regime probabilities. RiskEngine computes updated Kalman states (validated as `KalmanState`) and Shannon Entropy indices. 
+- Stage 5: `PipelineComplete` Event: streams quantitative indicators directly to GeminiAdapter. The LLM (`gemini-2.5-flash`) synthesizes narrative headlines with quant realities, yielding conviction-weighted `global_macro_sentiment_score` and `fed_policy_hawkishness_prob` structures.
+- Sizing Multiplier & Lake Logging: Applies aggressive Kelly multipliers (up to 120% Kelly exposure during structural expansion, and 0.5x slashes during rate shocks). The final snapshot is validated as a Pydantic `MarketSnapshot` and written to a daily partitioned event log: `data/raw/YYYY/MM/DD/events.jsonl` via the interceptor.
+- Presentation & Delivery: Report compilers (`src/build_report.py`, etc.) pull the snapshot directly from the daily partitioned event log and push brutalist briefings to Discord.
 
 4. THE MATH & MODELS BEHIND THE SCENES
 - Macro Condition Score (MCS): A composite number measuring overall market stress based on stock momentum, interest rates, energy prices, and cross-asset behavior (FeatureEngine).
 - Hidden Markov Models (HMM) & Kalman Filters: These algorithms smooth out daily noise to figure out the "true" underlying regime (HMMEngine & RiskEngine).
 - Deep Classifier (MLP): A trained neural network that double-checks the HMM. 
 - Institutional Footprinting: Natively supports advanced institutional footprinting, including a 20-day continuous Institutional Heat Index (IHI).
-- Semantic NLP NewsSignalVector (Google Gemini LLM Engine): 
-  Operates autonomously via a structured, JSON-constrained Gemini API pipeline to parse live news headlines for strict quantitative shock boundaries.
-  * Parameter Decoding: Gemini parses headlines and outputs strict JSON limits: `liquidity_drain_probability` and `geopolitical_shock_magnitude` (floats in [0.0, 1.0]).
-  * Shock Assignment: Discourages naive directional bias, translating geopolitical shock magnitude into compound volatility shocks (VIX impact) and liquidity drain probabilities into conditional noise multipliers.
-  * Geopolitical Event Flag: Event flag pings are automatically set to 1 if the geopolitical shock magnitude sweeps past the critical **0.70 boundary**, scaling active consensus requirements to 0.65.
+- Multimodal LLM Synthesis (Google Gemini Flash Engine): 
+  Synthesizes live unstructured news feeds with hard quantitative indicators:
+  * Parameter Decoding: GeminiFlash parses text and quant data to output strict JSON: `global_macro_sentiment_score` and `fed_policy_hawkishness_prob` (floats in [0.0, 1.0]).
+  * Multimodal Verification: Verifies narrative (news) against reality (hard quant data).
+  * Rate-Shock Signal Trigger: Activates a rate-shock `SHORT` signal (conviction-weighted) if the Federal Reserve policy Hawkishness sweeps past the **0.75 boundary**, which instantly slashes Kelly sizing exposure by half (0.5x multiplier) to insulate the system from interest rate surges.
 - Hyperparameter Tuning Meta-Agent (tune_hyperparameters.py):
   * Dynamic Parameter Tuning: A standalone meta-agent scheduled to run weekly. It feeds massive macroeconomic text blocks (such as FOMC meeting minutes or Beige Books) to the Gemini LLM.
   * Configuration Tuning: Translates central bank transcripts into concrete mathematical half-life decay thresholds and calibration scalars, dynamically overwriting active constants in `fetch_market_data.py` via the local `tuning_configs.json` configuration file.
 
 5. ADVANCED MODEL GOVERNANCE & TACTICAL ASSUMPTIONS
-- Kelly Sizing Decay Penalty: The algorithm targets exposure using the Fractional Kelly Criterion, heavily penalized by historical Brier Score calibration. Furthermore, if a regime outlives its mathematical "half-life" (e.g., 11 days for RISK_ON), an exponential decay penalty forcefully scales the portfolio exposure down, enforcing systematic profit-taking before transitions occur.
+- Aggressive Kelly Sizing (1.2x Kelly Sizing): Sizing is calculated via the Fractional Kelly Criterion, penalized by historical Brier Score calibration and exponential duration decay. 
+- Sizing Leverage Overdrive: Under v4.6.0/v4.7.0, if the multimodal LLM fires a `LONG` sentiment signal during a structural `RISK_ON_EXPANSION` regime, the system is authorized to apply a **1.2x multiplier**, pushing target portfolio exposure bounds up to **120% Kelly size**.
+- Contraction Slasher (0.5x Slasher): Conversely, if the LLM fires a `SHORT` position due to rate shocks or severe economic contractions, Kelly sizing is aggressively slashed by half (**0.5x multiplier**), promoting systematic profit-taking.
 - 1.5 Std Dev Dynamic Boundaries: Continuously tracks volatility thresholds to automatically invalidate outdated narratives upon statistical sweeps.
 
 6. ESCALATION SYSTEM
@@ -49,7 +50,7 @@ The agent respects your time and won't spam you with panicky alerts. It only fla
 - CRITICAL: Extreme mathematical stress (e.g., VIX > 30, simultaneous stock and bond crashes). Discord will ping you heavily for these.
 
 7. THE AUTOMATED SCHEDULE
-The agent manages three distinct workflows natively via bash scripts (run_4h.sh, run_daily.sh, run_weekly.sh) executed by cron:
+The agent manages three distinct workflows natively via bash scripts (run_4h.sh, run_daily.sh, run_weekly.sh) executed by cron or docker scheduling:
 - The 4-Hour Briefing: A quick pulse-check of the active market session.
 - The Daily Roll: At midnight, it pushes a master document containing the last 72 hours of updates.
 - The Sunday Synthesis: A deep-dive research report summarizing the entire week and previewing the week ahead.

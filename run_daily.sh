@@ -13,7 +13,7 @@ LATEST_ROLL=$(ls -t reports/72\ hours\ roll\ *.md 2>/dev/null | head -n 1)
 
 if [ -n "$LATEST_ROLL" ]; then
     echo "Pushing $LATEST_ROLL to Discord..."
-    python3 src/push_to_discord.py "$LATEST_ROLL" DAILY
+    PYTHONPATH=. python3 src/push_to_discord.py "$LATEST_ROLL" DAILY
 else
     echo "No 72 hours roll file found."
 fi

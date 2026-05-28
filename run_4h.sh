@@ -10,13 +10,13 @@ echo "Running automated pipeline: $(date)"
 echo "==========================================="
 
 echo "1) Fetching market data..."
-python3 src/fetch_market_data.py
+PYTHONPATH=. python3 src/fetch_market_data.py
 
 echo "2) Building 4-hour report and pushing to Discord..."
-python3 src/build_report.py
+PYTHONPATH=. python3 src/build_report.py
 
 echo "3) Updating the local 72-hours roll file..."
-python3 src/build_72h_roll.py
+PYTHONPATH=. python3 src/build_72h_roll.py
 
 echo "Pipeline complete!"
 echo "==========================================="
