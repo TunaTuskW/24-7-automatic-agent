@@ -31,7 +31,15 @@ class YahooAdapter(DataBroker):
             
     def fetch_yield(self, series_id: str) -> float:
         if not self.fred_key:
-            logger.warning("No FRED key provided. Cannot fetch yield.")
+            logger.info(f"No FRED key. Falling back to Yahoo Finance for {series_id}")
+            yf_ticker = "^TNX" if series_id == "DGS10" else "^FVX"
+            try:
+                tk = yf.Ticker(yf_ticker)
+                hist = tk.history(period="1d")
+                if not hist.empty:
+                    return float(hist['Close'].iloc[-1])
+            except Exception as e:
+                logger.error(f"Yahoo fallback failed for {yf_ticker}: {e}")
             return 0.0
             
         logger.info(f"Fetching FRED yield for {series_id}")

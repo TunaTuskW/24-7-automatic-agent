@@ -2,7 +2,10 @@ import json
 import os
 
 new_code_cell = [
+    "import sys\n",
     "import os\n",
+    "sys.path.append(os.path.abspath(os.path.join(os.getcwd(), '..')))\n",
+    "\n",
     "import json\n",
     "from src.schemas.models import MarketSnapshot\n",
     "\n",
@@ -47,12 +50,17 @@ for notebook in ["src/visualize_math_4h.ipynb", "src/visualize_math_1w.ipynb"]:
         
     for cell in nb.get("cells", []):
         if cell["cell_type"] == "code":
-            # Check if this is the cell that loads market_snapshot
+            # Check if this is the cell that loads market_snapshot or if it's our previous fix
             source = "".join(cell["source"])
-            if "snapshot_path =" in source or "market_snapshot.json" in source or "events.jsonl" in source:
-                cell["source"] = new_code_cell
+            if "snapshot_path =" in source or "market_snapshot.json" in source or "events.jsonl" in source or "from src.schemas.models" in source:
+                # Need to be careful not to rewrite everything if not necessary, but since our previous rewrite 
+                # just contained the above code, replacing it again is perfectly safe.
+                if "MarketSnapshot" in source and "sys.path.append" not in source:
+                    cell["source"] = new_code_cell
+                elif "snapshot_path =" in source:
+                     cell["source"] = new_code_cell
                 
     with open(notebook, 'w') as f:
         json.dump(nb, f, indent=1)
         
-print("Updated notebooks.")
+print("Updated notebooks with sys.path fix.")

@@ -44,7 +44,7 @@ def fetch_rss_headlines():
 
 class Conductor:
     def __init__(self):
-        logger.info("Initializing v4.6.0 Event-Driven Conductor")
+        logger.info("Initializing v4.7.0 Event-Driven Conductor")
         self.event_bus = EventBus()
         self.lake_manager = LakeManager()
         self.event_bus.set_interceptor(self.lake_manager.log_event)
@@ -281,8 +281,24 @@ class Conductor:
 
     def handle_engines_completed(self, payload):
         headlines = fetch_rss_headlines()
-        news_res = self.llm_provider.parse_news(headlines)
+        news_res = self.llm_provider.parse_news(headlines, market_data=self.feature_metadata)
         self.snapshot.news_signal = news_res
+        
+        # Override kelly if global macro sentiment is extreme
+        sentiment = self.snapshot.news_signal.conviction
+        signal = self.snapshot.news_signal.signal
+        regime = self.snapshot.regime.current
+        
+        multiplier = 1.0
+        if signal == "LONG" and sentiment >= 0.75 and regime == "RISK_ON_EXPANSION":
+            multiplier = 1.2
+        elif signal == "SHORT":
+            multiplier = 0.5
+            
+        current_kelly = self.snapshot.data_science_layer["epistemic_metrics"]["kelly_exposure_fraction"]
+        if multiplier != 1.0:
+            new_kelly = round(min(1.2, current_kelly * multiplier), 3)
+            self.snapshot.data_science_layer["epistemic_metrics"]["kelly_exposure_fraction"] = new_kelly
         
         spx_ret_now = self.clean_daily.get("SPX", {}).get("delta_pct", 0.0) if self.clean_daily.get("SPX") else 0.0
         escalation = "ROUTINE"
@@ -313,7 +329,7 @@ class Conductor:
         with open(prior_path, 'w') as f:
             json.dump(snapshot_dict, f, indent=4)
             
-        logger.info("v4.6.0 Event-Driven Pipeline Complete")
+        logger.info("v4.7.0 Event-Driven Pipeline Complete")
 
 def main():
     conductor = Conductor()

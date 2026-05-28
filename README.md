@@ -1,6 +1,6 @@
-# Macro Briefing Agent Setup Guide (v4.5.0)
+# Macro Briefing Agent Setup Guide (v4.7.0)
 
-Welcome to the **Macro Briefing Agent (v4.5.0)**—a 24/7 autonomous quantitative intelligence and execution pipeline. This project decouples data ingestion, partitioned storage, and mathematical engines into an enterprise-grade framework.
+Welcome to the **Macro Briefing Agent (v4.7.0)**—a 24/7 autonomous containerized **Multimodal Global Macro OS** and execution pipeline. This project decouples data ingestion, partitioned storage, mathematical engines, and pub-sub event dispatching into an enterprise-grade framework.
 
 ### 📚 Documentation Navigation Ledger
 
@@ -8,97 +8,103 @@ Welcome to the **Macro Briefing Agent (v4.5.0)**—a 24/7 autonomous quantitativ
 | :--- | :--- | :--- | :--- |
 | **[README.md](file:///Users/mac/agent/README.md)** | Master operational dashboard & orchestration map. | Users, Operators, Developers | Project Layout, Setup Guide, Cron Automation, Visualization |
 | **[docs/concept_and_model.txt](file:///Users/mac/agent/docs/concept_and_model.txt)** | Mathematical, statistical, and neural network blueprints. | Quants, Researchers | Hybrid Architecture, HMM & Kalman math, GARCH, Kelly Sizing, Escalation Logic |
-| **[docs/macro_agent_setup_v4.5.0.md](file:///Users/mac/agent/docs/macro_agent_setup_v4.5.0.md)** | Developer manual detailing the v4.5.0 modular refactor. | Software Engineers | Decoupled blueprint, Dependency Injection, Data Lake partitions, Logging |
+| **[docs/macro_agent_setup_v4.7.0.md](file:///Users/mac/agent/docs/macro_agent_setup_v4.7.0.md)** | Developer manual detailing the v4.7.0 Event-Driven OS. | Software Engineers | Event-Driven blueprint, Dependency Injection, Data Lake partitions, Logging |
 | **[docs/CRON_SETUP.md](file:///Users/mac/agent/docs/CRON_SETUP.md)** | Complete Unix/macOS automation guide. | Operators, DevOps | Cron syntax, Mac sleep guidelines, catch-up commands, troubleshooting |
 
 
 ## Project Structure Overview
-Following the v4.5.0 Enterprise Architecture refactor, the project is organized into a highly decoupled, professional modular pipeline:
+Following the v4.7.0 Multimodal Global Macro OS upgrade, the project is organized into a highly decoupled, professional modular pipeline:
 - **`config/`**: Contains your API keys and webhook configurations (`fred_api_key.txt`, `webhook_config.txt`, `api_keys.json`, `tuning_configs.json`, etc.).
 - **`src/`**: Houses the core Python code organized as modular packages:
   - **`interfaces/`**: Standardized OOP interfaces (`data_broker.py`, `llm_provider.py`) defining loose-coupling contracts.
   - **`adapters/`**: Physical retrieval clients (`yahoo_adapter.py` for yfinance/FRED, `gemini_adapter.py` for Gemini GenAI) implementing interface layers.
   - **`data_lake/`**: Database partition manager (`lake_manager.py`) handling daily-partitioned Parquet/JSONL.
   - **`engines/`**: Mapped quantitative processing and mathematical engines (`feature_engine.py`, `hmm_engine.py`, `risk_engine.py`).
-  - **`observability/`**: Contextual logging layer (`logger.py`) routing logs to console and `system_events.jsonl`.
-  - **`fetch_market_data.py`**: Central Enterprise Conductor orchestrating the ingestion and inference sequence using dependency injection.
+  - **`observability/`**: Standardized context logging (`logger.py`) and pub-sub event dispatching (`event_bus.py`).
+  - **`schemas/`**: Strict type-validation layer (`models.py`) housing Pydantic models for the entire pipeline state.
+  - **`fetch_market_data.py`**: Central Conductor orchestrating the ingestion and inference sequence using dependency injection.
   - **`build_report.py`, `build_weekly_synthesis.py`, `build_72h_roll.py`**: Presentation and formatting compilation scripts.
   - **`push_to_discord.py`**: Secured push delivery agent.
   - **`train_models.py`, `backtest.py`, `tune_hyperparameters.py`**: Model training, auditing, and tuning meta-agents.
   - **`visualize_math_4h.ipynb`, `visualize_math_1w.ipynb`**: Visual overlay Jupyter Notebooks.
-- **`docs/`**: Documentation and System Architecture Manuals (`macro_agent_setup_v4.5.0.md`).
+- **`docs/`**: Documentation and System Architecture Manuals (`macro_agent_setup_v4.7.0.md`).
 - **`data/`**: Local data snapshots and caches.
-- **`data/raw/`**: The local partitioned Data Lake structured as `YYYY/MM/DD/` directories.
+- **`data/raw/`**: The local partitioned Data Lake structured as `YYYY/MM/DD/` directories housing Parquet price tables and partitioned event logs (`events.jsonl`).
 - **`models/`**: Saved machine learning models and scaler binaries.
 - **`reports/`**: Mapped output briefings and backtest records.
 - **`logs/`**: Execution, error, and immutable audit logs.
-- **`older_versions/`**: Archived setup instructions from the legacy LLM era.
+- **`Dockerfile`, `docker-compose.yml`, `requirements.txt`**: Complete containerization and deployment configurations.
 
 ---
 
-## v4.5.0 Enterprise Pipeline Architecture
+## v4.7.0 Multimodal Event-Driven Architecture
 
-The data pipeline has been upgraded from a monolithic workflow to an enterprise-grade decoupled ingestion and inference architecture:
+The data pipeline has been upgraded from a monolithic workflow to an enterprise-grade containerized event-driven architecture featuring type-safe validation and multimodal LLM prompt synthesis:
 
 ```mermaid
 graph TD
     %% Source Ingestion
-    subgraph Ingestion["1. Data Ingestion & Adapters"]
-        YF["yfinance API"] --> YA["YahooAdapter<br>(DataBroker)"]
-        FRED["FRED API"] --> YA
-        News["RSS News Feeds"] --> GA["GeminiAdapter<br>(LLMProvider)"]
-        GA -->|"gemini-2.5-pro<br>(JSON constrained)"| NewsScore["Geopolitical Shock<br>& Liquidity Score"]
+    subgraph Ingestion["1. Data Ingestion & Fallbacks"]
+        YF["yfinance API"] --> YA["YahooAdapter (DataBroker)"]
+        FRED["FRED API"] -->|"Optional Key"| YA
+        YA -->|"Missing FRED Key Fallback"| Fallback["Yahoo proxy yields (^TNX & ^FVX)"]
+        News["RSS News Feeds"] --> GA["GeminiAdapter (LLMProvider)"]
     end
 
     %% Enterprise Conductor
-    subgraph Conductor["2. Conductor Orchestration"]
-        EC["fetch_market_data.py<br>(Enterprise Conductor)"]
-        YA -->|"Daily/Hourly OHLCV & Yields"| EC
-        NewsScore -->|"Semantic Shock Probability"| EC
+    subgraph Conductor["2. Event-Driven Conductor"]
+        EB["EventBus (src/observability/event_bus.py)"]
+        EC["fetch_market_data.py (Conductor Orchestrator)"]
+        EC -->|"SystemStart"| EB
+        EB -->|"DataFetched"| EC
+        EB -->|"FeaturesEngineered"| EC
+        EB -->|"EnginesCompleted"| EC
+        EB -->|"PipelineComplete"| EC
     end
 
     %% Data Lake Storage
-    subgraph DataLake["3. Partitioned Data Lake"]
-        LM["LakeManager"]
-        EC -->|"Ingested Dataframes"| LM
-        LM -->|"save_tabular (Parquet)"| DailyPart["data/raw/YYYY/MM/DD/<br>(raw_daily_ohlcv, raw_hourly_ohlcv)"]
+    subgraph DataLake["3. Partitioned Data Lake & Event Log"]
+        LM["LakeManager (data_lake/)"]
+        LM -->|"save_tabular (Parquet)"| DailyPart["data/raw/YYYY/MM/DD/<br>(raw_daily_ohlcv.parquet, raw_hourly_ohlcv.parquet)"]
+        LM -->|"Global Event Intercept"| EventLog["data/raw/YYYY/MM/DD/events.jsonl"]
+        EB -->|"All fired events intercepted"| LM
     end
 
     %% Mathematical Engines
-    subgraph Engines["4. Quantitative Engines"]
+    subgraph Engines["4. Quantitative Engines & Type Safety"]
         FE["FeatureEngine"]
         HMM["HMMEngine"]
         RE["RiskEngine"]
-        EC -->|"Process Stats, GARCH, MCS, volume heat"| FE
-        FE -->|"10D Feature Vector"| HMM
-        HMM -->|"Regime Mapped Probabilities"| RE
-        RE -->|"Kalman Filter State & Shannon Entropy"| RE
-        RE -->|"Fractional Kelly Sizing"| RE
+        Schema["Pydantic Schemas (src/schemas/models.py)"]
+        FE -->|"Process stats, GARCH, Credit composite z"| Schema
+        Schema -->|"10D Feature Vector"| HMM
+        HMM -->|"Regime probabilities"| Schema
+        Schema -->|"KalmanFilter / Entropy"| RE
+        RE -->|"1.2x Kelly exposure or 0.5x slashes"| Schema
     end
 
-    %% Persistence & Verification
-    subgraph Output["5. Snapshot & Auditing"]
-        EC -->|"Complete Market snapshot"| Snap["data/market_snapshot.json"]
-        EC -->|"Snapshot log append"| LM
-        LM -->|"save_unstructured (JSONL)"| SnapL["data/raw/YYYY/MM/DD/<br>(market_snapshot.jsonl)"]
-        EC -->|"TruChain L3 Signature"| Chain["logs/immutable_chain.log"]
+    %% Multimodal LLM Synthesis
+    subgraph Synthesis["5. Multimodal LLM Synthesis"]
+        Schema -->|"Live quant data (feature_metadata)"| GA
+        GA -->|"gemini-2.5-flash (429 Optimization)"| Prompt["Rewrite Prompt: Synthesize quant reality + narrative"]
+        Prompt -->|"Sentiment & Hawkishness scores"| EC
     end
 
-    %% Reporting & Delivery
-    subgraph Reporting["6. Compilation & Delivery"]
-        Snap -->|"Report compilation"| BR["build_report.py<br>(4h / Daily Roll / Weekly)"]
+    %% Delivery & Reporting
+    subgraph Output["6. Snapshot & Reporting"]
+        EC -->|"Pydantic validated snapshot"| Snap["data/market_snapshot.json"]
+        EC -->|"Snapshot append event"| LM
+        Snap -->|"Retrieve from events.jsonl"| BR["build_report.py (Consensus Compiler)"]
         BR -->|"Brutalist Markdown"| PD["push_to_discord.py"]
         PD -->|"Discord Webhook"| Discord["Discord Channels"]
     end
 
     %% Styling
     style EC fill:#003366,stroke:#ffffff,stroke-width:2px,color:#ffffff
+    style EB fill:#005588,stroke:#ffffff,stroke-width:1.5px,color:#ffffff
     style LM fill:#006666,stroke:#ffffff,stroke-width:2px,color:#ffffff
-    style YA fill:#660066,stroke:#ffffff,stroke-width:1px,color:#ffffff
+    style Schema fill:#885500,stroke:#ffffff,stroke-width:2px,color:#ffffff
     style GA fill:#660066,stroke:#ffffff,stroke-width:1px,color:#ffffff
-    style FE fill:#666600,stroke:#ffffff,stroke-width:1px,color:#ffffff
-    style HMM fill:#666600,stroke:#ffffff,stroke-width:1px,color:#ffffff
-    style RE fill:#666600,stroke:#ffffff,stroke-width:1px,color:#ffffff
 ```
 
 ---
@@ -109,18 +115,20 @@ The Python architecture is structured as a modular quantitative pipeline. Below 
 
 1. **`fetch_market_data.py` (The Enterprise Conductor Orchestrator)**
    - **Dependency Injection:** Instantiates and injects concrete providers (`YahooAdapter`, `GeminiAdapter`, `LakeManager`, `HMMEngine`, `RiskEngine`) to handle operations dynamically.
-   - **Structured Logging (`src/observability/logger.py`):** Operates contextual loggers to route structured console prints and JSONL records to `data/logs/system_events.jsonl` with dynamic context filters.
-   - **Ingestion & Data Lakeing (`src/data_lake/lake_manager.py`):** Ingests daily and hourly dataframes, immediately serializing them as Parquet tables under a daily partitioned structure: `data/raw/YYYY/MM/DD/`.
-   - **Feature Construction (`src/engines/feature_engine.py`):** Computes GARCH volatility, Gold-to-Silver momentum, Institutional digital asset compose MFI scores, volume heat indicators, and the cryptographic TruChain blocks.
-   - **regime Scoring (`src/engines/hmm_engine.py`):** Computes multi-fractal Hidden Markov Model probability maps over structural (daily) and tactical (hourly) feature horizons.
-   - **Risk State Mapping (`src/engines/risk_engine.py`):** Runs the Kalman Filter sequence, measures Shannon Entropy uncertainty, and solves Fractional Kelly sizing exposure calibrated by past forecast Brier scores and half-life decays.
-   - **NLP News Processor (`src/adapters/gemini_adapter.py`):** Utilizes JSON-constrained Gemini API parameters to decode news signals for strict shock and liquidity boundaries.
+   - **EventBus Pub-Sub Sequence (`src/observability/event_bus.py`):** Runs the pipeline as a series of decoupled events (`SystemStart` -> `DataFetched` -> `FeaturesEngineered` -> `EnginesCompleted` -> `PipelineComplete`).
+   - **Structured Logging & Global Interception (`src/data_lake/lake_manager.py`):** Captures every event fired in the system and logs it directly to `events.jsonl` under daily partitioned folders: `data/raw/YYYY/MM/DD/events.jsonl`.
+   - **Type-Safe Validation (`src/schemas/models.py`):** Uses Pydantic to enforce data structure contracts dynamically across conductors, adapters, and engines.
+   - **Asset Ingestion & Parquet Partitioning:** Ingests price series, saving raw tables under the daily partition as Parquet tables.
+   - **Feature Construction (`src/engines/feature_engine.py`):** Computes GARCH volatility, Gold-to-Silver ratio, volume heat, credit stress composite z-scores, and TruChain blocks.
+   - **regime Inference & Sizing (`src/engines/hmm_engine.py` & `src/engines/risk_engine.py`):** Computes multi-fractal regimes, runs Kalman filter state tracking, and solves Kelly portfolio sizing.
+   - **Multimodal prompt Synthesis (`src/adapters/gemini_adapter.py`):** Streams live quant contextual data (`self.feature_metadata`) directly into the Gemini prompt payload alongside unstructured headlines. Employs `gemini-2.5-flash` to gracefully bypass quota 429 errors.
 
 2. **`build_report.py` (Consensus Engine & 4-Hour Compiler)**
-   - **Deterministic Voting:** Aggregates quantitative indicators into `ModelResult` dataclasses and computes conviction-weighted votes.
+   - **Resilient Log Fetching:** Scans the data lake partitions, finds the latest `events.jsonl` log file, extracts the `PipelineComplete` event payload, and validates it against the `MarketSnapshot` Pydantic model.
+   - **Deterministic Voting:** Aggregates quantitative indicators and computes conviction-weighted votes.
    - **Gemini NLP Threshold Conditioning:** Dynamic consensus voting thresholds are scaled automatically based on the Gemini semantically-decoded shock probabilities.
    - **Timeframe Conflict Resolution:** Automatically slashes the HMM Kalman conviction weight by 50% if the Tactical Hourly HMM contradicts the Structural Daily HMM.
-   - **Epistemic Kelly Sizing:** Target portfolio exposure is loaded directly from the snapshot, calibrated by Brier score metrics and half-life decay thresholds.
+   - **Epistemic Kelly Sizing:** Solves target portfolio exposure sizing calibrated by Brier scores and regime decays. Applies a **1.2x aggressive multiplier** (up to 120% exposure) during liquidity-driven rallies, and a **0.5x slasher** during rate shocks.
    - **Presentation:** Formats the mathematical state matrices into the minimalist, Brutalist Markdown template, logs session updates, and triggers the Discord webhook pusher.
 
 3. **`build_72h_roll.py` (72-Hour Cumulative Roll Compiler)**
@@ -130,8 +138,9 @@ The Python architecture is structured as a modular quantitative pipeline. Below 
 
 4. **`build_weekly_synthesis.py` (Weekly Macro Research Synthesizer)**
    - **Narrative Assembly:** Executed weekly to build a comprehensive summary.
+   - **Resilient Log Fetching:** Reads the latest `events.jsonl` daily partitioned event logs and validates the snap using `MarketSnapshot`.
    - **Dual-Mode Generation:**
-     * **LLM Mode (Online):** If a valid Gemini API key is configured, the script packages the week's end-of-week quantitative JSON and the chronological development log, feeding them to the `gemini-2.5-pro` model to write an institutional narrative synthesis.
+     * **LLM Mode (Online):** If a valid Gemini API key is configured, the script packages the week's end-of-week quantitative JSON and the chronological development log, feeding them to the `gemini-2.5-flash` model to write an institutional narrative synthesis.
      * **Deterministic Mode (Fallback):** If offline or the key is absent, the script falls back to a deterministic brutalist template mapping identical mathematical metrics.
    - **Delivery:** Triggers the Discord webhook agent to push the weekly summary.
 
@@ -191,19 +200,20 @@ Ensure you have **Python 3** installed on your system. You will also need to ins
    ```
 2. Install the required dependencies:
    ```bash
-   pip3 install yfinance pandas numpy requests joblib arch matplotlib seaborn jupyter
+   pip3 install -r requirements.txt
    ```
 
 ### API Keys & Configuration Setup
 To configure operational parameters, API keys, and configurations:
 
-1. **FRED API Yield Feeds:**
+1. **FRED API Yield Feeds (Optional fallback available):**
    - Go to the [FRED website](https://fred.stlouisfed.org/) and register to get a free FRED API key.
    - Duplicate the FRED API example configuration file:
      ```bash
      cp config/fred_api_key.example.txt config/fred_api_key.txt
      ```
    - Open `config/fred_api_key.txt` and paste your API key. (Or `export FRED_API_KEY="your_key"`).
+   - *Note: If this key is omitted or missing, the system dynamically activates yfinance proxy fallbacks (`^TNX` & `^FVX`).*
 
 2. **Gemini LLM Integrations (News Parsing & Hyperparameter Tuning):**
    - Obtain a Gemini API key from Google AI Studio.
@@ -229,10 +239,10 @@ To configure operational parameters, API keys, and configurations:
 
 ## 2. System Architecture & Technical Manual
 
-The agent is now structured under the **v4.5.0 Enterprise Architecture**, featuring loose-coupling OOP components, structured contextual loggers, partitioned databases, and specialized mathematical engines.
+The agent is now structured under the **v4.7.0 Multimodal Global Macro OS**, featuring loose-coupling OOP components, in-memory `EventBus` pub-sub, type-safe Pydantic validations, and Docker container support.
 
 For a full breakdown of the mathematical engines, data ingestion layers, Kelly sizing decay penalties, and consensus logic, please refer to the **Technical Developer Manual** located at:
-`docs/macro_agent_setup_v4.5.0.md`
+`docs/macro_agent_setup_v4.7.0.md`
 
 ---
 
@@ -356,6 +366,18 @@ Whenever changes are made to the system architecture, automatically update the v
 - **Tiny change** (e.g., typo fix, formatting): Increment sub-patch version (x.x.x.1 to 9). Example: v1.3.1 -> v1.3.1.1
 
 ### Patch Notes:
+- **v4.7.0** (Multimodal LLM Synthesis):
+  - **[ADDED] Quantitative Context Injection:** Streams complete quantitative metadata (`self.feature_metadata`) directly into the LLM adapter payload alongside news headlines.
+  - **[ADDED] Prompt Engineering Overhaul:** Redesigned the LLM prompt to dynamically evaluate and verify qualitative news stories against hard quantitative market realities, scoring macro sentiment and hawkishness probabilities.
+  - **[ADDED] gemini-2.5-flash Integration:** Switched the LLM engine to `gemini-2.5-flash` for ultra-low latency execution and graceful bypassing of HTTP 429 quota exhaustion blocks on free-tier keys.
+- **v4.6.0** (Global Macro Pivot):
+  - **[ADDED] Event-Driven Pub-Sub Architecture:** Implemented in-memory `EventBus` pub-sub event sequencing (`SystemStart` -> `DataFetched` -> `FeaturesEngineered` -> `EnginesCompleted` -> `PipelineComplete`).
+  - **[ADDED] Type-Safe Pydantic Schemas:** Created structured schemas (`MarketSnapshot`, `RegimeState`, `KalmanState`, etc.) under `src/schemas/` to guarantee pipeline state type safety.
+  - **[ADDED] Daily Event Log Interceptor:** Configured the `LakeManager` to intercept all EventBus events and append them to an immutable, daily partitioned event log: `data/raw/YYYY/MM/DD/events.jsonl`.
+  - **[ADDED] Nikkei, KOSPI, SSE, DAX Scanning:** Expanded index tracking to DAX, Nikkei (N225), KOSPI, FTSE, and SSE global indices alongside commodities and FX.
+  - **[ADDED] Automated Yield Curve Fallbacks:** Implemented yfinance Treasury yield proxy fallbacks (`^TNX` & `^FVX`) to insulate the bond metrics from FRED API failures.
+  - **[ADDED] 1.2x Aggressive Kelly Sizing:** Configured Kelly sizing limits to expand bounds up to 1.2x (120% exposure) during major expansions/rallies, and slash by 0.5x during contractions.
+  - **[ADDED] Docker Containerization:** Added a multi-volume `Dockerfile` and `docker-compose.yml` to support fully containerized local microservice deployments.
 - **v4.5.0** (Enterprise Architecture Refactor):
   - **[ADDED] Decoupled Interface Layers:** Standardized `DataBroker` and `LLMProvider` abstract interface classes under `src/interfaces/`.
   - **[ADDED] Modular Adapter Components:** Added `YahooAdapter` and `GeminiAdapter` under `src/adapters/` implementing OOP contracts.
