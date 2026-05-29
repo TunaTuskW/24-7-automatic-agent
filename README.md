@@ -2,15 +2,6 @@
 
 Welcome to the **Macro Briefing Agent (v4.8.0)**—a 24/7 autonomous containerized **Mixture of Experts & CoT OS** and execution pipeline. This project decouples data ingestion, economic calendars, parallel LLM experts, consensus synthesis, and pub-sub event dispatching into an enterprise-grade framework.
 
-### 📚 Documentation Navigation Ledger
-
-| Document | Purpose | Target Audience | Key Sections |
-| :--- | :--- | :--- | :--- |
-| **[README.md](file:///Users/mac/agent/README.md)** | Master operational dashboard & orchestration map. | Users, Operators, Developers | Project Layout, Setup Guide, Cron Automation, Visualization |
-| **[docs/concept_and_model.txt](file:///Users/mac/agent/docs/concept_and_model.txt)** | Mathematical, statistical, and neural network blueprints. | Quants, Researchers | Hybrid Architecture, HMM & Kalman math, GARCH, Kelly Sizing, Escalation Logic |
-| **[docs/macro_agent_setup_v4.8.0.md](file:///Users/mac/agent/docs/macro_agent_setup_v4.8.0.md)** | Developer manual detailing the v4.8.0 Event-Driven MoE OS. | Software Engineers | MoE blueprint, CoT prompt engineering, Calendar parsing, Sizing slashes |
-| **[docs/CRON_SETUP.md](file:///Users/mac/agent/docs/CRON_SETUP.md)** | Complete Unix/macOS automation guide. | Operators, DevOps | Cron syntax, Mac sleep guidelines, catch-up commands, troubleshooting |
-
 
 ## Project Structure Overview
 Following the v4.8.0 Mixture of Experts & CoT OS upgrade, the project is organized into a highly decoupled, professional modular pipeline:
@@ -40,7 +31,106 @@ Following the v4.8.0 Mixture of Experts & CoT OS upgrade, the project is organiz
 ## v4.8.0 Mixture of Experts Event-Driven Architecture
 
 The data pipeline operates as an enterprise-grade containerized event-driven OS featuring parallel LLM experts, step-by-step Chain-of-Thought (CoT) verification, and quantitative divergence protection filters:
----
+```mermaid
+graph TD
+    %% Define Styles & Classes (Curated HSL tailored soft color scheme)
+    classDef IngestStyle fill:#f7fafc,stroke:#e2e8f0,stroke-width:1.5px,color:#4a5568;
+    classDef ConductorStyle fill:#ebf8ff,stroke:#bee3f8,stroke-width:2px,color:#2b6cb0;
+    classDef EngineStyle fill:#faf5ff,stroke:#e9d8fd,stroke-width:2px,color:#553c9a;
+    classDef MoEStyle fill:#fffaf0,stroke:#feebc8,stroke-width:2px,color:#c05621;
+    classDef OutputStyle fill:#f0fff4,stroke:#c6f6d5,stroke-width:2px,color:#22543d;
+
+    %% 1. Data Ingestion & Fallbacks
+    subgraph Ingestion["1. Data Ingestion & Fallbacks"]
+        YF["yfinance API"] --> YA["YahooAdapter (DataBroker)"]
+        FRED["FRED API"] -->|"Optional Key"| YA
+        YA -->|"Missing FRED Key Fallback"| Fallback["Yahoo proxy yields (^TNX & ^FVX)"]
+        FF["Forex Factory API"] --> FA["ForexFactoryAdapter"]
+        News["RSS News Feeds"] --> GA["GeminiAdapter (LLMProvider)"]
+    end
+
+    %% 2. Processing & Conductor Phase
+    subgraph Conductor["2. Event-Driven Conductor & Database Inception"]
+        Cond["fetch_market_data.py (Conductor Orchestrator)"]
+        Bus["EventBus (src/observability/event_bus.py)"]
+        Lake["LakeManager (data_lake/)"]
+        DailyPart["data/raw/YYYY/MM/DD/<br>(raw_daily_ohlcv.parquet, raw_hourly_ohlcv.parquet)"]
+        EventLog["data/raw/YYYY/MM/DD/events.jsonl"]
+        
+        YA --> Cond
+        Fallback --> Cond
+        FA --> Cond
+        GA --> Cond
+        Cond -->|"SystemStart"| Bus
+        Bus -->|"All fired events intercepted"| Lake
+        Lake -->|"save_tabular (Parquet)"| DailyPart
+        Lake -->|"Global Event Intercept"| EventLog
+    end
+
+    %% 3. Quantitative Engines & Type-Safety Checkpoints
+    subgraph Engines["3. Quantitative Mathematical Engines & Type-Safety"]
+        FE["FeatureEngine"]
+        Schema1["Pydantic Schema: Feature Vector"]
+        HMM["HMMEngine (6-Regime GaussianHMM)"]
+        Schema2["Pydantic Schema: RegimeState"]
+        RE["RiskEngine (Kalman & Kelly Sizing)"]
+        Schema3["Pydantic Schema: RiskState"]
+        
+        DailyPart --> FE
+        FE -->|"Process stats, GARCH, Credit composite z"| Schema1
+        Schema1 -->|"10D Feature Vector"| HMM
+        HMM -->|"Regime probabilities"| Schema2
+        Schema2 -->|"KalmanFilter & Entropy"| RE
+        RE -->|"1.2x Kelly Sizing / 0.5x Slasher"| Schema3
+    end
+
+    %% 4. Parallel LLM Experts (MoE)
+    subgraph MoE["4. Parallel LLM Experts & Chain-of-Thought (CoT)"]
+        ThreadPool["ThreadPoolExecutor (gemini-2.5-flash)"]
+        MacroEx["Macro Policy Expert<br>(Ingests headlines, calendar, spread)"]
+        PsychEx["Market Psychology Expert<br>(Ingests headlines, VIX, vol heat)"]
+        
+        Schema3 -->|"Parallel ThreadPool execution"| ThreadPool
+        ThreadPool -->|"Quant Context Ingestion"| MacroEx
+        ThreadPool -->|"Quant Context Ingestion"| PsychEx
+    end
+
+    %% 5. Consensus & Slasher
+    subgraph Consensus["5. Consensus Engine & Capital Defense"]
+        MoECon["ConsensusEngine (engines/consensus_engine.py)"]
+        DivergeCheck{"VIX z-score > 1.5<br>& Bullish Headlines?"}
+        Flag["Set quantitative_divergence_flag = True<br>dynamically slashes Kelly by 0.5x"]
+        Normal["Neutral / Normal consensus sizing"]
+        
+        MacroEx -->|"CoT reasoning contract"| MoECon
+        PsychEx -->|"CoT reasoning contract"| MoECon
+        MoECon -->|"Checks narrative-reality divergence"| DivergeCheck
+        DivergeCheck -->|YES| Flag
+        DivergeCheck -->|NO| Normal
+    end
+
+    %% 6. Snapshot & Reporting
+    subgraph Output["6. Persistent Event Logging & Delivery"]
+        Snap["Validated Market Snapshot (market_snapshot.json)"]
+        BR["build_report.py (Consensus Compiler)"]
+        PD["push_to_discord.py"]
+        Discord["Discord Channels"]
+        
+        Flag -->|"Consolidate reasoning & scores"| Snap
+        Normal -->|"Consolidate reasoning & scores"| Snap
+        Snap -->|"Retrieve from events.jsonl"| BR
+        BR -->|"Renders MoE CoT block in Brutalist Markdown"| PD
+        PD -->|"Discord Webhook"| Discord
+    end
+
+    %% Assign classes for beautiful HSL pastel styling
+    class YF,FRED,YA,Fallback,FF,FA,News,GA IngestStyle;
+    class Cond,Bus,Lake,DailyPart,EventLog ConductorStyle;
+    class FE,Schema1,HMM,Schema2,RE,Schema3 EngineStyle;
+    class ThreadPool,MacroEx,PsychEx MoEStyle;
+    class MoECon,DivergeCheck,Flag,Normal MoEStyle;
+    class Snap,BR,PD,Discord OutputStyle;
+```
 
 ## Core Script Ecosystem & Ingestion Flow
 
