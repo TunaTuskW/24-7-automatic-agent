@@ -43,101 +43,76 @@ The data pipeline operates as an enterprise-grade containerized event-driven OS 
 
 ```mermaid
 graph TD
-    %% Define Styles & Classes (Curated HSL tailored soft color scheme)
-    classDef IngestStyle fill:#f7fafc,stroke:#e2e8f0,stroke-width:1.5px,color:#4a5568;
-    classDef ConductorStyle fill:#ebf8ff,stroke:#bee3f8,stroke-width:2px,color:#2b6cb0;
-    classDef EngineStyle fill:#faf5ff,stroke:#e9d8fd,stroke-width:2px,color:#553c9a;
-    classDef MoEStyle fill:#fffaf0,stroke:#feebc8,stroke-width:2px,color:#c05621;
-    classDef OutputStyle fill:#f0fff4,stroke:#c6f6d5,stroke-width:2px,color:#22543d;
-
-    %% 1. Ingestion Phase
-    subgraph Ingestion["1. Ingestion & In-Memory Adapters"]
-        YF["yfinance / FRED APIs"]
-        FF["Forex Factory Calendar Feed"]
-        RSS["RSS Unstructured News Feeds"]
-        YA["YahooAdapter (DataBroker yield fallback)"]
-        FA["ForexFactoryAdapter (EconomicCalendar parsing)"]
-        GA["GeminiAdapter (LLMProvider client)"]
-        
-        YF --> YA
-        FF --> FA
-        RSS --> GA
+    %% Source Ingestion
+    subgraph Ingestion["1. Data Ingestion & Fallbacks"]
+        YF["yfinance API"] --> YA["YahooAdapter (DataBroker)"]
+        FRED["FRED API"] -->|"Optional Key"| YA
+        YA -->|"Missing FRED Key Fallback"| Fallback["Yahoo proxy yields (^TNX & ^FVX)"]
+        FF["Forex Factory API"] --> FA["ForexFactoryAdapter"]
+        News["RSS News Feeds"] --> GA["GeminiAdapter (LLMProvider)"]
     end
 
-    %% 2. Processing & Conductor Phase
-    subgraph Conductor["2. Event-Driven Conductor & Database Inception"]
-        Cond["fetch_market_data.py (Central Orchestrator)"]
-        Bus["EventBus (SystemStart -> DataFetched)"]
-        Lake["LakeManager (data_lake/)"]
-        Parquet["Parquet Tabular Lake (raw_daily_ohlcv.parquet)"]
-        
-        YA --> Cond
-        FA --> Cond
-        GA --> Cond
-        Cond --> Bus
-        Bus --> Lake
-        Lake --> Parquet
+    %% Enterprise Conductor
+    subgraph Conductor["2. Event-Driven Conductor"]
+        EB["EventBus (src/observability/event_bus.py)"]
+        EC["fetch_market_data.py (Conductor Orchestrator)"]
+        EC -->|"SystemStart"| EB
+        EB -->|"DataFetched"| EC
+        EB -->|"FeaturesEngineered"| EC
+        EB -->|"EnginesCompleted"| EC
+        EB -->|"PipelineComplete"| EC
     end
 
-    %% 3. Quantitative Engines
-    subgraph Engines["3. Math Models & Pydantic Type-Safety"]
-        Feat["FeatureEngine (GARCH, Credit Stress, Stats)"]
-        Schema["Pydantic State Validation (schemas/models.py)"]
-        HMM["HMMEngine (6-Regime Classifier)"]
-        Risk["RiskEngine (Kalman & Kelly Sizing)"]
-        
-        Parquet --> Feat
-        Feat --> Schema
-        Schema --> HMM
-        HMM --> Risk
+    %% Data Lake Storage
+    subgraph DataLake["3. Partitioned Data Lake & Event Log"]
+        LM["LakeManager (data_lake/)"]
+        LM -->|"save_tabular (Parquet)"| DailyPart["data/raw/YYYY/MM/DD/<br>(raw_daily_ohlcv.parquet, raw_hourly_ohlcv.parquet)"]
+        LM -->|"Global Event Intercept"| EventLog["data/raw/YYYY/MM/DD/events.jsonl"]
+        EB -->|"All fired events intercepted"| LM
     end
 
-    %% 4. Parallel LLM Experts (MoE)
-    subgraph MoE["4. Parallel LLM Experts & Chain-of-Thought (CoT)"]
-        Pool["ThreadPoolExecutor (gemini-2.5-flash)"]
-        Macro["Macro Policy Expert (Calendar, Spread, News)"]
-        Psych["Market Psychology Expert (VIX, Volume, News)"]
-        
-        Risk --> Pool
-        Pool --> Macro
-        Pool --> Psych
+    %% Mathematical Engines
+    subgraph Engines["4. Quantitative Engines & Type Safety"]
+        FE["FeatureEngine"]
+        HMM["HMMEngine"]
+        RE["RiskEngine"]
+        Schema["Pydantic Schemas (src/schemas/models.py)"]
+        FE -->|"Process stats, GARCH, Credit composite z"| Schema
+        Schema -->|"10D Feature Vector"| HMM
+        HMM -->|"Regime probabilities"| Schema
+        Schema -->|"KalmanFilter / Entropy"| RE
+        RE -->|"1.2x Kelly exposure"| Schema
     end
 
-    %% 5. Consensus & Slasher
-    subgraph Consensus["5. Consensus Engine & Capital Defense"]
-        Merge["ConsensusEngine (engines/consensus_engine.py)"]
-        Check{"VIX z-score > 1.5<br>& Bullish Headlines?"}
-        Slasher["Set quantitative_divergence_flag = True<br>Slash Target Sizing by 0.5x"]
-        Normal["Normal Consensus Sizing"]
-        
-        Macro --> Merge
-        Psych --> Merge
-        Merge --> Check
-        Check -->|YES| Slasher
-        Check -->|NO| Normal
+    %% Multimodal MoE Synthesis
+    subgraph Synthesis["5. Mixture of Experts (MoE) & Chain-of-Thought (CoT)"]
+        Schema -->|"Parallel ThreadPoolExecutor execution"| ThreadPool["ThreadPoolExecutor"]
+        ThreadPool -->|"Quant Context Ingestion"| MacroEx["Macro Policy Expert<br>(Ingests headlines, calendar, spread)"]
+        ThreadPool -->|"Quant Context Ingestion"| PsychEx["Market Psychology Expert<br>(Ingests headlines, VIX, vol heat)"]
+        MacroEx -->|"CoT reasoning contract"| MoECon["ConsensusEngine (engines/consensus_engine.py)"]
+        PsychEx -->|"CoT reasoning contract"| MoECon
+        MoECon -->|"Checks narrative-reality divergence"| DivergeCheck{"VIX z-score > 1.5 & Bullish headlines?"}
+        DivergeCheck -->|"YES"| Flag["Set quantitative_divergence_flag = True<br>dynamically slashes Kelly by 0.5x"]
+        DivergeCheck -->|"NO"| Normal["Neutral / Normal consensus sizing"]
+        Flag -->|"Consolidate reasoning & scores"| EC
+        Normal -->|"Consolidate reasoning & scores"| EC
     end
 
-    %% 6. Snapshot & Reporting
-    subgraph Output["6. Persistent Event Logging & Delivery"]
-        Snap["Validated Market Snapshot (market_snapshot.json)"]
-        EventLog["Daily Partitioned Event Log (events.jsonl)"]
-        Report["build_report.py / build_weekly_synthesis.py"]
-        Discord["push_to_discord.py (Discord Channels)"]
-        
-        Slasher --> Snap
-        Normal --> Snap
-        Snap --> EventLog
-        EventLog --> Report
-        Report --> Discord
+    %% Delivery & Reporting
+    subgraph Output["6. Snapshot & Reporting"]
+        EC -->|"Pydantic validated snapshot"| Snap["data/market_snapshot.json"]
+        EC -->|"Snapshot append event"| LM
+        Snap -->|"Retrieve from events.jsonl"| BR["build_report.py (Consensus Compiler)"]
+        BR -->|"Renders MoE CoT block in Brutalist Markdown"| PD["push_to_discord.py"]
+        PD -->|"Discord Webhook"| Discord["Discord Channels"]
     end
 
-    %% Assign classes
-    class YF,FF,RSS,YA,FA,GA IngestStyle;
-    class Cond,Bus,Lake,Parquet ConductorStyle;
-    class Feat,Schema,HMM,Risk EngineStyle;
-    class Pool,Macro,Psych MoEStyle;
-    class Merge,Check,Slasher,Normal MoEStyle;
-    class Snap,EventLog,Report,Discord OutputStyle;
+    %% Styling
+    style EC fill:#003366,stroke:#ffffff,stroke-width:2px,color:#ffffff
+    style EB fill:#005588,stroke:#ffffff,stroke-width:1.5px,color:#ffffff
+    style LM fill:#006666,stroke:#ffffff,stroke-width:2px,color:#ffffff
+    style Schema fill:#885500,stroke:#ffffff,stroke-width:2px,color:#ffffff
+    style GA fill:#660066,stroke:#ffffff,stroke-width:1px,color:#ffffff
 ```
 
 ---
