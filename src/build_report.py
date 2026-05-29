@@ -269,7 +269,7 @@ def main():
     
     report_content = f"""```text
 [ SESSION SNAPSHOT ]
-SPX {spx_sign}{spx_pct}% | DXY {dxy_level} | VIX {vix_level} | US10Y {us10y}% | WTI {wti_sign}{wti_pct}% | BTC {btc_sign}{btc_pct}%
+SPX {spx_sign}{spx_pct}% | DXY {dxy_level} | VIX {vix_level} | US10Y {us10y:.3f}% | WTI {wti_sign}{wti_pct}% | BTC {btc_sign}{btc_pct}%
 [ ASSET DASHBOARD ]
 - Equities: {eq_str}
 - FX/Rates: {fx_str}
@@ -279,7 +279,7 @@ SPX {spx_sign}{spx_pct}% | DXY {dxy_level} | VIX {vix_level} | US10Y {us10y}% | 
 [ QUANTITATIVE MATRIX ]
 SPX   | {spx_sign}{spx_pct}% | Heat: {part_type}
 VIX   | {vix_level} | Temp: {ext.get('temperature_state', 'UNKNOWN')}
-US10Y | {us10y}% | Crowd: {ext.get('crowded_state', 'UNKNOWN')}
+US10Y | {us10y:.3f}% | Crowd: {ext.get('crowded_state', 'UNKNOWN')}
 DXY   | {dxy_level} ({dxy_sign}{dxy_pct}%) | Credit: {credit_label}
 BTC   | {btc_level:,.0f} ({btc_sign}{btc_pct}%) | Crypto Flow: {(raw.get('institutional_crypto_mfi') or {}).get('flow_regime', 'UNKNOWN')}
 [ SYSTEM HEALTH ]
