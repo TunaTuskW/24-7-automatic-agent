@@ -67,13 +67,20 @@ Upcoming High-Impact Calendar Events (USD, EUR, JPY):
 
 Current 2s10s Spread: {spread_2s10s}"""
 
-        try:
-            response = self.client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
-            raw_text = response.text.replace("```json", "").replace("```", "").strip()
-            return json.loads(raw_text)
-        except Exception as e:
-            logger.error(f"Macro Policy Expert failed: {e}")
-            return {"fed_policy_hawkishness_prob": 0.5, "reasoning": f"Error: {e}"}
+        import time
+        for attempt in range(10):
+            try:
+                response = self.client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
+                raw_text = response.text.replace("```json", "").replace("```", "").strip()
+                return json.loads(raw_text)
+            except Exception as e:
+                if ("503" in str(e) or "429" in str(e)) and attempt < 9:
+                    sleep_time = (attempt + 1) * 10
+                    logger.warning(f"API UNAVAILABLE/RATE_LIMIT. Retrying Macro Expert in {sleep_time} seconds (Attempt {attempt+1}/10)...")
+                    time.sleep(sleep_time)
+                else:
+                    logger.error(f"Macro Policy Expert failed: {e}")
+                    return {"fed_policy_hawkishness_prob": 0.5, "reasoning": f"Error: {e}"}
 
     def run_market_psychology_expert(self, headlines: List[str], vix_zscore: float, volume_heat: float) -> Dict[str, Any]:
         if not self.client:
@@ -102,10 +109,17 @@ Recent Headlines:
 VIX z-score: {vix_zscore}
 Volume Activity Heat: {volume_heat}"""
 
-        try:
-            response = self.client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
-            raw_text = response.text.replace("```json", "").replace("```", "").strip()
-            return json.loads(raw_text)
-        except Exception as e:
-            logger.error(f"Market Psychology Expert failed: {e}")
-            return {"fear_greed_sentiment_score": 0.5, "reasoning": f"Error: {e}", "quantitative_divergence_flag": False}
+        import time
+        for attempt in range(10):
+            try:
+                response = self.client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
+                raw_text = response.text.replace("```json", "").replace("```", "").strip()
+                return json.loads(raw_text)
+            except Exception as e:
+                if ("503" in str(e) or "429" in str(e)) and attempt < 9:
+                    sleep_time = (attempt + 1) * 10
+                    logger.warning(f"API UNAVAILABLE/RATE_LIMIT. Retrying Psych Expert in {sleep_time} seconds (Attempt {attempt+1}/10)...")
+                    time.sleep(sleep_time)
+                else:
+                    logger.error(f"Market Psychology Expert failed: {e}")
+                    return {"fear_greed_sentiment_score": 0.5, "reasoning": f"Error: {e}", "quantitative_divergence_flag": False}

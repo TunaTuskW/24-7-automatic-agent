@@ -13,6 +13,8 @@ Following the v4.8.0 upgrades, the agent operates as a containerized, event-driv
 - Mixture of Experts (MoE) Cognitive Layer: Replaces single news parsing with a dual-expert parallel LLM framework:
   * Macro Policy Expert: Evaluates RSS headlines, upcoming high-impact economic calendar events, and the 2s10s yield spread to score interest rate hike probabilities (`fed_policy_hawkishness_prob`).
   * Market Psychology Expert: Evaluates RSS headlines, VIX z-scores, and volume activity heat to score market greed and fear limits (`fear_greed_sentiment_score`).
+  * Rate-Limit Resilience: Deploys a 10-attempt dynamic backoff retry loop (sleeps `(attempt + 1) * 10` seconds, up to 90s) intercepting HTTP 429/503 quota errors in both expert channels to safeguard execution.
+- Institutional Yield Formatting: Presentation compilations format the 10-year US Treasury yield (`us10y`) to precisely three decimal places (`{us10y:.3f}%`) in all output briefs.
 - Step-by-Step Chain-of-Thought (CoT) Verification: Both experts are bound by a prompt contract requiring exactly 3 sentences of step-by-step reasoning explaining how the quantitative data justifies their conclusion before outputting final scores, outputted directly within the Pydantic JSON structure.
 - Consensus & Divergence Engine (`src/engines/consensus_engine.py`):
   * Synthesizes reasoning and scores from both experts into a single unified `NewsSignal` with a combined CoT reasoning block.
@@ -38,6 +40,7 @@ Following the v4.8.0 upgrades, the agent operates as a containerized, event-driv
   Synthesizes live unstructured news feeds with hard quantitative indicators:
   * Parameter Decoding: Macro and Psychology experts parse text and quant data to output strict JSON starting with exactly 3 sentences of step-by-step Chain-of-Thought (CoT) reasoning.
   * Quant Divergence Trigger: Activates a quantitative divergence flag if headlines are extremely bullish but VIX z-scores spike > 1.5, which instantly slashes Kelly sizing exposure by half (0.5x multiplier) to defend capital.
+  * API Call Resilience: Protects inference processes with a 10-attempt dynamic backoff loop that intercepts HTTP 429 and 503 errors and steps up sleep times by 10s per iteration to secure robust execution.
 - Hyperparameter Tuning Meta-Agent (tune_hyperparameters.py):
   * Dynamic Parameter Tuning: A standalone meta-agent scheduled to run weekly. It feeds massive macroeconomic text blocks (such as FOMC meeting minutes or Beige Books) to the Gemini LLM.
   * Configuration Tuning: Translates central bank transcripts into concrete mathematical half-life decay thresholds and calibration scalars, dynamically overwriting active constants in `fetch_market_data.py` via the local `tuning_configs.json` configuration file.

@@ -47,6 +47,12 @@ Using a `ThreadPoolExecutor`, the `Conductor` executes two independent specializ
    - **Inputs:** RSS financial headlines, the VIX z-score, and volume activity heat.
    - **Outputs:** An analytical reasoning text block, a fear/greed sentiment score (`fear_greed_sentiment_score`), and a quantitative divergence flag.
 
+**Robust API Error Backoff & Recovery:**
+To protect the parallel pipelines from Gemini API quota blocks or service outages, both experts wrap the LLM payload inside a 10-attempt exponential backoff retry loop:
+- **Triggers:** Automatically intercepts HTTP 503 (Service Unavailable) and HTTP 429 (Rate Limit) exceptions.
+- **Delay Sizing:** Delay increments dynamically by 10 seconds per failed iteration: `sleep_time = (attempt + 1) * 10` seconds, starting at 10 seconds and scaling up to 90 seconds (Attempt 9/10).
+- **Graceful Failures:** If all 10 attempts are exhausted or a non-retryable exception occurs, the system logs the incident and issues neutral default analytical outputs (e.g., probability of 0.5 and raw error descriptions) without crashing the pipeline.
+
 ### B. Chain-of-Thought (CoT) Prompt Verification
 To guarantee empirical justification and prevent LLM hallucinations, both experts are bound by a rigid **CoT Rule**:
 - The model MUST write **exactly 3 sentences** of step-by-step reasoning explaining how the quantitative context justifies its conclusion *before* outputting the final probability score. This reasoning is outputted directly within the Pydantic JSON structure:
@@ -75,7 +81,9 @@ The `ConsensusEngine` consolidates reasoning and scores from both experts into a
 
 Both report compilation engines and interactive Jupyter environments have been upgraded to extract, format, and display the MoE Chain-of-Thought reasoning blocks:
 
-- **`build_report.py` & `build_weekly_synthesis.py`:** Adds the `Quant Divergence` status and `[ MoE REASONING ]` step-by-step logical synthesis blocks directly into the Brutalist Markdown report.
+- **`build_report.py` & `build_weekly_synthesis.py`:** 
+  - Adds the `Quant Divergence` status and `[ MoE REASONING ]` step-by-step logical synthesis blocks directly into the Brutalist Markdown report.
+  - **3-Decimal Yield Formatting:** Formats the 10-year Treasury yield (`us10y`) to precisely three decimal places (`{us10y:.3f}%`) in all presenting matrices, ensuring institutional-grade accuracy.
 - **Jupyter Notebooks (`visualize_math_4h.ipynb` & `visualize_math_1w.ipynb`):** Renders the MoE reasoning text and divergence metrics in polished Markdown blocks natively within your IDE.
 
 ---
