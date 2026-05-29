@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 import os
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import sys
+import glob
+
 sys.path.append(os.path.dirname(__file__))
 from build_report import run_consensus_engine, compute_deterministic_synthesis
 
@@ -15,7 +17,38 @@ def read_api_key():
                 return key
     return None
 
-def generate_llm_synthesis(data, api_key, timestamp_str, log_content):
+def fetch_30d_memory(reports_dir):
+    """Fetches the last 30 days of 4-hour update markdown files and combines them."""
+    log_content = ""
+    cutoff_date = datetime.now(timezone.utc) - timedelta(days=30)
+    
+    updates_dir = os.path.join(reports_dir, 'updates')
+    if not os.path.exists(updates_dir):
+        return "No historical 4h reports found."
+
+    pattern = os.path.join(updates_dir, '4 hours update*.md')
+    files = glob.glob(pattern)
+    
+    valid_files = []
+    for f in files:
+        mtime = datetime.fromtimestamp(os.path.getmtime(f), tz=timezone.utc)
+        if mtime >= cutoff_date:
+            valid_files.append((mtime, f))
+            
+    # Sort chronologically
+    valid_files.sort(key=lambda x: x[0])
+    
+    for mtime, fpath in valid_files:
+        with open(fpath, 'r') as f:
+            content = f.read()
+            log_content += f"\n--- Report {mtime.strftime('%Y-%m-%d %H:%M UTC')} ---\n"
+            log_content += content
+            
+    if not log_content:
+        return "No historical 4h reports found within the last 30 days."
+    return log_content
+
+def generate_llm_synthesis(data, api_key, log_content):
     try:
         from google import genai
         client = genai.Client(api_key=api_key)
@@ -24,10 +57,10 @@ def generate_llm_synthesis(data, api_key, timestamp_str, log_content):
 Here is the raw quantitative JSON snapshot for the end of the week:
 {json.dumps(data, indent=2)}
 
-Here is the log of all developments across the past 7 days:
+Here is the log of all 4-hour mathematical updates across the past 30 days (for reference checking and trend analysis):
 {log_content}
 
-Synthesize this data into a professional weekly institutional report.
+Synthesize this data into a professional weekly institutional report. Do not repeat the mathematical matrix, focus purely on the written synthesis and narrative.
 """
         response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
         return response.text
@@ -71,86 +104,79 @@ def main():
     now_utc = datetime.now(timezone.utc)
     timestamp_str = now_utc.strftime("%Y-%m-%d UTC")
     
-    log_path = os.path.join(os.path.dirname(__file__), '..', 'logs', 'macro_weekly_log.md')
-    log_content = ""
-    if os.path.exists(log_path):
-        with open(log_path, 'r') as f:
-            log_content = f.read()
+    reports_dir = os.path.join(os.path.dirname(__file__), '..', 'reports')
+    log_content = fetch_30d_memory(reports_dir)
 
-    report_content = None
     api_key = read_api_key()
-    
+    llm_synthesis_text = ""
     if api_key:
-        print("API Key found. Attempting LLM weekly synthesis...")
-        report_content = generate_llm_synthesis(data, api_key, timestamp_str, log_content)
+        print("API Key found. Attempting LLM weekly synthesis with 30-day memory...")
+        llm_synthesis_text = generate_llm_synthesis(data, api_key, log_content) or ""
 
-    if not report_content:
-        print("Using deterministic template.")
-        
-        generated_utc = data.get("generated_utc", datetime.now(timezone.utc).isoformat())
-        dt = datetime.fromisoformat(generated_utc)
-        
-        mcs_score = data.get("mcs", {}).get("score", 0.0)
-        regime = data.get("regime", {}).get("current", "UNKNOWN")
-        kalman = data.get("kalman_state", {})
-        dominant_state = kalman.get("dominant_state", "unknown")
-        dominant_prob = kalman.get("dominant_prob", 0.0) * 100
-        tvd_score = kalman.get("tvd", 0.0)
-        brier_score = kalman.get("brier_score_calibration", 0.15)
-        
-        tier = data.get("data_driven_escalation", "ROUTINE")
-        raw = data.get("raw_indicators", {})
-        vol_heat = raw.get("volume_activity_heat") or {}
-        part_type = vol_heat.get("participation_type", "UNKNOWN")
-        ext = data.get("market_extremes_insight", {})
-        
-        spx_pct = (raw.get("SPX") or {}).get("delta_pct", 0.0)
-        spx_sign = "+" if spx_pct >= 0 else ""
-        us10y = data.get("bonds", {}).get("US10Y", {}).get("current", 0.0) if data.get("bonds", {}).get("US10Y") else 0.0
-        wti_pct = (raw.get("WTI") or {}).get("delta_pct", 0.0)
-        wti_sign = "+" if wti_pct >= 0 else ""
-        vix_level = (raw.get("VIX") or {}).get("current", 0.0)
-        dxy_level = (raw.get("DXY") or {}).get("current", 0.0)
-        dxy_pct = (raw.get("DXY") or {}).get("delta_pct", 0.0)
-        dxy_sign = "+" if dxy_pct >= 0 else ""
-        gold_pct = (raw.get("Gold") or {}).get("delta_pct", 0.0)
-        gold_sign = "+" if gold_pct >= 0 else ""
-        copper_pct = (raw.get("Copper") or {}).get("delta_pct", 0.0)
-        copper_sign = "+" if copper_pct >= 0 else ""
-        btc_pct = (raw.get("BTC") or {}).get("delta_pct", 0.0)
-        btc_sign = "+" if btc_pct >= 0 else ""
-        btc_level = (raw.get("BTC") or {}).get("current", 0.0)
-        
-        def fmt_ticker(ticker_name):
-            t_data = raw.get(ticker_name, {})
-            if not t_data: return ""
-            pct = t_data.get("delta_pct", 0.0)
-            sign = "+" if pct >= 0 else ""
-            return f"{ticker_name} {sign}{pct}%"
+    # Always generate the mathematical matrix
+    generated_utc = data.get("generated_utc", datetime.now(timezone.utc).isoformat())
+    dt = datetime.fromisoformat(generated_utc)
+    
+    mcs_score = data.get("mcs", {}).get("score", 0.0)
+    regime = data.get("regime", {}).get("current", "UNKNOWN")
+    kalman = data.get("kalman_state", {})
+    dominant_prob = kalman.get("dominant_prob", 0.0) * 100
+    tvd_score = kalman.get("tvd", 0.0)
+    brier_score = kalman.get("brier_score_calibration", 0.15)
+    
+    tier = data.get("data_driven_escalation", "ROUTINE")
+    raw = data.get("raw_indicators", {})
+    vol_heat = raw.get("volume_activity_heat") or {}
+    part_type = vol_heat.get("participation_type", "UNKNOWN")
+    ext = data.get("market_extremes_insight", {})
+    
+    spx_pct = (raw.get("SPX") or {}).get("delta_pct", 0.0)
+    spx_sign = "+" if spx_pct >= 0 else ""
+    us10y = data.get("bonds", {}).get("US10Y", {}).get("current", 0.0) if data.get("bonds", {}).get("US10Y") else 0.0
+    wti_pct = (raw.get("WTI") or {}).get("delta_pct", 0.0)
+    wti_sign = "+" if wti_pct >= 0 else ""
+    vix_level = (raw.get("VIX") or {}).get("current", 0.0)
+    dxy_level = (raw.get("DXY") or {}).get("current", 0.0)
+    dxy_pct = (raw.get("DXY") or {}).get("delta_pct", 0.0)
+    dxy_sign = "+" if dxy_pct >= 0 else ""
+    gold_pct = (raw.get("Gold") or {}).get("delta_pct", 0.0)
+    gold_sign = "+" if gold_pct >= 0 else ""
+    copper_pct = (raw.get("Copper") or {}).get("delta_pct", 0.0)
+    copper_sign = "+" if copper_pct >= 0 else ""
+    btc_pct = (raw.get("BTC") or {}).get("delta_pct", 0.0)
+    btc_sign = "+" if btc_pct >= 0 else ""
+    btc_level = (raw.get("BTC") or {}).get("current", 0.0)
+    
+    def fmt_ticker(ticker_name):
+        t_data = raw.get(ticker_name, {})
+        if not t_data: return ""
+        pct = t_data.get("delta_pct", 0.0)
+        sign = "+" if pct >= 0 else ""
+        return f"{ticker_name} {sign}{pct}%"
 
-        eq_list = ["NDX", "DAX", "FTSE", "N225", "HSI", "SHANGHAI", "KOSPI", "TASI", "DFM"]
-        eq_str = " | ".join(filter(None, [fmt_ticker(t) for t in eq_list]))
-        fx_list = ["EURUSD", "GBPUSD", "JPYUSD", "CHFUSD", "USDCAD"]
-        fx_str = " | ".join(filter(None, [fmt_ticker(t) for t in fx_list]))
-        crypto_list = ["IBIT", "ETHA", "COIN"]
-        crypto_str = " | ".join(filter(None, [fmt_ticker(t) for t in crypto_list]))
+    eq_list = ["NDX", "DAX", "FTSE", "N225", "HSI", "SHANGHAI", "KOSPI", "TASI", "DFM"]
+    eq_str = " | ".join(filter(None, [fmt_ticker(t) for t in eq_list]))
+    fx_list = ["EURUSD", "GBPUSD", "JPYUSD", "CHFUSD", "USDCAD"]
+    fx_str = " | ".join(filter(None, [fmt_ticker(t) for t in fx_list]))
+    crypto_list = ["IBIT", "ETHA", "COIN"]
+    crypto_str = " | ".join(filter(None, [fmt_ticker(t) for t in crypto_list]))
 
-        credit = raw.get("credit_stress_proxy", {}) or {}
-        credit_label = credit.get("label", "NORMAL")
-        tactical = raw.get("tactical_setup", {}) or {}
-        setup_name = tactical.get("matched_setup", "NONE")
-        edge_prob = tactical.get("regime_conditioned_probability", 0.50) * 100
-        
-        epistemic = data.get("epistemic_metrics", {})
-        news_signal = data.get("news_signal", {})
-        
-        direction, clean_count, news_impact = run_consensus_engine(kalman, vol_heat, ext, mcs_score, epistemic, news_signal, regime)
-        synth = compute_deterministic_synthesis(kalman, vol_heat, ext, epistemic, direction, news_impact)
-        
-        headlines = news_signal.get("top_headlines", [])
-        headlines_str = "\n".join(f"> {h}" for h in headlines) if headlines else "> No significant headlines detected."
-        
-        template = f"""```text
+    credit = raw.get("credit_stress_proxy", {}) or {}
+    credit_label = credit.get("label", "NORMAL")
+    tactical = raw.get("tactical_setup", {}) or {}
+    setup_name = tactical.get("matched_setup", "NONE")
+    edge_prob = tactical.get("regime_conditioned_probability", 0.50) * 100
+    
+    epistemic = data.get("epistemic_metrics", {})
+    news_signal = data.get("news_signal", {})
+    
+    direction, clean_count, news_impact = run_consensus_engine(kalman, vol_heat, ext, mcs_score, epistemic, news_signal, regime)
+    synth = compute_deterministic_synthesis(kalman, vol_heat, ext, epistemic, direction, news_impact)
+    
+    divergence_str = "DETECTED" if news_signal.get("quantitative_divergence_flag", False) else "NONE"
+    reasoning_str = news_signal.get("reasoning", "No CoT reasoning available.")
+    
+    math_matrix = f"""```text
 [ WEEKLY MACRO SYNTHESIS ]
 SPX {spx_sign}{spx_pct}% | DXY {dxy_level} | VIX {vix_level} | US10Y {us10y}% | WTI {wti_sign}{wti_pct}% | BTC {btc_sign}{btc_pct}%
 [ ASSET DASHBOARD ]
@@ -175,6 +201,9 @@ Conflict    : {tvd_score:.4f} TVD
 > Probability: {edge_prob:.1f}%
 > Escalation: {tier}
 > News Impact: {news_impact}
+> Quant Divergence: {divergence_str}
+[ MoE REASONING ]
+{reasoning_str}
 [ ALGORITHMIC SYNTHESIS ]
 State       : {synth['market_state']}
 Lean        : {synth['directional_lean']}
@@ -182,10 +211,10 @@ Positioning : {synth['positioning']}
 Invalidation: {synth['invalidation']}
 ```
 """
-        report_content = template
+    
+    report_content = f"{math_matrix}\n\n{llm_synthesis_text}"
 
     report_filename = f"macro weekly synthesis ({timestamp_str}).md"
-    reports_dir = os.path.join(os.path.dirname(__file__), '..', 'reports')
     os.makedirs(reports_dir, exist_ok=True)
     report_path = os.path.join(reports_dir, report_filename)
 

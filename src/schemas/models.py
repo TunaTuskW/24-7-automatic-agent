@@ -2,10 +2,23 @@ from pydantic import BaseModel, Field
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 
+class EconomicEvent(BaseModel):
+    title: str = Field(default="")
+    country: str = Field(default="")
+    date: str = Field(default="")
+    impact: str = Field(default="High")
+    forecast: str = Field(default="")
+    previous: str = Field(default="")
+
+class EconomicCalendar(BaseModel):
+    events: List[EconomicEvent] = Field(default_factory=list)
+
 class NewsSignal(BaseModel):
     signal: str = Field(default="FLAT", description="Directional signal from news parsing")
     conviction: float = Field(default=0.0, description="Conviction score")
     impact: str = Field(default="Neutral Impact (Fallback)", description="Qualitative impact of the news")
+    reasoning: str = Field(default="", description="Chain-of-Thought reasoning from the LLM")
+    quantitative_divergence_flag: bool = Field(default=False, description="Flag indicating narrative diverges from quantitative reality")
 
 class RegimeState(BaseModel):
     current: str = Field(default="UNKNOWN_TRANSITION", description="Current overarching regime")
@@ -49,3 +62,4 @@ class MarketSnapshot(BaseModel):
     mcs: Dict[str, Any] = Field(default_factory=dict)
     data_driven_escalation: str = Field(default="ROUTINE")
     news_signal: NewsSignal = Field(default_factory=NewsSignal)
+    economic_calendar: EconomicCalendar = Field(default_factory=EconomicCalendar)

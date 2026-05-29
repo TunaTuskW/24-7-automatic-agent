@@ -264,6 +264,9 @@ def main():
     headlines = news_signal.get("top_headlines", [])
     headlines_str = "\n".join(f"> {h}" for h in headlines) if headlines else "> No significant headlines detected."
         
+    divergence_str = "DETECTED" if news_signal.get("quantitative_divergence_flag", False) else "NONE"
+    reasoning_str = news_signal.get("reasoning", "No CoT reasoning available.")
+    
     report_content = f"""```text
 [ SESSION SNAPSHOT ]
 SPX {spx_sign}{spx_pct}% | DXY {dxy_level} | VIX {vix_level} | US10Y {us10y}% | WTI {wti_sign}{wti_pct}% | BTC {btc_sign}{btc_pct}%
@@ -289,6 +292,9 @@ Conflict    : {tvd_score:.4f} TVD
 > Probability: {edge_prob:.1f}%
 > Escalation: {tier}
 > News Impact: {news_impact}
+> Quant Divergence: {divergence_str}
+[ MoE REASONING ]
+{reasoning_str}
 [ ALGORITHMIC SYNTHESIS ]
 State       : {synth['market_state']}
 Lean        : {synth['directional_lean']}

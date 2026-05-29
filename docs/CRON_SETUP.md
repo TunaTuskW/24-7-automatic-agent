@@ -11,7 +11,6 @@ Cron requires your Mac to be awake. If your Mac goes to sleep, the cron job will
 **How to "Catch Up":**
 If your Mac was asleep and missed a run, you can always catch up manually! Just open your terminal and run the exact absolute path for whichever script you missed (you don't need to change folders, just copy/paste these):
 - Missed a 4-hour update? Run: `/Users/mac/agent/run_4h.sh`
-- Missed the daily Discord push? Run: `/Users/mac/agent/run_daily.sh`
 - Missed the Sunday weekly report? Run: `/Users/mac/agent/run_weekly.sh`
 
 ---
@@ -26,16 +25,13 @@ crontab -e
 *Tip: If the editor feels confusing (it defaults to `vim`), you can press `Esc`, type `:q!` and hit Enter to quit. Then run `export EDITOR=nano` before running `crontab -e` again to use a simpler editor.*
 
 ### Step 2: Add the Schedule
-Once the editor is open, use your arrow keys to go to the very bottom and paste these exact lines to set up all three jobs (4-Hour, Daily, and Weekly):
+Once the editor is open, use your arrow keys to go to the very bottom and paste these exact lines to set up both jobs (4-Hour and Weekly):
 
 ```bash
 # 1. Main 4-Hour Briefing (Runs at minute 0 past every 4th hour)
 0 */4 * * * /Users/mac/agent/run_4h.sh >> /Users/mac/agent/logs/cron.log 2>&1
 
-# 2. Daily Digest Push (Runs at Midnight UTC / 7:00 AM local)
-0 0 * * * /Users/mac/agent/run_daily.sh >> /Users/mac/agent/logs/cron.log 2>&1
-
-# 3. Weekly Synthesis (Runs every Sunday at 08:00 UTC / 3:00 PM local)
+# 2. Weekly Synthesis (Runs every Sunday at 08:00 UTC / 3:00 PM local)
 0 8 * * 0 /Users/mac/agent/run_weekly.sh >> /Users/mac/agent/logs/cron.log 2>&1
 ```
 

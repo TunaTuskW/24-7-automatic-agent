@@ -15,8 +15,5 @@ PYTHONPATH=. python3 src/fetch_market_data.py
 echo "2) Building 4-hour report and pushing to Discord..."
 PYTHONPATH=. python3 src/build_report.py
 
-echo "3) Updating the local 72-hours roll file..."
-PYTHONPATH=. python3 src/build_72h_roll.py
-
 echo "Pipeline complete!"
 echo "==========================================="

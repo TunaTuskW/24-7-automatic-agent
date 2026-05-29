@@ -7,9 +7,15 @@ class LLMProvider(ABC):
     """
     
     @abstractmethod
-    def parse_news(self, headlines: List[str]) -> Dict[str, Any]:
+    def run_macro_policy_expert(self, headlines: List[str], calendar_events: List[Any], spread_2s10s: float) -> Dict[str, Any]:
         """
-        Parses a list of headlines and returns a structured dictionary
-        containing shock probability and liquidity drain probability.
+        Runs the Macro Policy Expert LLM pipeline.
+        """
+        pass
+
+    @abstractmethod
+    def run_market_psychology_expert(self, headlines: List[str], vix_zscore: float, volume_heat: float) -> Dict[str, Any]:
+        """
+        Runs the Market Psychology Expert LLM pipeline.
         """
         pass

@@ -12,9 +12,11 @@ from src.observability.event_bus import EventBus
 from src.data_lake.lake_manager import LakeManager
 from src.adapters.yahoo_adapter import YahooAdapter
 from src.adapters.gemini_adapter import GeminiAdapter
+from src.adapters.forexfactory_adapter import ForexFactoryAdapter
 from src.engines.hmm_engine import HMMEngine
 from src.engines.risk_engine import RiskEngine
-from src.schemas.models import MarketSnapshot, RegimeState, MarketExtremes, NewsSignal, KalmanState
+from src.engines.consensus_engine import ConsensusEngine
+from src.schemas.models import MarketSnapshot, RegimeState, MarketExtremes, NewsSignal, KalmanState, EconomicCalendar
 from src.engines.feature_engine import (
     ALL_YF_TICKERS, get_fred_key, get_signature_salt, sign_snapshot_payload,
     check_mathematical_consistency, append_to_immutable_chain,
@@ -44,17 +46,19 @@ def fetch_rss_headlines():
 
 class Conductor:
     def __init__(self):
-        logger.info("Initializing v4.7.0 Event-Driven Conductor")
+        logger.info("Initializing v4.8.0 Event-Driven Conductor")
         self.event_bus = EventBus()
         self.lake_manager = LakeManager()
         self.event_bus.set_interceptor(self.lake_manager.log_event)
         
         fred_key = get_fred_key()
         self.data_broker = YahooAdapter(fred_key=fred_key)
+        self.ff_adapter = ForexFactoryAdapter()
         self.llm_provider = GeminiAdapter()
         
         self.hmm_engine = HMMEngine()
         self.risk_engine = RiskEngine()
+        self.consensus_engine = ConsensusEngine()
         
         self.snapshot = MarketSnapshot()
         
@@ -91,14 +95,22 @@ class Conductor:
         raw_daily_data = self.data_broker.fetch_ohlcv_daily(tickers, period="30d")
         raw_hourly_data = self.data_broker.fetch_ohlcv_hourly(tickers, period="5d")
         
+        calendar_data = self.ff_adapter.fetch_calendar()
+        
         self.lake_manager.save_tabular(raw_daily_data, "raw_daily_ohlcv.parquet")
         self.lake_manager.save_tabular(raw_hourly_data, "raw_hourly_ohlcv.parquet")
         
-        self.event_bus.publish("DataFetched", {"daily": raw_daily_data, "hourly": raw_hourly_data})
+        self.event_bus.publish("DataFetched", {
+            "daily": raw_daily_data, 
+            "hourly": raw_hourly_data,
+            "calendar": calendar_data.model_dump()
+        })
 
     def handle_data_fetched(self, payload):
         raw_daily_data = payload["daily"]
         raw_hourly_data = payload["hourly"]
+        
+        self.snapshot.economic_calendar = EconomicCalendar.model_validate(payload.get("calendar", {}))
         
         def parse_assets(raw_df):
             parsed = {}
@@ -281,16 +293,40 @@ class Conductor:
 
     def handle_engines_completed(self, payload):
         headlines = fetch_rss_headlines()
-        news_res = self.llm_provider.parse_news(headlines, market_data=self.feature_metadata)
+        
+        # Prepare inputs for experts
+        calendar_events = self.snapshot.economic_calendar.events
+        spread_2s10s = self.snapshot.bonds.get("2s10s_spread", 0.0)
+        vix_zscore = self.snapshot.market_extremes_insight.temperature_zscore
+        volume_heat = self.snapshot.data_science_layer.get("advanced_metrics", {}).get("volume_activity_heat", 0.0)
+        
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            macro_future = executor.submit(
+                self.llm_provider.run_macro_policy_expert,
+                headlines, calendar_events, spread_2s10s
+            )
+            psych_future = executor.submit(
+                self.llm_provider.run_market_psychology_expert,
+                headlines, vix_zscore, volume_heat
+            )
+            
+            macro_res = macro_future.result()
+            psych_res = psych_future.result()
+            
+        news_res = self.consensus_engine.synthesize(macro_res, psych_res, self.snapshot.regime.current)
         self.snapshot.news_signal = news_res
         
-        # Override kelly if global macro sentiment is extreme
+        # Override kelly if global macro sentiment is extreme or there's divergence
         sentiment = self.snapshot.news_signal.conviction
         signal = self.snapshot.news_signal.signal
         regime = self.snapshot.regime.current
+        divergence = self.snapshot.news_signal.quantitative_divergence_flag
         
         multiplier = 1.0
-        if signal == "LONG" and sentiment >= 0.75 and regime == "RISK_ON_EXPANSION":
+        if divergence:
+            multiplier = 0.5
+        elif signal == "LONG" and sentiment >= 0.75 and regime == "RISK_ON_EXPANSION":
             multiplier = 1.2
         elif signal == "SHORT":
             multiplier = 0.5
@@ -329,7 +365,7 @@ class Conductor:
         with open(prior_path, 'w') as f:
             json.dump(snapshot_dict, f, indent=4)
             
-        logger.info("v4.7.0 Event-Driven Pipeline Complete")
+        logger.info("v4.8.0 Event-Driven Pipeline Complete")
 
 def main():
     conductor = Conductor()

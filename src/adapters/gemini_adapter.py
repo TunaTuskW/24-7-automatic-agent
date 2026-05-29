@@ -40,55 +40,72 @@ class GeminiAdapter(LLMProvider):
         else:
             self.client = None
             
-    def parse_news(self, headlines: List[str], market_data: Dict[str, float] = None) -> NewsSignal:
-        if not self.client or not headlines:
-            logger.warning("No Gemini client or empty headlines. Returning default news struct.")
-            return NewsSignal()
+    def run_macro_policy_expert(self, headlines: List[str], calendar_events: List[Any], spread_2s10s: float) -> Dict[str, Any]:
+        if not self.client:
+            logger.warning("No Gemini client. Returning default Macro response.")
+            return {"fed_policy_hawkishness_prob": 0.5, "reasoning": "Default fallback due to missing client."}
             
         headlines_text = "\n".join(headlines[:20])
-        market_context = json.dumps(market_data, indent=2) if market_data else "No market data provided."
+        calendar_text = json.dumps([e.model_dump() for e in calendar_events], indent=2) if calendar_events else "No upcoming high-impact events."
         
-        prompt = f"""You are a quantitative data parser. Analyze the current global macroeconomic state by synthesizing the latest financial news headlines WITH the hard quantitative market data (e.g. SPX/WTI momentum, bond yields, VIX z-scores).
-Focus on Global Equity indices (SPX, Nasdaq, N225, KOSPI, Beijing/SSE, DAX), Energy/Commodity markets, and Central Bank Policy. Output strictly valid JSON with no markdown:
-{{"global_macro_sentiment_score": 0.5, "fed_policy_hawkishness_prob": 0.5}}
-Ensure values are floats between 0.0 and 1.0, where 1.0 sentiment is an extremely bullish global macro environment, and 1.0 hawkishness means extreme rate hike pressure.
+        prompt = f"""You are the Macro Policy Expert. Analyze the current global macroeconomic state by synthesizing the latest financial news headlines WITH the upcoming Forex Factory high-impact economic calendar events and the current 2s10s bond spread.
+Output strictly valid JSON with no markdown. The JSON MUST begin with a "reasoning" key.
+You must write exactly 3 sentences of step-by-step reasoning explaining how the quantitative data justifies your conclusion BEFORE you output the final probability score.
+
+{{
+  "reasoning": "string (exactly 3 sentences)",
+  "fed_policy_hawkishness_prob": 0.5
+}}
+
+Ensure fed_policy_hawkishness_prob is a float between 0.0 and 1.0, where 1.0 means extreme rate hike pressure.
+
 Recent Headlines:
 {headlines_text}
 
-Current Market Data:
-{market_context}"""
-        
+Upcoming High-Impact Calendar Events (USD, EUR, JPY):
+{calendar_text}
+
+Current 2s10s Spread: {spread_2s10s}"""
+
         try:
             response = self.client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
             raw_text = response.text.replace("```json", "").replace("```", "").strip()
-            llm_response = json.loads(raw_text)
-            
-            sentiment = llm_response.get("global_macro_sentiment_score", 0.5)
-            hawk_prob = llm_response.get("fed_policy_hawkishness_prob", 0.5)
-            
-            signal_type = "FLAT"
-            impact_msg = "Routine"
-            conviction = 0.0
-            
-            if hawk_prob > 0.75:
-                signal_type = "SHORT"
-                impact_msg = "RATE_SHOCK"
-                conviction = hawk_prob
-            elif sentiment > 0.75:
-                signal_type = "LONG"
-                impact_msg = "LIQUIDITY_DRIVEN_RALLY"
-                conviction = sentiment
-            elif sentiment < 0.25:
-                signal_type = "SHORT"
-                impact_msg = "GLOBAL_CONTRACTION"
-                conviction = 1.0 - sentiment
-                
-            return NewsSignal(
-                signal=signal_type,
-                conviction=conviction,
-                impact=impact_msg
-            )
-            
+            return json.loads(raw_text)
         except Exception as e:
-            logger.error(f"LLM news processing failed: {e}")
-            return NewsSignal()
+            logger.error(f"Macro Policy Expert failed: {e}")
+            return {"fed_policy_hawkishness_prob": 0.5, "reasoning": f"Error: {e}"}
+
+    def run_market_psychology_expert(self, headlines: List[str], vix_zscore: float, volume_heat: float) -> Dict[str, Any]:
+        if not self.client:
+            logger.warning("No Gemini client. Returning default Psychology response.")
+            return {"fear_greed_sentiment_score": 0.5, "reasoning": "Default fallback.", "quantitative_divergence_flag": False}
+            
+        headlines_text = "\n".join(headlines[:20])
+        
+        prompt = f"""You are the Market Psychology Expert. Analyze the current global market sentiment by synthesizing the latest financial news headlines WITH the hard quantitative psychology indicators (VIX z-score and volume activity heat).
+Output strictly valid JSON with no markdown. The JSON MUST begin with a "reasoning" key.
+You must write exactly 3 sentences of step-by-step reasoning explaining how the quantitative data justifies your conclusion BEFORE you output the final probability score.
+
+CRITICAL DIVERGENCE RULE: If the news headlines are extremely bullish, but the VIX z-score is spiking > 1.5 (indicating hidden institutional panic), you MUST set quantitative_divergence_flag to true.
+
+{{
+  "reasoning": "string (exactly 3 sentences)",
+  "fear_greed_sentiment_score": 0.5,
+  "quantitative_divergence_flag": false
+}}
+
+Ensure fear_greed_sentiment_score is a float between 0.0 and 1.0, where 1.0 is extreme greed/bullishness.
+
+Recent Headlines:
+{headlines_text}
+
+VIX z-score: {vix_zscore}
+Volume Activity Heat: {volume_heat}"""
+
+        try:
+            response = self.client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
+            raw_text = response.text.replace("```json", "").replace("```", "").strip()
+            return json.loads(raw_text)
+        except Exception as e:
+            logger.error(f"Market Psychology Expert failed: {e}")
+            return {"fear_greed_sentiment_score": 0.5, "reasoning": f"Error: {e}", "quantitative_divergence_flag": False}
