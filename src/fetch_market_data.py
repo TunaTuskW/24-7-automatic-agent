@@ -12,6 +12,7 @@ from src.observability.event_bus import EventBus
 from src.data_lake.lake_manager import LakeManager
 from src.adapters.yahoo_adapter import YahooAdapter
 from src.adapters.gemini_adapter import GeminiAdapter
+from src.adapters.groq_adapter import GroqAdapter
 from src.adapters.forexfactory_adapter import ForexFactoryAdapter
 from src.engines.hmm_engine import HMMEngine
 from src.engines.risk_engine import RiskEngine
@@ -45,8 +46,9 @@ def fetch_rss_headlines():
     return headlines
 
 class Conductor:
-    def __init__(self):
-        logger.info("Initializing v4.8.0 Event-Driven Conductor")
+    def __init__(self, interval="1d"):
+        self.interval = interval
+        logger.info(f"Initializing v4.8.0 Event-Driven Conductor (Interval: {interval})")
         self.event_bus = EventBus()
         self.lake_manager = LakeManager()
         self.event_bus.set_interceptor(self.lake_manager.log_event)
@@ -54,9 +56,13 @@ class Conductor:
         fred_key = get_fred_key()
         self.data_broker = YahooAdapter(fred_key=fred_key)
         self.ff_adapter = ForexFactoryAdapter()
-        self.llm_provider = GeminiAdapter()
+        self.gemini_adapter = GeminiAdapter()
+        self.groq_adapter = GroqAdapter()
         
-        self.hmm_engine = HMMEngine()
+        hmm_model_path = os.path.join(os.path.dirname(__file__), '..', 'models', f'hmm_model_{self.interval}.pkl')
+        if not os.path.exists(hmm_model_path) and self.interval == "1d":
+            hmm_model_path = None
+        self.hmm_engine = HMMEngine(model_path=hmm_model_path)
         self.risk_engine = RiskEngine()
         self.consensus_engine = ConsensusEngine()
         
@@ -67,16 +73,16 @@ class Conductor:
         self.features_vector = []
         self.feature_metadata = {}
         self.ordered_feature_keys = [
-            ("SPX_ret", "SPX", "delta_pct"),
-            ("DXY_ret", "DXY", "delta_pct"),
+            ("SPX_ret_z", "SPX", "z_score"),
+            ("DXY_ret_z", "DXY", "z_score"),
             ("VIX_zscore", "VIX", "z_score"),
-            ("WTI_ret", "WTI", "delta_pct"),
-            ("GoldSilverRatio_ret", "gold_to_silver_ratio", "delta_pct"),
-            ("US10Y_delta", "bonds", "delta"),
-            ("US_2s10s_spread", "bonds", "spread_2s10s"),
+            ("WTI_ret_z", "WTI", "z_score"),
+            ("GoldSilverRatio_ret_z", "gold_to_silver_ratio", "z_score"),
+            ("US10Y_delta_z", "bonds", "delta_zscore"),
+            ("US_2s10s_spread_z", "bonds", "spread_zscore"),
             ("CryptoMFI_zscore", "institutional_crypto_mfi", "composite_z"),
             ("VolumeHeat_ihi", "volume_activity_heat", "institutional_heat_index"),
-            ("USDCAD_ret", "USDCAD", "delta_pct")
+            ("USDCAD_ret_z", "USDCAD", "z_score")
         ]
         
         # Register Event Callbacks
@@ -90,9 +96,9 @@ class Conductor:
         self.event_bus.publish("SystemStart", {"timestamp": datetime.now(timezone.utc).isoformat()})
 
     def handle_system_start(self, payload):
-        logger.info("Starting Data Ingestion Phase via Event Bus")
+        logger.info(f"Starting Data Ingestion Phase via Event Bus for {self.interval}")
         tickers = list(ALL_YF_TICKERS.values())
-        raw_daily_data = self.data_broker.fetch_ohlcv_daily(tickers, period="30d")
+        raw_daily_data = self.data_broker.fetch_ohlcv_daily(tickers, period="90d", interval=self.interval)
         raw_hourly_data = self.data_broker.fetch_ohlcv_hourly(tickers, period="5d")
         
         calendar_data = self.ff_adapter.fetch_calendar()
@@ -131,9 +137,26 @@ class Conductor:
         for k, v in parsed_daily.items():
             clean_daily[k] = {ik: iv for ik, iv in v.items() if ik != "raw_series"}
             
+        # Calculate US10Y and spread z-scores
+        us10y_hist = self.data_broker.fetch_yield_history("DGS10")
+        us2y_hist = self.data_broker.fetch_yield_history("DGS2")
+        
+        us10y_delta_z = 0.0
+        if not us10y_hist.empty and len(us10y_hist) >= 60:
+            deltas = us10y_hist.diff().dropna()
+            m, s = deltas.mean(), deltas.std()
+            if s > 0: us10y_delta_z = float((deltas.iloc[-1] - m) / s)
+            
+        spread_z = 0.0
+        if not us10y_hist.empty and not us2y_hist.empty and len(us10y_hist) >= 60 and len(us2y_hist) >= 60:
+            spreads = (us10y_hist - us2y_hist).dropna().diff().dropna()
+            m, s = spreads.mean(), spreads.std()
+            if s > 0: spread_z = float((spreads.iloc[-1] - m) / s)
+            
         bonds = {
             "US2Y": {"current": self.data_broker.fetch_yield("DGS2")},
-            "US10Y": {"current": self.data_broker.fetch_yield("DGS10")}
+            "US10Y": {"current": self.data_broker.fetch_yield("DGS10"), "delta_zscore": round(us10y_delta_z, 4)},
+            "spread_zscore": round(spread_z, 4)
         }
         if bonds["US2Y"]["current"] and bonds["US10Y"]["current"]:
             bonds["spread_2s10s"] = round(bonds["US10Y"]["current"] - bonds["US2Y"]["current"], 4)
@@ -146,7 +169,9 @@ class Conductor:
         garch_layer = {}
         for name, ticker in garch_targets.items():
             cond_vol, regime, f_vol = compute_garch_volatility(ticker)
-            garch_layer[name] = {"conditional_vol": cond_vol if cond_vol else 0.0}
+            garch_layer[name] = {"conditional_vol": cond_vol if cond_vol else 0.0, "regime": regime}
+            
+        self.garch_layer = garch_layer
             
         spx_s = parsed_daily.get("SPX", {}).get("raw_series")
         vix_s = parsed_daily.get("VIX", {}).get("raw_series")
@@ -193,8 +218,8 @@ class Conductor:
             val = 0.0
             try:
                 if category == "bonds":
-                    if key == "delta" and bonds.get("US10Y"): val = bonds["US10Y"].get("delta", 0.0)
-                    elif key == "spread_2s10s": val = bonds.get("spread_2s10s", 0.0)
+                    if key == "delta_zscore" and bonds.get("US10Y"): val = bonds["US10Y"].get("delta_zscore", 0.0)
+                    elif key == "spread_zscore": val = bonds.get("spread_zscore", 0.0)
                 else: val = self.clean_daily.get(category, {}).get(key, 0.0)
                 if val is None: val = 0.0
             except Exception: pass
@@ -204,16 +229,16 @@ class Conductor:
         self.event_bus.publish("FeaturesEngineered", {"vector": self.features_vector, "meta": self.feature_metadata})
 
     def handle_features_engineered(self, payload):
-        mlp_package = load_mlp_model()
-        mlp_state = run_mlp_inference(self.features_vector, mlp_package)
-        
-        mcs, sub_comps = compute_mcs(self.clean_daily, self.bonds, self.clean_daily)
-        self.snapshot.mcs = {"score": mcs, "label": "NEUTRAL", "components": sub_comps}
-        
         hmm_beta_probs, hmm_beta_dom, tr_risk, _ = self.hmm_engine.run_inference(self.features_vector)
         hmm_alpha_probs, hmm_alpha_dom, _, _ = self.hmm_engine.run_inference(self.features_vector)
         
         current_regime = hmm_beta_dom if hmm_beta_dom else "NEUTRAL_TRANSITIONAL"
+        
+        mlp_package = load_mlp_model(self.interval)
+        mlp_state = run_mlp_inference(self.features_vector, mlp_package, current_regime)
+        
+        mcs, sub_comps = compute_mcs(self.clean_daily, self.bonds, self.clean_daily)
+        self.snapshot.mcs = {"score": mcs, "label": "NEUTRAL", "components": sub_comps}
         
         prior_path = os.path.join(os.path.dirname(__file__), "..", "data", "market_snapshot_prior.json")
         prior = {}
@@ -250,6 +275,16 @@ class Conductor:
         prior_state = prior.get("kalman_state", {}).get("probabilities")
         prior_cov = prior.get("kalman_state", {}).get("covariance_matrix")
         
+        # v4.9.0 GARCH Bayesian Updating
+        spx_garch_regime = getattr(self, 'garch_layer', {}).get("SPX", {}).get("regime", "NORMAL")
+        if spx_garch_regime == "ELEVATED" and hmm_beta_probs:
+            risk_on_keys = ["LIQUIDITY_DRIVEN_RALLY", "RISK_ON_EXPANSION"]
+            for k in risk_on_keys:
+                if k in hmm_beta_probs and hmm_beta_probs[k] > 0:
+                    penalty = hmm_beta_probs[k] * 0.5
+                    hmm_beta_probs[k] -= penalty
+                    hmm_beta_probs["NEUTRAL_TRANSITIONAL"] = hmm_beta_probs.get("NEUTRAL_TRANSITIONAL", 0.0) + penalty
+                    
         kalman_res = self.risk_engine.run_kalman_filter(mcs, sub_comps, hmm_beta_probs or {}, prior_state, prior_cov)
         
         tvd_score = 0.0
@@ -265,7 +300,12 @@ class Conductor:
                 t_conf = json.load(f)
                 half_life = t_conf.get("regime_half_lives", {}).get(current_regime, 99.0)
                 
-        kelly = self.risk_engine.compute_kelly_sizing(kalman_res.dominant_prob, 0.1, duration_days, half_life)
+        kelly = self.risk_engine.compute_kelly_sizing(
+            kalman_res.dominant_prob,
+            dominant_state=kalman_res.dominant_state,
+            brier_score=brier_score,
+            duration_days=duration_days
+        )
         
         spx_ret_now = self.clean_daily.get("SPX", {}).get("delta_pct", 0.0) if self.clean_daily.get("SPX") else 0.0
         predictions_history_path = os.path.join(os.path.dirname(__file__), "..", "data", "mlp_predictions_history.json")
@@ -301,15 +341,24 @@ class Conductor:
         volume_heat = self.snapshot.data_science_layer.get("advanced_metrics", {}).get("volume_activity_heat", 0.0)
         
         import concurrent.futures
+        
+        def run_macro():
+            res = self.groq_adapter.run_macro_policy_expert(headlines, calendar_events, spread_2s10s)
+            if "Error:" in res.get("reasoning", "") or "Default fallback" in res.get("reasoning", ""):
+                res = self.gemini_adapter.run_macro_policy_expert(headlines, calendar_events, spread_2s10s)
+                res["reasoning"] = "(Failover to Gemini) " + res.get("reasoning", "")
+            return res
+            
+        def run_psych():
+            res = self.gemini_adapter.run_market_psychology_expert(headlines, vix_zscore, volume_heat)
+            if "Error:" in res.get("reasoning", "") or "Default fallback" in res.get("reasoning", ""):
+                res = self.groq_adapter.run_market_psychology_expert(headlines, vix_zscore, volume_heat)
+                res["reasoning"] = "(Failover to Groq) " + res.get("reasoning", "")
+            return res
+
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            macro_future = executor.submit(
-                self.llm_provider.run_macro_policy_expert,
-                headlines, calendar_events, spread_2s10s
-            )
-            psych_future = executor.submit(
-                self.llm_provider.run_market_psychology_expert,
-                headlines, vix_zscore, volume_heat
-            )
+            macro_future = executor.submit(run_macro)
+            psych_future = executor.submit(run_psych)
             
             macro_res = macro_future.result()
             psych_res = psych_future.result()
@@ -367,9 +416,11 @@ class Conductor:
             
         logger.info("v4.8.0 Event-Driven Pipeline Complete")
 
-def main():
-    conductor = Conductor()
-    conductor.run()
-
 if __name__ == "__main__":
-    main()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--interval", type=str, default="1d", choices=["1d", "1wk", "1h", "4h"])
+    args = parser.parse_args()
+    
+    conductor = Conductor(interval=args.interval)
+    conductor.run()

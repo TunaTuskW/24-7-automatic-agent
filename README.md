@@ -1,10 +1,10 @@
-# Macro Briefing Agent Setup Guide (v4.8.0)
+# Macro Briefing Agent Setup Guide (v4.9.0)
 
-Welcome to the **Macro Briefing Agent (v4.8.0)**—a 24/7 autonomous containerized **Mixture of Experts & CoT OS** and execution pipeline. This project decouples data ingestion, economic calendars, parallel LLM experts, consensus synthesis, and pub-sub event dispatching into an enterprise-grade framework.
+Welcome to the **Macro Briefing Agent (v4.9.0)**—a 24/7 autonomous containerized **Active-Active Failover & GARCH Bayesian OS** and execution pipeline. This project decouples data ingestion, economic calendars, parallel LLM experts, consensus synthesis, and pub-sub event dispatching into an enterprise-grade framework.
 
 
 ## Project Structure Overview
-Following the v4.8.0 Mixture of Experts & CoT OS upgrade, the project is organized into a highly decoupled, professional modular pipeline:
+Following the v4.9.0 Active-Active Failover & GARCH Bayesian OS upgrade, the project is organized into a highly decoupled, professional modular pipeline:
 - **`config/`**: Contains your API keys and webhook configurations (`fred_api_key.txt`, `webhook_config.txt`, `api_keys.json`, `tuning_configs.json`, etc.).
 - **`src/`**: Houses the core Python code organized as modular packages:
   - **`interfaces/`**: Standardized OOP interfaces (`data_broker.py`, `llm_provider.py`) defining loose-coupling contracts.
@@ -18,7 +18,7 @@ Following the v4.8.0 Mixture of Experts & CoT OS upgrade, the project is organiz
   - **`push_to_discord.py`**: Secured push delivery agent.
   - **`train_models.py`, `backtest.py`, `tune_hyperparameters.py`**: Model training, auditing, and tuning meta-agents.
   - **`visualize_math_4h.ipynb`, `visualize_math_1w.ipynb`**: Visual overlay Jupyter Notebooks incorporating MoE reasoning blocks.
-- **`docs/`**: Documentation and System Architecture Manuals (`macro_agent_setup_v4.8.0.md`).
+- **`docs/`**: Documentation and System Architecture Manuals (`macro_agent_setup_v4.9.0.md`).
 - **`data/`**: Local data snapshots and caches.
 - **`data/raw/`**: The local partitioned Data Lake structured as `YYYY/MM/DD/` directories housing Parquet price tables and partitioned event logs (`events.jsonl`).
 - **`models/`**: Saved machine learning models and scaler binaries.
@@ -28,7 +28,7 @@ Following the v4.8.0 Mixture of Experts & CoT OS upgrade, the project is organiz
 
 ---
 
-## v4.8.0 Mixture of Experts Event-Driven Architecture
+## v4.9.0 Active-Active Failover & GARCH Bayesian OS
 
 The data pipeline operates as an enterprise-grade containerized event-driven OS featuring parallel LLM experts, step-by-step Chain-of-Thought (CoT) verification, and quantitative divergence protection filters:
 ```mermaid
@@ -257,10 +257,10 @@ To configure operational parameters, API keys, and configurations:
 
 ## 2. System Architecture & Technical Manual
 
-The agent is now structured under the **v4.8.0 Mixture of Experts & CoT OS**, featuring parallel LLM experts, type-safe validations, in-memory `EventBus` pub-sub, and Docker container support.
+The agent is now structured under the **v4.9.0 Active-Active Failover & GARCH Bayesian OS**, featuring dual-provider active-active LLM failover, type-safe validations, in-memory `EventBus` pub-sub, and Docker container support.
 
-For a full breakdown of the mathematical engines, data ingestion layers, Kelly sizing decay penalties, and consensus logic, please refer to the **Technical Developer Manual** located at:
-`docs/macro_agent_setup_v4.8.0.md`
+For a full breakdown of the mathematical engines, data ingestion layers, GARCH penalty filters, and consensus logic, please refer to the **Technical Developer Manual** located at:
+`docs/macro_agent_setup_v4.9.0.md`
 
 ---
 
@@ -380,6 +380,14 @@ Whenever changes are made to the system architecture, automatically update the v
 - **Tiny change** (e.g., typo fix, formatting): Increment sub-patch version (x.x.x.1 to 9). Example: v1.3.1 -> v1.3.1.1
 
 ### Patch Notes:
+- **v4.9.0** (Active-Active Failover & GARCH Bayesian OS):
+  - **[ADDED] GARCH Bayesian Updates & Penalty Filter:** Elevated SPX GARCH regimes dynamically trigger a 50% penalty on `RISK_ON_EXPANSION` and `LIQUIDITY_DRIVEN_RALLY` HMM probabilities, redistributing the mass to `NEUTRAL_TRANSITIONAL` to suppress bullish bias during volatility spikes.
+  - **[ADDED] Active-Active Cross-Provider Failover:** Integrated `groq_adapter.py` utilizing Groq Llama 3 models. Structured a resilient failover flow: the Conductor dispatches Groq first for policy (failing back to Gemini) and Gemini first for psychology (failing back to Groq) to ensure 100% operational uptime.
+  - **[ADDED] 60-Day Lookback Horizon & Return z-Scores:** Expanded lookbacks to a robust 60-day historical window (`ROLLING_DAYS = 60`) in statistical engines. Transitioned statistical z-scores to measures of Return-Based z-Scores (`(delta_pct - ret_mean) / ret_std`) to insulate the indicators from price level drift.
+  - **[ADDED] Treasury Yield & Spread Z-Scores:** Yield delta z-scores and 2s10s spread z-scores are calculated over a 60-day historical window, replacing raw yield values in engineered feature vectors.
+  - **[ADDED] Dynamic Timeframe Model Ingestion:** Upgraded `fetch_market_data.py` to accept dynamic `--interval` command-line flags, loading timeframe-localized MLP models (`mlp_model_{interval}.pkl`) and routing inference based on the active HMM regime (bull, bear, neutral models).
+  - **[ADDED] HMM Regime-Specific Kelly Penalties:** Base target portfolio Kelly sizing is dynamically slashed by 50% (0.5x multiplier) in `risk_off` dominant states, and discounted by 25% (0.75x multiplier) in `transitional` dominant states.
+  - **[MODIFIED] Simplified Consensus Signal Mapping:** Synthesized and mapped consensus conviction voting directly to four strict signal boundaries: `QUANT_DIVERGENCE_PANIC`, `CONSENSUS_BEARISH`, `CONSENSUS_BULLISH`, and `MIXED_SIGNALS`.
 - **v4.8.0** (Mixture of Experts & CoT OS):
   - **[ADDED] Mixture of Experts (MoE) Architecture:** Deployed a parallel dual-expert LLM framework running a ThreadPoolExecutor. `Macro Policy Expert` evaluates headlines, Forex Factory calendar events, and yield spreads, while `Market Psychology Expert` evaluates headlines, VIX z-scores, and volume heat.
   - **[ADDED] Chain-of-Thought (CoT) Prompt Contracts:** Enforced rigid 3-sentence step-by-step reasoning prompts in each expert payload to verify and justify analytical outcomes against quantitative indicators before outputting confidence ratings.
