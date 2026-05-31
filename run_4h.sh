@@ -10,7 +10,7 @@ echo "Running automated pipeline: $(date)"
 echo "==========================================="
 
 echo "1) Fetching market data..."
-PYTHONPATH=. python3 src/fetch_market_data.py
+PYTHONPATH=. python3 src/fetch_market_data.py --interval 4h
 
 echo "2) Building 4-hour report and pushing to Discord..."
 PYTHONPATH=. python3 src/build_report.py

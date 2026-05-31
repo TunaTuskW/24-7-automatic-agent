@@ -45,7 +45,7 @@ garch_targets = {
     "DXY":   "DX-Y.NYB",   
 }
 
-ROLLING_DAYS = 5
+ROLLING_DAYS = 60
 
 def get_fred_key():
     key = os.environ.get("FRED_API_KEY")
@@ -110,14 +110,20 @@ def compute_stats(series, garch_conditional_vol=None):
     prev     = float(series.iloc[-2])
     delta    = current - prev
     delta_pct = (delta / prev * 100) if prev != 0 else 0
+    # Price level stats
     rolling  = series.tail(ROLLING_DAYS)
     mean     = float(rolling.mean())
     std      = float(rolling.std()) if len(rolling) > 1 else 0
     
+    # Return (delta_pct) z-score stats
+    rolling_returns = series.pct_change().dropna().tail(ROLLING_DAYS) * 100
+    ret_mean = float(rolling_returns.mean()) if len(rolling_returns) > 0 else 0
+    ret_std = float(rolling_returns.std()) if len(rolling_returns) > 1 else 0
+    
     if garch_conditional_vol is not None and garch_conditional_vol > 0:
         z_score = delta_pct / garch_conditional_vol
     else:
-        z_score = ((current - mean) / std) if std != 0 else 0
+        z_score = ((delta_pct - ret_mean) / ret_std) if ret_std > 0 else 0
         
     if len(rolling) >= 3:
         slope    = float(np.polyfit(range(len(rolling)), rolling.values, 1)[0])
@@ -129,8 +135,8 @@ def compute_stats(series, garch_conditional_vol=None):
         "prev":      round(prev, 4),
         "delta":     round(delta, 4),
         "delta_pct": round(delta_pct, 3),
-        "mean_5d":   round(mean, 4),
-        "std_5d":    round(std, 4),
+        "mean_60d":   round(mean, 4),
+        "std_60d":    round(std, 4),
         "z_score":   round(z_score, 3),
         "momentum":  momentum,
     }
@@ -220,19 +226,28 @@ def compute_garch_volatility(ticker_symbol, lookback_days=250):
     except Exception as e:
         logger.error(f"GARCH error for {ticker_symbol}: {e}")
         return None, None, None
-def load_mlp_model():
-    model_path = os.path.join(os.path.dirname(__file__), '..', 'models', 'mlp_model.pkl')
+def load_mlp_model(interval="1d"):
+    model_path = os.path.join(os.path.dirname(__file__), '..', '..', 'models', f'mlp_model_{interval}.pkl')
+    # Backward compatibility fallback
+    if not os.path.exists(model_path) and interval == "1d":
+        model_path = os.path.join(os.path.dirname(__file__), '..', '..', 'models', 'mlp_model.pkl')
     try:
         if os.path.exists(model_path):
             return joblib.load(model_path)
     except Exception as e:
         logger.error(f"MLP Load Failure: {e}")
     return None
-def run_mlp_inference(features_vector, mlp_package):
-    if mlp_package is None:
+def run_mlp_inference(features_vector, mlp_package, current_regime: str):
+    if mlp_package is None or current_regime is None:
         return None
     try:
-        model = mlp_package["model"]
+        if "RISK" in current_regime or "RALLY" in current_regime:
+            model = mlp_package.get("model_bull", mlp_package.get("model_base"))
+        elif "STRESS" in current_regime or "SHOCK" in current_regime or "FEAR" in current_regime:
+            model = mlp_package.get("model_bear", mlp_package.get("model_base"))
+        else:
+            model = mlp_package.get("model_neutral", mlp_package.get("model_base"))
+            
         scaler = mlp_package["scaler"]
         obs = np.array([features_vector])
         obs_scaled = scaler.transform(obs)
@@ -242,14 +257,14 @@ def run_mlp_inference(features_vector, mlp_package):
         probs = np.clip(probs, 0.01, 0.99)
         probs /= probs.sum() # Re-normalize to 1.0
 
-        classes = ["risk_off", "risk_on", "transitional"]
-        dominant_idx = int(np.argmax(probs))
+        prob_down = round(float(probs[0]), 3)
+        prob_up = round(float(probs[1]), 3)
+        predicted_class = 1 if prob_up > 0.5 else 0
+        
         return {
-            "risk_off":     round(float(probs[0]), 3),
-            "risk_on":      round(float(probs[1]), 3),
-            "transitional": round(float(probs[2]), 3),
-            "dominant_state": classes[dominant_idx],
-            "dominant_prob":  round(float(probs[dominant_idx]), 3)
+            "bull_probability": prob_up,
+            "bear_probability": prob_down,
+            "predicted_class": predicted_class
         }
     except Exception as e:
         logger.error(f"MLP Inference Failure: {e}")

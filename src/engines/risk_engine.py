@@ -17,10 +17,18 @@ class RiskEngine:
             F = np.array([[0.92, 0.04, 0.04], [0.04, 0.92, 0.04], [0.04, 0.04, 0.92]])
             
             hmm_risk_on = hmm_regime_probs.get("RISK_ON_EXPANSION", 0.0) + hmm_regime_probs.get("LIQUIDITY_DRIVEN_RALLY", 0.0)
-            hmm_risk_off = (hmm_regime_probs.get("STAGFLATION_STRESS", 0.0) + 
-                            hmm_regime_probs.get("RATE_SHOCK", 0.0) + 
-                            hmm_regime_probs.get("DEFLATION_FEAR", 0.0) + 
-                            hmm_regime_probs.get("CRISIS_DISLOCATION", 0.0))
+            
+            # Map all known stress and shock states to risk_off
+            risk_off_states = ["STAGFLATION_STRESS", "RATE_SHOCK", "DEFLATION_FEAR", "CRISIS_DISLOCATION", "COMMODITY_SHOCK", "VOLATILITY_EXPANSION"]
+            hmm_risk_off = sum(hmm_regime_probs.get(s, 0.0) for s in risk_off_states)
+            
+            # Add dynamic checking for indexed states like COMMODITY_SHOCK_4
+            for state_name, prob in hmm_regime_probs.items():
+                if any(state_name.startswith(base) for base in risk_off_states) and state_name not in risk_off_states:
+                    hmm_risk_off += prob
+                elif any(state_name.startswith(base) for base in ["RISK_ON", "LIQUIDITY"]) and state_name not in ["RISK_ON_EXPANSION", "LIQUIDITY_DRIVEN_RALLY"]:
+                    hmm_risk_on += prob
+                    
             hmm_trans = max(0.0, 1.0 - hmm_risk_on - hmm_risk_off)
             
             z = np.array([hmm_risk_on, hmm_risk_off, hmm_trans])
@@ -72,8 +80,10 @@ class RiskEngine:
         except Exception:
             return 1.58
 
-    def compute_kelly_sizing(self, max_prob: float, brier_score: float, duration_days: float = 0.0, half_life: float = 99.0, sentiment_multiplier: float = 1.0) -> float:
-        logger.info(f"Computing Kelly size (prob: {max_prob}, brier: {brier_score})")
+    def compute_kelly_sizing(self, max_prob: float, dominant_state: str, brier_score: float, duration_days: float = 0.0, half_life: float = 99.0, sentiment_multiplier: float = 1.0) -> float:
+        logger.info(f"Computing Kelly size (prob: {max_prob}, state: {dominant_state}, brier: {brier_score})")
+        
+        # Base probability threshold (need at least 33% win rate expectation to play)
         edge = max_prob - 0.333
         if edge <= 0: return 0.0
         
@@ -87,6 +97,12 @@ class RiskEngine:
         
         final_fraction = base_fraction * calibration_penalty
         
+        # Apply regime-specific risk aversion penalties
+        if dominant_state == "risk_off":
+            final_fraction *= 0.5  # Half-Kelly for high volatility/stress regimes
+        elif dominant_state == "transitional":
+            final_fraction *= 0.75 # Discounted Kelly for uncertain regimes
+            
         if duration_days > half_life:
             decay_factor = math.exp(-0.2 * (duration_days - half_life))
             final_fraction *= max(0.2, decay_factor)
