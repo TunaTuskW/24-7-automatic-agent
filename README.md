@@ -76,7 +76,7 @@ graph TD
         RE["RiskEngine (Dynamic Measurement Noise & Ensembles)"]
         EnsembleInference["Ensemble Classifiers (MLP + RF + GB)<br>for SPX, BTC, GLD, WTI"]
         CalibCheck{"Brier Score > 0.60?"}
-        AutoInversion["Auto-Inversion Module<br>(Flip Probability: 1-p)"]
+        AutoInversion["Auto-Inversion Module<br>(Flip Probability: 1 - p)"]
         ConsensusCheck["Model Consensus Scoring<br>(Standard Dev < 0.15)"]
         Schema3["Pydantic Schema: RiskState"]
         
@@ -110,13 +110,11 @@ graph TD
         EchoCheck{"Parallel LLM Echo Chamber?<br>(Both on same provider)"}
         EchoPenalty["Apply 0.70x News Conviction Penalty"]
         DivergeCheck{"VIX z-score > 1.5<br>& Bullish Headlines?"}
-        SizingChecks{"Sizing Overrides & Circuit Breakers?"}
-        BlackSwan{"Black Swan: SPX Kelly = 0.0 (spx_ret_z < -3.5)"}
-        MacroTrend{"Macro Trend: Block Longs if below 20 EMA"}
-        RetailNoise{"Retail Filter: 0.5x Kelly if ihi < 0.0"}
-        CapitulationOverride{"Capitulation: 0.9x contrarian Kelly"}
-        MomentumOverride{"Momentum: 1.25x momentum Kelly"}
-        AssetAlloc["compute_multi_asset_kelly (Capital Rotation Engine)"]
+        DivergeSlash["Apply 0.5x Divergence Slash"]
+        
+        Overrides["System Sizing Overrides & Safety Circuit Breakers:<br>• Black Swan Circuit Breaker (SPX return z < -3.5): Force SPX Kelly = 0.0<br>• Macro Trend Override (SPX below 20 EMA): Force Long SPX Kelly = 0.0<br>• Retail Noise Filter (non-risk-off & ihi < 0.0): Slash SPX Kelly by 50%<br>• Capitulation Override (Oversold z between -1.5 and -3.0, ihi > 0.0, MLP > 0.5): 0.9x contrarian Kelly<br>• Momentum Ignition Override (SPX z > 1.0, ihi > 0.1, MLP > 0.4): 1.25x momentum Kelly"]
+        
+        AssetAlloc["compute_multi_asset_kelly (Capital Rotation Engine:<br>Rotates to alternative assets Gold/BTC/WTI on SPX weakness)"]
         Balancer["Global Portfolio Balancer (Normalize to 1.2 leverage ceiling)"]
         
         MacroEx -->|"CoT reasoning contract"| MoECon
@@ -125,19 +123,11 @@ graph TD
         EchoCheck -->|Yes| EchoPenalty
         EchoCheck -->|No| DivergeCheck
         EchoPenalty --> DivergeCheck
-        DivergeCheck -->|"0.5x Kelly slash"| SizingChecks
-        DivergeCheck -->|Normal| SizingChecks
-        SizingChecks --> BlackSwan
-        SizingChecks --> MacroTrend
-        SizingChecks --> RetailNoise
-        SizingChecks --> CapitulationOverride
-        SizingChecks --> MomentumOverride
-        BlackSwan --> AssetAlloc
-        MacroTrend --> AssetAlloc
-        RetailNoise --> AssetAlloc
-        CapitulationOverride --> AssetAlloc
-        MomentumOverride --> AssetAlloc
-        AssetAlloc -->|"Rotate capital to alternative assets on SPX weakness"| Balancer
+        DivergeCheck -->|Yes| DivergeSlash
+        DivergeCheck -->|No| Overrides
+        DivergeSlash --> Overrides
+        Overrides --> AssetAlloc
+        AssetAlloc --> Balancer
     end
 
     %% 6. Snapshot, Reporting & Telemetry
@@ -164,7 +154,7 @@ graph TD
     class Cond,Bus,Lake,DailyPart,EventLog ConductorStyle;
     class FE,Schema1,HMM,Schema2,RE,EnsembleInference,CalibCheck,AutoInversion,ConsensusCheck,Schema3 EngineStyle;
     class ThreadPool,MacroEx,PsychEx MoEStyle;
-    class MoECon,EchoCheck,EchoPenalty,DivergeCheck,SizingChecks,BlackSwan,MacroTrend,RetailNoise,CapitulationOverride,MomentumOverride,AssetAlloc,Balancer MoEStyle;
+    class MoECon,EchoCheck,EchoPenalty,DivergeCheck,DivergeSlash,Overrides,AssetAlloc,Balancer MoEStyle;
     class Snap,Telem,VM,VisMap,BR,PD,Discord OutputStyle;
 ```
 
