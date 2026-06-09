@@ -1,66 +1,27 @@
 import json
 import os
 
-new_code_cell = [
-    "import sys\n",
-    "import os\n",
-    "sys.path.append(os.path.abspath(os.path.join(os.getcwd(), '..')))\n",
-    "\n",
-    "import json\n",
-    "from src.schemas.models import MarketSnapshot\n",
-    "\n",
-    "# Find latest events.jsonl\n",
-    "events_path = '../data/raw'\n",
-    "part_dirs = []\n",
-    "if os.path.exists(events_path):\n",
-    "    for year in os.listdir(events_path):\n",
-    "        yp = os.path.join(events_path, year)\n",
-    "        if not os.path.isdir(yp): continue\n",
-    "        for month in os.listdir(yp):\n",
-    "            mp = os.path.join(yp, month)\n",
-    "            for day in os.listdir(mp):\n",
-    "                dp = os.path.join(mp, day)\n",
-    "                part_dirs.append(dp)\n",
-    "\n",
-    "data = {}\n",
-    "if part_dirs:\n",
-    "    latest = sorted(part_dirs)[-1]\n",
-    "    events_file = os.path.join(latest, 'events.jsonl')\n",
-    "    if os.path.exists(events_file):\n",
-    "        last_payload = None\n",
-    "        with open(events_file, 'r') as f:\n",
-    "            for line in f:\n",
-    "                if not line.strip(): continue\n",
-    "                try:\n",
-    "                    evt = json.loads(line)\n",
-    "                    if evt.get('event_type') == 'PipelineComplete':\n",
-    "                        last_payload = evt.get('payload')\n",
-    "                except: pass\n",
-    "        if last_payload:\n",
-    "            snapshot = MarketSnapshot.model_validate(last_payload)\n",
-    "            data = snapshot.model_dump()\n",
-    "print('Loaded latest MarketSnapshot from events.jsonl')\n"
-]
-
-for notebook in ["src/visualize_math_4h.ipynb", "src/visualize_math_1w.ipynb"]:
-    if not os.path.exists(notebook):
-        continue
-    with open(notebook, 'r') as f:
+def process_notebook(file_path):
+    with open(file_path, 'r') as f:
         nb = json.load(f)
-        
-    for cell in nb.get("cells", []):
-        if cell["cell_type"] == "code":
-            # Check if this is the cell that loads market_snapshot or if it's our previous fix
-            source = "".join(cell["source"])
-            if "snapshot_path =" in source or "market_snapshot.json" in source or "events.jsonl" in source or "from src.schemas.models" in source:
-                # Need to be careful not to rewrite everything if not necessary, but since our previous rewrite 
-                # just contained the above code, replacing it again is perfectly safe.
-                if "MarketSnapshot" in source and "sys.path.append" not in source:
-                    cell["source"] = new_code_cell
-                elif "snapshot_path =" in source:
-                     cell["source"] = new_code_cell
-                
-    with open(notebook, 'w') as f:
+
+    for cell in nb.get('cells', []):
+        if cell.get('cell_type') == 'code':
+            source = cell.get('source', [])
+            new_source = []
+            for line in source:
+                new_source.append(line)
+                if line.strip() == '"kelly_smoothed = pd.Series(kelly_exposure).rolling(5).mean().fillna(0)\\n",':
+                    new_source.append('    "safe_haven_exposure = np.where((df[\'Regime_Label\'].str.contains(\'CRISIS_DISLOCATION|DEFLATION_FEAR\')) & (kelly_smoothed < 0.2), 1.0 - kelly_smoothed, 0.0)\\n",\n')
+                    new_source.append('    "safe_haven_smoothed = pd.Series(safe_haven_exposure).rolling(5).mean().fillna(0)\\n",\n')
+                elif line.strip() == '"ax1.plot(df.index, kelly_smoothed * 100, color=\'lime\', label=\'Target Portfolio Exposure %\')\\n",':
+                    new_source.append('    "ax1.fill_between(df.index, safe_haven_smoothed * 100, color=\'gold\', alpha=0.4)\\n",\n')
+                    new_source.append('    "ax1.plot(df.index, safe_haven_smoothed * 100, color=\'gold\', label=\'Safe Haven Exposure %\')\\n",\n')
+            cell['source'] = new_source
+
+    with open(file_path, 'w') as f:
         json.dump(nb, f, indent=1)
         
-print("Updated notebooks with sys.path fix.")
+process_notebook("src/visualize_math_1w.ipynb")
+process_notebook("src/visualize_math_4h.ipynb")
+print("Notebooks updated successfully!")

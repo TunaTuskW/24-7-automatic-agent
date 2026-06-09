@@ -41,7 +41,14 @@ class RiskEngine:
             P_pred = F @ P @ F.T + Q
             
             H = np.eye(n)
-            R = np.eye(n) * 0.05
+            
+            # Dynamic measurement noise to prevent sudden 1-bar regime jumps
+            is_sudden_fear = (z[1] > 0.6) and (x[1] < 0.3)
+            if is_sudden_fear:
+                R = np.eye(n) * 0.25
+                logger.info("Sudden fear spike detected. Inflating measurement noise to enforce multi-bar confirmation.")
+            else:
+                R = np.eye(n) * 0.05
             
             S = H @ P_pred @ H.T + R
             K = P_pred @ H.T @ np.linalg.inv(S)
@@ -80,28 +87,54 @@ class RiskEngine:
         except Exception:
             return 1.58
 
-    def compute_kelly_sizing(self, max_prob: float, dominant_state: str, brier_score: float, duration_days: float = 0.0, half_life: float = 99.0, sentiment_multiplier: float = 1.0) -> float:
-        logger.info(f"Computing Kelly size (prob: {max_prob}, state: {dominant_state}, brier: {brier_score})")
+    def compute_kelly_sizing(self, max_prob: float, dominant_state: str, brier_score: float, duration_days: float = 0.0, half_life: float = 99.0, sentiment_multiplier: float = 1.0, is_capitulation_override: bool = False, is_momentum_override: bool = False, is_black_swan: bool = False, is_bull_trap: bool = False, hmm_regime: str = "UNKNOWN", current_ihi: float = 0.0, consensus_score: float = 0.0) -> dict:
+        logger.info(f"Computing Kelly size (prob: {max_prob}, state: {dominant_state}, brier: {brier_score}, consensus: {consensus_score})")
         
         # Base probability threshold (need at least 33% win rate expectation to play)
+        if is_bull_trap:
+            logger.warning("Bull Trap Override Active: MLP Prob > 0.80 is historically inversely calibrated. Inverting to contrarian bearish.")
+            max_prob = 1.0 - max_prob
+            
         edge = max_prob - 0.333
-        if edge <= 0: return 0.0
         
         win_rate = max_prob
         loss_rate = 1.0 - win_rate
-        base_fraction = win_rate - (loss_rate / 1.5)
+        base_fraction = win_rate - (loss_rate / 2.0)
         
-        if brier_score > 0.25: calibration_penalty = 0.2
-        elif brier_score > 0.15: calibration_penalty = 0.6
-        else: calibration_penalty = 1.0
+        # Baseline Risk Tolerance: High volatility regimes mathematically generate noise.
+        # We relax the Brier penalty if the model correctly identified a Risk Off regime.
+        if is_momentum_override:
+            calibration_penalty = 1.0
+            logger.info("Momentum Ignition Active: Bypassing Brier Score penalties.")
+        elif dominant_state == "risk_off":
+            if brier_score > 0.35: calibration_penalty = 0.5
+            elif brier_score > 0.20: calibration_penalty = 0.9
+            else: calibration_penalty = 1.0
+        else:
+            if brier_score > 0.25: calibration_penalty = 0.5
+            elif brier_score > 0.15: calibration_penalty = 0.8
+            else: calibration_penalty = 1.0
         
         final_fraction = base_fraction * calibration_penalty
         
         # Apply regime-specific risk aversion penalties
-        if dominant_state == "risk_off":
-            final_fraction *= 0.5  # Half-Kelly for high volatility/stress regimes
-        elif dominant_state == "transitional":
-            final_fraction *= 0.75 # Discounted Kelly for uncertain regimes
+        if is_capitulation_override:
+            logger.info("Capitulation Override Active: Bypassing risk-off penalties and applying 0.9x guarded contrarian multiplier.")
+            final_fraction *= 0.9 # Guarded contrarian Kelly
+        elif is_momentum_override:
+            logger.info("Momentum Ignition Active: Bypassing risk-off penalties and applying 1.25x momentum multiplier.")
+            final_fraction *= 1.25 # Aggressive trend-following Kelly
+        else:
+            if dominant_state == "risk_off":
+                final_fraction *= 0.6  # Moderated penalty for high volatility/stress regimes
+            elif dominant_state == "transitional":
+                final_fraction *= 0.9  # Discounted Kelly for uncertain regimes
+                
+        # Consensus Risk Modifier
+        if consensus_score >= 1.0:
+            final_fraction *= 1.5
+        else:
+            final_fraction *= 0.5
             
         if duration_days > half_life:
             decay_factor = math.exp(-0.2 * (duration_days - half_life))
@@ -109,4 +142,113 @@ class RiskEngine:
             
         final_fraction *= sentiment_multiplier
             
-        return round(max(0.0, min(1.2, final_fraction)), 3)
+        return final_fraction
+
+    def compute_multi_asset_kelly(self, mlp_predictions, dominant_state, brier_score, duration_days=0, is_capitulation_override=False, is_momentum_override=False, is_black_swan=False, is_bull_trap=False, hmm_regime="NEUTRAL_TRANSITIONAL", current_ihi=0.0, is_downtrend=False):
+        # Calculate raw kelly for each asset
+        raw_allocations = {}
+        for asset, preds in mlp_predictions.items():
+            prob = preds.get("bull_probability", 0.5)
+            consensus_score = preds.get("consensus_score", 0.0)
+            
+            # AUTO-INVERSION MODULE
+            if brier_score > 0.60:
+                # The model is negatively calibrated (overfitted mean-reversion). Flip the probability.
+                inverted_prob = round(1.0 - prob, 3)
+                logger.warning(f"[AUTO-INVERSION TRIGGERED] {asset.upper()} model is negatively correlated (Brier: {brier_score:.3f}). Inverting probability: {prob} -> {inverted_prob}")
+                prob = inverted_prob
+
+            # Apply bull trap logic ONLY to SPX
+            asset_is_bull_trap = False
+            if asset == "spx" and is_bull_trap:
+                asset_is_bull_trap = True
+            
+            raw_kelly = self.compute_kelly_sizing(
+                max_prob=prob, 
+                dominant_state=dominant_state, 
+                brier_score=brier_score, 
+                duration_days=duration_days, 
+                is_capitulation_override=is_capitulation_override, 
+                is_momentum_override=is_momentum_override, 
+                is_black_swan=is_black_swan, 
+                is_bull_trap=asset_is_bull_trap, 
+                hmm_regime=hmm_regime, 
+                current_ihi=current_ihi,
+                consensus_score=consensus_score
+            )
+            raw_allocations[asset] = raw_kelly
+
+        # Extract SPX for specific filters
+        spx_raw = raw_allocations.get("spx", 0.0)
+        
+        # Macro Trend Override: Block Longs in technical downtrends
+        if is_downtrend and spx_raw > 0:
+            logger.info("Macro Trend Override active (SPX below 20 EMA). Forcing SPX Long Kelly to 0.0.")
+            spx_raw = 0.0
+            
+
+        spx_kelly = 0.0
+        short_kelly = 0.0
+        
+        if spx_raw > 0:
+            spx_kelly = round(min(1.2, spx_raw), 3)
+            # Retail Noise Filter as an active risk multiplier
+            if dominant_state != "risk_off" and current_ihi < 0.0:
+                logger.info(f"Retail Noise Filter active: dominant_state={dominant_state}, current_ihi={current_ihi}. Slashed SPX Kelly fraction by 50%.")
+                spx_kelly = round(spx_kelly * 0.5, 3)
+        else:
+            short_kelly = round(min(1.0, abs(spx_raw)), 3)
+            if dominant_state == "transitional":
+                short_kelly = round(short_kelly * 0.6, 3)
+            logger.info(f"Negative Edge Detected. Activating Short Kelly: {short_kelly}")
+
+        # Black Swan Circuit Breaker overrides SPX
+        if is_black_swan:
+            logger.error("BLACK SWAN CIRCUIT BREAKER ACTIVE: Liquidating all SPX equity exposure.")
+            spx_kelly = 0.0
+            
+        # Process other assets
+        btc_kelly = round(max(0.0, min(1.0, raw_allocations.get("btc", 0.0))), 3)
+        gld_kelly = round(max(0.0, min(1.0, raw_allocations.get("gld", 0.0))), 3)
+        wti_kelly = round(max(0.0, min(1.0, raw_allocations.get("wti", 0.0))), 3)
+
+        # Capital Rotation Engine (Active Rotation)
+        spx_prob = mlp_predictions.get("spx", {}).get("bull_probability", 0.5)
+        if spx_prob < 0.40:
+            logger.info(f"SPX weakness detected (prob: {spx_prob}). Activating Capital Rotation Engine for alternative assets.")
+            if mlp_predictions.get("gld", {}).get("bull_probability", 0.0) > 0.50:
+                gld_kelly = min(1.0, round(gld_kelly * 1.5, 3))
+            if mlp_predictions.get("btc", {}).get("bull_probability", 0.0) > 0.50:
+                btc_kelly = min(1.0, round(btc_kelly * 1.5, 3))
+            if mlp_predictions.get("wti", {}).get("bull_probability", 0.0) > 0.50:
+                wti_kelly = min(1.0, round(wti_kelly * 1.5, 3))
+
+        # Apply regime filters for alternative assets
+        if hmm_regime in ["DEFLATION_FEAR", "CRISIS_DISLOCATION"]:
+            btc_kelly = 0.0  # Zero crypto in panic
+            wti_kelly = 0.0  # Zero oil in deflation
+            # Boost Gold as safe haven
+            if gld_kelly < 0.2 and spx_kelly < 0.2:
+                gld_kelly = round(max(gld_kelly, 1.0 - spx_kelly - short_kelly), 3)
+
+        # Global Portfolio Balancer (Normalize exposure)
+        total_exposure = spx_kelly + short_kelly + btc_kelly + gld_kelly + wti_kelly
+        if total_exposure > 1.2:
+            scale = 1.2 / total_exposure
+            spx_kelly = round(spx_kelly * scale, 3)
+            short_kelly = round(short_kelly * scale, 3)
+            btc_kelly = round(btc_kelly * scale, 3)
+            gld_kelly = round(gld_kelly * scale, 3)
+            wti_kelly = round(wti_kelly * scale, 3)
+            total_exposure = spx_kelly + short_kelly + btc_kelly + gld_kelly + wti_kelly
+
+        cash = round(max(0.0, 1.0 - total_exposure), 3)
+            
+        return {
+            "SPX_Kelly": spx_kelly,
+            "Short_Kelly": short_kelly,
+            "BTC_Kelly": btc_kelly,
+            "GLD_Kelly": gld_kelly,
+            "WTI_Kelly": wti_kelly,
+            "Cash": cash
+        }

@@ -22,7 +22,7 @@ from src.engines.feature_engine import (
     ALL_YF_TICKERS, get_fred_key, get_signature_salt, sign_snapshot_payload,
     check_mathematical_consistency, append_to_immutable_chain,
     compute_stats, compute_volume_heat, compute_market_extremes,
-    compute_garch_volatility, load_mlp_model, run_mlp_inference,
+    compute_garch_volatility, load_mlp_models, run_multi_mlp_inference,
     compute_weekly_liquidity_boundaries, calculate_model_tvd,
     calculate_bayesian_conditional_probability, run_self_calibration,
     compute_mcs, garch_targets
@@ -48,9 +48,11 @@ def fetch_rss_headlines():
 class Conductor:
     def __init__(self, interval="1d"):
         self.interval = interval
-        logger.info(f"Initializing v4.8.0 Event-Driven Conductor (Interval: {interval})")
-        self.event_bus = EventBus()
+        logger.info(f"Initializing v5.1.0 Event-Driven Conductor (Interval: {interval})")
+        
+        self.data_broker = DataBroker()
         self.lake_manager = LakeManager()
+        self.event_bus = EventBus()
         self.event_bus.set_interceptor(self.lake_manager.log_event)
         
         fred_key = get_fred_key()
@@ -73,16 +75,16 @@ class Conductor:
         self.features_vector = []
         self.feature_metadata = {}
         self.ordered_feature_keys = [
-            ("SPX_ret_z", "SPX", "z_score"),
-            ("DXY_ret_z", "DXY", "z_score"),
-            ("VIX_zscore", "VIX", "z_score"),
-            ("WTI_ret_z", "WTI", "z_score"),
-            ("GoldSilverRatio_ret_z", "gold_to_silver_ratio", "z_score"),
-            ("US10Y_delta_z", "bonds", "delta_zscore"),
-            ("US_2s10s_spread_z", "bonds", "spread_zscore"),
-            ("CryptoMFI_zscore", "institutional_crypto_mfi", "composite_z"),
-            ("VolumeHeat_ihi", "volume_activity_heat", "institutional_heat_index"),
-            ("USDCAD_ret_z", "USDCAD", "z_score")
+            ("spx_ret", "SPX", "z_score"),
+            ("dxy_ret", "DXY", "z_score"),
+            ("vix_zscore", "VIX", "z_score"),
+            ("Inst_Heat_Index", "volume_activity_heat", "institutional_heat_index"),
+            ("wti_ret", "WTI", "z_score"),
+            ("gsr_ret", "gold_to_silver_ratio", "z_score"),
+            ("us10y_delta", "bonds", "delta_zscore"),
+            ("spread_level", "bonds", "spread_zscore"),
+            ("crypto_mfi_z", "institutional_crypto_mfi", "composite_z"),
+            ("usdcad_ret", "USDCAD", "z_score")
         ]
         
         # Register Event Callbacks
@@ -141,10 +143,12 @@ class Conductor:
         us10y_hist = self.data_broker.fetch_yield_history("DGS10")
         us2y_hist = self.data_broker.fetch_yield_history("DGS2")
         
+        us10y_delta = 0.0
         us10y_delta_z = 0.0
         if not us10y_hist.empty and len(us10y_hist) >= 60:
             deltas = us10y_hist.diff().dropna()
             m, s = deltas.mean(), deltas.std()
+            if len(deltas) > 0: us10y_delta = float(deltas.iloc[-1])
             if s > 0: us10y_delta_z = float((deltas.iloc[-1] - m) / s)
             
         spread_z = 0.0
@@ -155,7 +159,7 @@ class Conductor:
             
         bonds = {
             "US2Y": {"current": self.data_broker.fetch_yield("DGS2")},
-            "US10Y": {"current": self.data_broker.fetch_yield("DGS10"), "delta_zscore": round(us10y_delta_z, 4)},
+            "US10Y": {"current": self.data_broker.fetch_yield("DGS10"), "delta": round(us10y_delta, 4), "delta_zscore": round(us10y_delta_z, 4)},
             "spread_zscore": round(spread_z, 4)
         }
         if bonds["US2Y"]["current"] and bonds["US10Y"]["current"]:
@@ -219,7 +223,9 @@ class Conductor:
             try:
                 if category == "bonds":
                     if key == "delta_zscore" and bonds.get("US10Y"): val = bonds["US10Y"].get("delta_zscore", 0.0)
+                    elif key == "delta" and bonds.get("US10Y"): val = bonds["US10Y"].get("delta", 0.0)
                     elif key == "spread_zscore": val = bonds.get("spread_zscore", 0.0)
+                    elif key == "spread_2s10s": val = bonds.get("spread_2s10s", 0.0)
                 else: val = self.clean_daily.get(category, {}).get(key, 0.0)
                 if val is None: val = 0.0
             except Exception: pass
@@ -234,8 +240,14 @@ class Conductor:
         
         current_regime = hmm_beta_dom if hmm_beta_dom else "NEUTRAL_TRANSITIONAL"
         
-        mlp_package = load_mlp_model(self.interval)
-        mlp_state = run_mlp_inference(self.features_vector, mlp_package, current_regime)
+        mlp_packages = load_mlp_models(self.interval)
+        features_vector_clipped = np.clip(self.features_vector, -4.0, 4.0).tolist()
+        mlp_state = run_multi_mlp_inference(features_vector_clipped, mlp_packages, current_regime)
+        
+        # Extract SPX specific properties for back-compatibility
+        spx_mlp = mlp_state.get("spx", {})
+        mlp_prob = spx_mlp.get("bull_probability", 0.5)
+
         
         mcs, sub_comps = compute_mcs(self.clean_daily, self.bonds, self.clean_daily)
         self.snapshot.mcs = {"score": mcs, "label": "NEUTRAL", "components": sub_comps}
@@ -288,8 +300,8 @@ class Conductor:
         kalman_res = self.risk_engine.run_kalman_filter(mcs, sub_comps, hmm_beta_probs or {}, prior_state, prior_cov)
         
         tvd_score = 0.0
-        if mlp_state and hmm_beta_probs:
-            tvd_score = calculate_model_tvd(hmm_beta_probs, mlp_state)
+        if spx_mlp and hmm_beta_probs:
+            tvd_score = calculate_model_tvd(hmm_beta_probs, spx_mlp)
         kalman_res.tvd = tvd_score
         
         entropy = self.risk_engine.compute_shannon_entropy(np.array(list((hmm_beta_probs or {}).values())))
@@ -300,21 +312,60 @@ class Conductor:
                 t_conf = json.load(f)
                 half_life = t_conf.get("regime_half_lives", {}).get(current_regime, 99.0)
                 
-        kelly = self.risk_engine.compute_kelly_sizing(
-            kalman_res.dominant_prob,
+        current_spx_val = self.clean_daily.get("SPX", {}).get("current", 0.0) if self.clean_daily.get("SPX") else 0.0
+        current_ihi = self.clean_daily.get("volume_activity_heat", {}).get("institutional_heat_index", 0.0)
+        
+        predictions_history_path = os.path.join(os.path.dirname(__file__), "..", "data", f"mlp_predictions_history_{self.interval}.json")
+        brier_score = 0.1500
+        history = []
+        try:
+            if os.path.exists(predictions_history_path):
+                with open(predictions_history_path, 'r') as f:
+                    history = json.load(f)
+            brier_score, history = run_self_calibration(history, current_spx_val, current_ihi, grading_delay=5, interval=self.interval)
+            
+            history.append({
+                "predicted_risk_on": mlp_prob,
+                "spx_val_at_prediction": current_spx_val,
+                "target_graded": False
+            })
+            with open(predictions_history_path, 'w') as f:
+                json.dump(history, f, indent=4)
+        except Exception as e:
+            logger.error(f"Failed self-calibration: {e}")
+            
+        kalman_res.brier_score_calibration = brier_score
+
+        spx_ret_z = self.clean_daily.get("SPX", {}).get("z_score", 0.0) if self.clean_daily.get("SPX") else 0.0
+        is_capitulation_override = False
+        if spx_ret_z < -1.5 and spx_ret_z >= -3.0 and current_ihi > 0.0 and mlp_prob > 0.5:
+            is_capitulation_override = True
+
+        is_momentum_override = False
+        if spx_ret_z > 1.0 and current_ihi > 0.1 and 0.4 < mlp_prob <= 0.80:
+            is_momentum_override = True
+
+        is_black_swan = False
+        if spx_ret_z < -3.5:
+            is_black_swan = True
+            
+        is_bull_trap = False
+        if mlp_prob > 0.80:
+            is_bull_trap = True
+
+        kelly = self.risk_engine.compute_multi_asset_kelly(
+            mlp_predictions=mlp_state,
             dominant_state=kalman_res.dominant_state,
             brier_score=brier_score,
-            duration_days=duration_days
+            duration_days=duration_days,
+            is_capitulation_override=is_capitulation_override,
+            is_momentum_override=is_momentum_override,
+            is_black_swan=is_black_swan,
+            is_bull_trap=is_bull_trap,
+            hmm_regime=self.snapshot.regime.current,
+            current_ihi=current_ihi
         )
-        
-        spx_ret_now = self.clean_daily.get("SPX", {}).get("delta_pct", 0.0) if self.clean_daily.get("SPX") else 0.0
-        predictions_history_path = os.path.join(os.path.dirname(__file__), "..", "data", "mlp_predictions_history.json")
-        brier_score = 0.1500
-        try:
-            from src.fetch_market_data_legacy import run_self_calibration
-            brier_score, _ = run_self_calibration(spx_ret_now, predictions_history_path)
-        except: pass
-        kalman_res.brier_score_calibration = brier_score
+
         
         self.snapshot.kalman_state = kalman_res
         self.snapshot.mlp_deep_state = mlp_state or {}
@@ -325,7 +376,8 @@ class Conductor:
             "epistemic_metrics": {
                 "shannon_entropy": entropy,
                 "kelly_exposure_fraction": kelly,
-                "is_high_risk_edge": bool(kalman_res.dominant_prob >= 0.45)
+                "is_high_risk_edge": bool(kalman_res.dominant_prob >= 0.45),
+                "is_capitulation_override_active": is_capitulation_override
             }
         }
         
@@ -363,7 +415,18 @@ class Conductor:
             macro_res = macro_future.result()
             psych_res = psych_future.result()
             
-        news_res = self.consensus_engine.synthesize(macro_res, psych_res, self.snapshot.regime.current)
+        # Track providers to detect parallel LLM Echo Chamber
+        macro_provider = "Groq"
+        if "(Failover to Gemini)" in macro_res.get("reasoning", "") or "Default fallback" in macro_res.get("reasoning", ""):
+            macro_provider = "Gemini"
+            
+        psych_provider = "Gemini"
+        if "(Failover to Groq)" in psych_res.get("reasoning", "") or "Default fallback" in psych_res.get("reasoning", ""):
+            psych_provider = "Groq"
+            
+        echo_chamber = (macro_provider == psych_provider)
+        
+        news_res = self.consensus_engine.synthesize(macro_res, psych_res, self.snapshot.regime.current, echo_chamber=echo_chamber)
         self.snapshot.news_signal = news_res
         
         # Override kelly if global macro sentiment is extreme or there's divergence
@@ -382,8 +445,12 @@ class Conductor:
             
         current_kelly = self.snapshot.data_science_layer["epistemic_metrics"]["kelly_exposure_fraction"]
         if multiplier != 1.0:
-            new_kelly = round(min(1.2, current_kelly * multiplier), 3)
-            self.snapshot.data_science_layer["epistemic_metrics"]["kelly_exposure_fraction"] = new_kelly
+            if isinstance(current_kelly, dict):
+                new_spx_kelly = round(min(1.2, current_kelly.get("SPX_Kelly", 0.0) * multiplier), 3)
+                self.snapshot.data_science_layer["epistemic_metrics"]["kelly_exposure_fraction"]["SPX_Kelly"] = new_spx_kelly
+            else:
+                new_kelly = round(min(1.2, current_kelly * multiplier), 3)
+                self.snapshot.data_science_layer["epistemic_metrics"]["kelly_exposure_fraction"] = new_kelly
         
         spx_ret_now = self.clean_daily.get("SPX", {}).get("delta_pct", 0.0) if self.clean_daily.get("SPX") else 0.0
         escalation = "ROUTINE"
@@ -403,18 +470,36 @@ class Conductor:
     def handle_pipeline_complete(self, snapshot_payload):
         out_path = os.path.join(os.path.dirname(__file__), "..", "data", "market_snapshot.json")
         prior_path = os.path.join(os.path.dirname(__file__), "..", "data", "market_snapshot_prior.json")
+        telemetry_path = os.path.join(os.path.dirname(__file__), "..", "data", "live_telemetry.json")
         
         snapshot_dict = self.snapshot.model_dump()
         
         with open(out_path, 'w') as f:
             json.dump(snapshot_dict, f, indent=4)
             
+        # Write Phase 2 Live Telemetry File
+        kelly_obj = self.snapshot.data_science_layer.get("epistemic_metrics", {}).get("kelly_exposure_fraction", {})
+        if not isinstance(kelly_obj, dict):
+            kelly_obj = {"SPX_Kelly": kelly_obj, "Safe_Haven_Kelly": 0.0}
+            
+        telemetry_payload = {
+            "timestamp_utc": self.snapshot.generated_utc,
+            "dominant_regime": self.snapshot.regime.dominant_regime,
+            "spx_kelly_fraction": kelly_obj.get("SPX_Kelly", 0.0),
+            "safe_haven_kelly_fraction": kelly_obj.get("Safe_Haven_Kelly", 0.0),
+            "is_capitulation_override_active": self.snapshot.data_science_layer.get("epistemic_metrics", {}).get("is_capitulation_override_active", False),
+            "institutional_heat_index": self.snapshot.raw_indicators.get("volume_activity_heat", {}).get("institutional_heat_index", 0.0)
+        }
+        
+        with open(telemetry_path, 'w') as f:
+            json.dump(telemetry_payload, f, indent=4)
+            
         self.lake_manager.save_unstructured(snapshot_dict, "market_snapshot.jsonl")
         
         with open(prior_path, 'w') as f:
             json.dump(snapshot_dict, f, indent=4)
             
-        logger.info("v4.8.0 Event-Driven Pipeline Complete")
+        logger.info("v5.1.0 Event-Driven Pipeline Complete")
 
 if __name__ == "__main__":
     import argparse

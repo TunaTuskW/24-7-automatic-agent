@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-build_report.py - v3.7.0
+build_report.py - v5.1.0
 Generates institutional macro updates displaying dual-engine (HMM + Deep MLP)
 statistics alongside the decision-oriented AI Strategic Assumptions Layer.
 """
@@ -41,7 +41,8 @@ def run_consensus_engine(kalman, volume_heat, extremes, mcs_score, epistemic, ne
     v_signal = "long" if part_type == "INSTITUTIONAL_ACCUMULATION" else "short" if part_type == "INSTITUTIONAL_DISTRIBUTION" else "flat"
     models.append(ModelResult("Volume_Heat", v_signal, 0.8, part_type == "RETAIL_DRIFT", current_regime))
     
-    k_frac = epistemic.get("kelly_exposure_fraction", 0.0)
+    k_obj = epistemic.get("kelly_exposure_fraction", {})
+    k_frac = k_obj.get("SPX_Kelly", 0.0) if isinstance(k_obj, dict) else float(k_obj)
     e_signal = "long" if kalman.get("risk_on", 0) > kalman.get("risk_off", 0) else "short"
     e_noise = epistemic.get("shannon_entropy", 0) > 1.5
     models.append(ModelResult("Epistemic_Kelly", e_signal, k_frac, e_noise, current_regime))
@@ -86,7 +87,14 @@ def compute_deterministic_synthesis(kalman, volume_heat, extremes, epistemic, di
     dominant_prob = kalman.get("dominant_prob", 0.33)
     brier = kalman.get("brier_score_calibration", 0.25)
     tvd = kalman.get("tvd", 0.0)
-    kelly_frac = epistemic.get("kelly_exposure_fraction", 0.0)
+    kelly_obj = epistemic.get("kelly_exposure_fraction", {})
+    if isinstance(kelly_obj, dict):
+        kelly_frac = kelly_obj.get("SPX_Kelly", 0.0)
+        safe_haven_frac = kelly_obj.get("Safe_Haven_Kelly", 0.0)
+    else:
+        kelly_frac = kelly_obj
+        safe_haven_frac = 0.0
+        
     entropy = epistemic.get("shannon_entropy", 1.58)
     
     # 1. Base Consensus State (Trust the Consensus Engine)
@@ -105,14 +113,17 @@ def compute_deterministic_synthesis(kalman, volume_heat, extremes, epistemic, di
         market_state = "INSTITUTIONAL SELLING INTO RALLY"
         
     # 3. Dynamic Kelly Positioning
-    if kelly_frac == 0.0:
+    if kelly_frac == 0.0 and safe_haven_frac == 0.0:
         positioning = f"STAND ASIDE. 0% Exposure. {news_impact}"
+    elif kelly_frac == 0.0 and safe_haven_frac > 0.0:
+        positioning = f"RISK OFF. Scale SPX to 0%. Safe Haven Allocation: {safe_haven_frac * 100:.1f}%. {news_impact}"
     else:
-        positioning = f"Scale exposure to exactly {kelly_frac * 100:.1f}%. {news_impact}"
+        positioning = f"Scale SPX to {kelly_frac * 100:.1f}%. Safe Haven: {safe_haven_frac * 100:.1f}%. {news_impact}"
         
-    if brier > 0.20 or tvd > 0.08:
-        positioning += " [WARNING: Model Degraded]"
-        
+    if brier > 0.25:
+        positioning += " [WARNING: Model Degraded (High Brier)]"
+    elif tvd > 0.08:
+        positioning += " [WARNING: High Model Conflict (TVD)]"
     return {
         "market_state": market_state,
         "directional_lean": lean,
@@ -253,7 +264,7 @@ def main():
     elif 8 <= dt.hour < 14:
         session = "European Session"
     kalman = data.get("kalman_state", {})
-    epistemic = data.get("epistemic_metrics", {})
+    epistemic = data.get("data_science_layer", {}).get("epistemic_metrics", {})
     news_signal = data.get("news_signal", {})
     
     tactical_alpha_regime = data.get("regime", {}).get("tactical_alpha_regime")

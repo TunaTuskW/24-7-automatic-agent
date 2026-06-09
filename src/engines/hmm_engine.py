@@ -28,6 +28,8 @@ class HMMEngine:
             scaler = self.hmm_package["scaler"]
             state_labels = self.hmm_package["state_labels"]
             
+            # Force uniform start probabilities to prevent degenerate single-bar inference
+            hmm.startprob_ = np.full(hmm.n_components, 1.0 / hmm.n_components)
             obs = np.array([features_vector])
             obs_scaled = scaler.transform(obs)
             _, posteriors = hmm.score_samples(obs_scaled)
@@ -37,8 +39,31 @@ class HMMEngine:
             state_probs /= state_probs.sum()
             
             regime_probs = {state_labels.get(i, f"STATE_{i}"): round(float(prob), 4) for i, prob in enumerate(state_probs)}
-            dominant_state_id = int(np.argmax(state_probs))
-            dominant_regime = state_labels.get(dominant_state_id, "NEUTRAL_TRANSITIONAL")
+            
+            # GARCH Bayesian Penalty Filter (Proxy: VIX_zscore > 1.0)
+            vix_zscore = features_vector[2] if len(features_vector) > 2 else 0.0
+            if vix_zscore > 1.0:
+                for state in list(regime_probs.keys()):
+                    if any(state.startswith(base) for base in ["RISK_ON", "LIQUIDITY"]):
+                        penalty = regime_probs[state] * 0.5
+                        regime_probs[state] = round(regime_probs[state] - penalty, 4)
+                        neutral_key = next((k for k in regime_probs.keys() if k.startswith("NEUTRAL_TRANSITIONAL")), "NEUTRAL_TRANSITIONAL")
+                        regime_probs[neutral_key] = round(regime_probs.get(neutral_key, 0.0) + penalty, 4)
+                
+                total = sum(regime_probs.values())
+                if total > 0:
+                    regime_probs = {k: round(v / total, 4) for k, v in regime_probs.items()}
+            
+            # Identify the new dominant regime
+            dominant_regime = max(regime_probs, key=regime_probs.get)
+            
+            # Reverse map dominant regime to state_id for transition risk
+            dominant_state_id = int(np.argmax(state_probs)) # Default fallback
+            for i, label in state_labels.items():
+                if label == dominant_regime:
+                    dominant_state_id = i
+                    break
+                    
             stay_prob = float(hmm.transmat_[dominant_state_id, dominant_state_id])
             transition_risk = round(1.0 - stay_prob, 4)
             

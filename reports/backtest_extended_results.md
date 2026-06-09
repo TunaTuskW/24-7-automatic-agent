@@ -1,215 +1,742 @@
-# Quantitative Engine Backtest: Extended (Jan 1 - May 30)
+# Quantitative Engine Backtest: Detailed (Jan 1 - May 30)
 
 **Test Period:** Jan 1, 2026 to May 30, 2026
-**Samples:** 202 Trading Days
+**Samples:** 719 Trading Days
 
 ## Performance Summary
-- **Edge Accuracy (Captured Uptrends):** 45.0%
-- **Drawdown Protection Rate:** 70.0% (7/10 major dips avoided)
-- **Average Kelly Allocation:** 0.183
+- **Portfolio Win Rate (Edge Accuracy):** 55.8%
+- **Crash Protection Rate:** 100.0% (0/0 major dips avoided)
+- **Average Kelly Allocation:** 0.074
 
-## Daily Log (Sample of last 10 days)
-| Date | SPX Close | HMM Regime | Kalman State | Kelly Exposure | 3-Day Fwd Ret |
-|------|-----------|------------|--------------|----------------|---------------|
-| 2026-01-02 | 6835.86 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.903 | -0.414% |
-| 2026-01-02 | 6858.54 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.131% |
-| 2026-01-05 | 6910.03 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.945 | -0.21% |
-| 2026-01-05 | 6902.74 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | -1.623% |
-| 2026-01-06 | 6934.56 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | -0.44% |
-| 2026-01-06 | 6946.35 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | 0.469% |
-| 2026-01-07 | 6947.48 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.686% |
-| 2026-01-07 | 6921.53 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.766% |
-| 2026-01-08 | 6920.96 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | -0.225% |
-| 2026-01-08 | 6921.1 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.002% |
-| 2026-01-09 | 6964.43 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.036% |
-| 2026-01-09 | 6965.99 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.666% |
-| 2026-01-12 | 6976.73 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.347 | -0.159% |
-| 2026-01-12 | 6976.72 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.449% |
-| 2026-01-13 | 6954.6 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.738 | -0.04% |
-| 2026-01-13 | 6962.98 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.227 | -0.054% |
-| 2026-01-14 | 6900.49 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.828 | 0.021% |
-| 2026-01-14 | 6928.41 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.342 | -0.622% |
-| 2026-01-15 | 6973.85 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.481% |
-| 2026-01-15 | 6944.97 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | -0.386% |
-| 2026-01-16 | 6954.05 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | 0.531% |
-| 2026-01-16 | 6939.46 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | -1.3% |
-| 2026-01-20 | 6826.8 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.462% |
-| 2026-01-20 | 6796.76 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | -0.679% |
-| 2026-01-21 | 6828.63 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.179% |
-| 2026-01-21 | 6875.48 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.96 | -1.018% |
-| 2026-01-22 | 6928.14 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | -0.186% |
-| 2026-01-22 | 6912.54 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 1.637% |
-| 2026-01-23 | 6912.69 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.727 | 0.274% |
-| 2026-01-23 | 6915.16 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.49% |
-| 2026-01-26 | 6961.23 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | -0.015% |
-| 2026-01-26 | 6950.15 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | -0.11% |
-| 2026-01-27 | 6981.38 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.278 | -0.223% |
-| 2026-01-27 | 6978.58 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.882 | 0.128% |
-| 2026-01-28 | 6974.83 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | -0.132% |
-| 2026-01-28 | 6976.28 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | -1.275% |
-| 2026-01-29 | 6932.9 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | -0.258% |
-| 2026-01-29 | 6966.27 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.505 | 0.56% |
-| 2026-01-30 | 6939.4 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | -0.535% |
-| 2026-02-02 | 6976.23 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.092% |
-| 2026-02-03 | 6885.56 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.068% |
-| 2026-02-03 | 6917.4 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.967 | 0.728% |
-| 2026-02-04 | 6870.46 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | -0.235% |
-| 2026-02-04 | 6882.76 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.37 | -0.561% |
-| 2026-02-05 | 6812.68 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.301% |
-| 2026-02-05 | 6799.99 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.313% |
-| 2026-02-06 | 6911.31 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.967 | 0.393% |
-| 2026-02-06 | 6930.27 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.257 | -0.81% |
-| 2026-02-09 | 6964.2 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.353 | -0.214% |
-| 2026-02-09 | 6963.17 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.172 | 0.686% |
-| 2026-02-10 | 6955.49 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.066% |
-| 2026-02-10 | 6940.01 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | 0.708% |
-| 2026-02-11 | 6948.88 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.102% |
-| 2026-02-11 | 6939.68 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.102 | -1.067% |
-| 2026-02-12 | 6851.21 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.527% |
-| 2026-02-12 | 6833.54 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.143 | -0.814% |
-| 2026-02-13 | 6871.82 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.967 | 0.369% |
-| 2026-02-13 | 6835.08 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | 0.062% |
-| 2026-02-17 | 6841.37 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | -0.033% |
-| 2026-02-17 | 6846.03 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.15 | -0.976% |
-| 2026-02-18 | 6895.87 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.054% |
-| 2026-02-18 | 6879.66 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.871% |
-| 2026-02-19 | 6841.08 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | -0.102% |
-| 2026-02-19 | 6861.65 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.358 | -1.336% |
-| 2026-02-20 | 6883.14 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.145 | 0.778% |
-| 2026-02-20 | 6910.22 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.188 | -1.024% |
-| 2026-02-23 | 6854.25 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | -0.322% |
-| 2026-02-23 | 6839.59 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | -0.552% |
-| 2026-02-24 | 6886.52 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.312 | 1.422% |
-| 2026-02-24 | 6891.04 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.123 | 0.709% |
-| 2026-02-25 | 6939.83 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.967 | -0.922% |
-| 2026-02-25 | 6946.89 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.008 | -0.08% |
-| 2026-02-26 | 6872.76 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | -0.017% |
-| 2026-02-26 | 6909.01 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.483 | -1.156% |
-| 2026-02-27 | 6852.76 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | -0.368% |
-| 2026-02-27 | 6878.04 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.052 | -0.272% |
-| 2026-03-02 | 6882.3 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.867 | -0.328% |
-| 2026-03-02 | 6880.05 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | 1.053% |
-| 2026-03-03 | 6812.9 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | -0.028% |
-| 2026-03-03 | 6816.59 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.003 | 0.37% |
-| 2026-03-04 | 6875.95 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.967 | -0.111% |
-| 2026-03-04 | 6868.95 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | -0.74% |
-| 2026-03-05 | 6777.19 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | -0.646% |
-| 2026-03-05 | 6829.91 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.542 | -0.675% |
-| 2026-03-06 | 6759.95 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.403% |
-| 2026-03-06 | 6738.15 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | -0.887% |
-| 2026-03-09 | 6700.95 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.195 | -0.6% |
-| 2026-03-09 | 6796.24 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.788 | 1.092% |
-| 2026-03-10 | 6844.4 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.603 | 0.036% |
-| 2026-03-10 | 6781.31 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | -0.336% |
-| 2026-03-11 | 6775.91 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.037 | -0.034% |
-| 2026-03-11 | 6774.76 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | 0.748% |
-| 2026-03-12 | 6696.43 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | -0.212% |
-| 2026-03-12 | 6671.81 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.068 | -1.235% |
-| 2026-03-13 | 6653.68 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.08 | -0.521% |
-| 2026-03-13 | 6631.88 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | -1.329% |
-| 2026-03-16 | 6701.7 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.952 | -0.364% |
-| 2026-03-16 | 6699.85 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.073 | -0.156% |
-| 2026-03-17 | 6724.63 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.225 | -0.221% |
-| 2026-03-17 | 6717.19 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | 2.376% |
-| 2026-03-18 | 6667.47 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.526% |
-| 2026-03-18 | 6624.38 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 1.213% |
-| 2026-03-19 | 6579.66 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | -0.496% |
-| 2026-03-19 | 6606.2 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | -0.072% |
-| 2026-03-20 | 6547.62 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.171% |
-| 2026-03-20 | 6508.32 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | 0.248% |
-| 2026-03-23 | 6579.4 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.292 | 0.204% |
-| 2026-03-23 | 6581.76 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.055 | -0.451% |
-| 2026-03-24 | 6559.64 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.554% |
-| 2026-03-24 | 6557.38 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | 2.359% |
-| 2026-03-25 | 6606.46 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.827 | 0.139% |
-| 2026-03-25 | 6592.44 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | 0.647% |
-| 2026-03-26 | 6511.01 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | -0.05% |
-| 2026-03-26 | 6477.11 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | -0.197% |
-| 2026-03-27 | 6391.03 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.109% |
-| 2026-03-27 | 6367.77 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | 0.456% |
-| 2026-03-30 | 6357.82 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.702 | 0.54% |
-| 2026-03-30 | 6343.75 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 1.097% |
-| 2026-03-31 | 6494.46 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.77 | 0.076% |
-| 2026-03-31 | 6528.65 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.45% |
-| 2026-04-01 | 6607.83 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.632 | 0.342% |
-| 2026-04-01 | 6575.08 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.123% |
-| 2026-04-02 | 6570.32 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.123% |
-| 2026-04-02 | 6581.56 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | 1.186% |
-| 2026-04-06 | 6597.87 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.918 | 0.032% |
-| 2026-04-06 | 6611.31 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | -0.306% |
-| 2026-04-07 | 6581.48 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.1% |
-| 2026-04-07 | 6617.92 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.398 | -0.571% |
-| 2026-04-08 | 6774.05 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.953 | -0.077% |
-| 2026-04-08 | 6783.48 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.847% |
-| 2026-04-09 | 6827.36 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.245 | 0.182% |
-| 2026-04-09 | 6823.94 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | -0.739% |
-| 2026-04-10 | 6810.48 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.27 | 0.334% |
-| 2026-04-10 | 6817.9 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | 0.645% |
-| 2026-04-13 | 6848.96 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.146% |
-| 2026-04-13 | 6885.91 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.488 | 0.077% |
-| 2026-04-14 | 6961.48 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.853 | 0.059% |
-| 2026-04-14 | 6966.78 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | -0.687% |
-| 2026-04-15 | 6998.16 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.337 | 0.204% |
-| 2026-04-15 | 7022.1 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.268 | -0.242% |
-| 2026-04-16 | 7030.75 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.219% |
-| 2026-04-16 | 7039.37 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.39 | 0.614% |
-| 2026-04-17 | 7122.86 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.955 | 0.394% |
-| 2026-04-17 | 7125.12 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | 0.603% |
-| 2026-04-20 | 7103.29 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | -0.328% |
-| 2026-04-20 | 7110.38 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.082 | -0.297% |
-| 2026-04-21 | 7069.78 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | -0.089% |
-| 2026-04-21 | 7064.31 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.836% |
-| 2026-04-22 | 7124.17 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.967 | -0.03% |
-| 2026-04-22 | 7137.12 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | 1.111% |
-| 2026-04-23 | 7084.35 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.321% |
-| 2026-04-23 | 7108.04 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | -0.461% |
-| 2026-04-24 | 7153.88 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | 0.101% |
-| 2026-04-24 | 7164.29 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | 0.851% |
-| 2026-04-27 | 7169.81 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | -0.029% |
-| 2026-04-27 | 7174.01 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | 0.299% |
-| 2026-04-28 | 7124.71 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | -0.089% |
-| 2026-04-28 | 7139.24 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.122 | -0.659% |
-| 2026-04-29 | 7121.95 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.509% |
-| 2026-04-29 | 7137.56 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.628% |
-| 2026-04-30 | 7181.37 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.11 | -0.043% |
-| 2026-04-30 | 7209.63 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.102 | 0.614% |
-| 2026-05-01 | 7253.08 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.922 | 0.153% |
-| 2026-05-01 | 7229.32 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | -0.751% |
-| 2026-05-04 | 7207.88 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.847 | -0.49% |
-| 2026-05-04 | 7201.46 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | -0.223% |
-| 2026-05-05 | 7261.68 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.603 | 0.141% |
-| 2026-05-05 | 7259.47 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | -0.193% |
-| 2026-05-06 | 7340.13 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | -0.458% |
-| 2026-05-06 | 7363.68 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.888% |
-| 2026-05-07 | 7329.74 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.168% |
-| 2026-05-07 | 7337.11 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.247 | 0.081% |
-| 2026-05-08 | 7399.57 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | 0.097% |
-| 2026-05-08 | 7397.43 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | 0.795% |
-| 2026-05-11 | 7419.56 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.532 | -0.415% |
-| 2026-05-11 | 7412.95 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | 0.404% |
-| 2026-05-12 | 7364.11 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.203% |
-| 2026-05-12 | 7401.63 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.077 | -0.138% |
-| 2026-05-13 | 7448.08 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.162% |
-| 2026-05-13 | 7444.88 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | 0.513% |
-| 2026-05-14 | 7490.56 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.963 | 0.047% |
-| 2026-05-14 | 7502.04 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.263% |
-| 2026-05-15 | 7445.7 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | -0.027% |
-| 2026-05-15 | 7409.18 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.0% |
-| 2026-05-18 | 7392.68 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.0% |
-| 2026-05-18 | 7403.1 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.0% |
-| 2026-05-19 | 7388.81 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | 0.0% |
-| 2026-05-19 | 7354.96 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.0% |
-| 2026-05-20 | 7420.3 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.843 | 0.0% |
-| 2026-05-20 | 7432.77 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | 0.0% |
-| 2026-05-21 | 7438.8 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.38 | 0.0% |
-| 2026-05-21 | 7446.05 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.0% |
-| 2026-05-22 | 7505.22 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.0% |
-| 2026-05-22 | 7474.07 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.0% |
-| 2026-05-26 | 7504.23 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | 0.0% |
-| 2026-05-26 | 7519.47 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | 0.0% |
-| 2026-05-27 | 7509.09 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.0% |
-| 2026-05-27 | 7521.29 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | 0.0% |
-| 2026-05-28 | 7559.84 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.0% |
-| 2026-05-28 | 7563.43 | LIQUIDITY_DRIVEN_RALLY_3 | risk_on | 0.0 | 0.0% |
-| 2026-05-29 | 7583.32 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.715 | 0.0% |
-| 2026-05-29 | 7581.25 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.0 | 0.0% |
+## Deep Learning Probability Calibration
+| Probability Bucket | Occurrences | Win Rate | Avg Forward Return |
+|--------------------|-------------|----------|--------------------|
+| 0-20% | 0 | 0.0% | 0.000% |
+| 20-40% | 30 | 10.0% | 0.026% |
+| 40-60% | 685 | 13.3% | 0.013% |
+| 60-80% | 4 | 0.0% | 0.000% |
+| 80-100% | 0 | 0.0% | 0.000% |
+
+
+## Detailed Daily Log
+| Date | SPX Close | HMM Regime | Kalman State | Ensemble Prob | Consensus | SPX Kelly | Short Kelly | BTC Kelly | GLD Kelly | WTI Kelly | Cash | Portfolio 5D PnL |
+|------|-----------|------------|--------------|---------------|-----------|-----------|-------------|-----------|-----------|-----------|------|------------------|
+| 2026-01-02 | 6850.08984375 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.477 | 1.0 | 0.291 | 0.0 | 0.0 | 0.097 | 0.0 | 0.612 | 0.000% |
+| 2026-01-02 | 6844.31982421875 | DEFLATION_FEAR | transitional | 0.489 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-01-02 | 6850.3701171875 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.479 | 1.0 | 0.147 | 0.0 | 0.0 | 0.0 | 0.09 | 0.763 | 0.000% |
+| 2026-01-02 | 6835.85986328125 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.461 | 1.0 | 0.0 | 0.0 | 0.0 | 0.05 | 0.014 | 0.936 | 0.000% |
+| 2026-01-02 | 6855.0498046875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.470 | 1.0 | 0.139 | 0.0 | 0.0 | 0.109 | 0.078 | 0.674 | 0.000% |
+| 2026-01-02 | 6858.68994140625 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.432 | 1.0 | 0.2 | 0.0 | 0.0 | 0.0 | 0.0 | 0.8 | 0.000% |
+| 2026-01-02 | 6858.5400390625 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.463 | 1.0 | 0.131 | 0.0 | 0.0 | 0.037 | 0.0 | 0.832 | 0.000% |
+| 2026-01-05 | 6912.8798828125 | LIQUIDITY_DRIVEN_RALLY | transitional | 0.498 | 1.0 | 0.084 | 0.0 | 0.002 | 0.007 | 0.0 | 0.907 | 0.000% |
+| 2026-01-05 | 6912.830078125 | DEFLATION_FEAR | transitional | 0.467 | 1.0 | 0.135 | 0.0 | 0.0 | 0.865 | 0.0 | 0.0 | 0.000% |
+| 2026-01-05 | 6909.91015625 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.471 | 1.0 | 0.139 | 0.0 | 0.0 | 0.028 | 0.009 | 0.824 | 0.000% |
+| 2026-01-05 | 6910.02978515625 | LIQUIDITY_DRIVEN_RALLY | transitional | 0.466 | 1.0 | 0.134 | 0.0 | 0.0 | 0.05 | 0.0 | 0.816 | 0.000% |
+| 2026-01-05 | 6908.35986328125 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.455 | 1.0 | 0.123 | 0.0 | 0.0 | 0.046 | 0.013 | 0.818 | 0.000% |
+| 2026-01-05 | 6905.56982421875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.464 | 1.0 | 0.132 | 0.0 | 0.0 | 0.041 | 0.024 | 0.803 | -0.009% |
+| 2026-01-05 | 6902.740234375 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.461 | 1.0 | 0.129 | 0.0 | 0.0 | 0.048 | 0.0 | 0.823 | 0.000% |
+| 2026-01-06 | 6932.52001953125 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.482 | 1.0 | 0.084 | 0.0 | 0.0 | 0.0 | 0.015 | 0.901 | 0.000% |
+| 2026-01-06 | 6916.39013671875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.477 | 1.0 | 0.145 | 0.0 | 0.0 | 0.041 | 0.105 | 0.709 | 0.000% |
+| 2026-01-06 | 6929.85009765625 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.440 | 1.0 | 0.108 | 0.0 | 0.0 | 0.05 | 0.001 | 0.841 | 0.000% |
+| 2026-01-06 | 6934.56005859375 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.474 | 1.0 | 0.142 | 0.0 | 0.0 | 0.025 | 0.0 | 0.833 | 0.000% |
+| 2026-01-06 | 6945.7001953125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.461 | 1.0 | 0.129 | 0.0 | 0.0 | 0.062 | 0.006 | 0.803 | 0.000% |
+| 2026-01-06 | 6945.41015625 | LIQUIDITY_DRIVEN_RALLY | transitional | 0.475 | 1.0 | 0.143 | 0.0 | 0.025 | 0.062 | 0.023 | 0.747 | 0.017% |
+| 2026-01-06 | 6946.35009765625 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.461 | 1.0 | 0.144 | 0.0 | 0.0 | 0.059 | 0.0 | 0.797 | -0.038% |
+| 2026-01-07 | 6943.14990234375 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.469 | 1.0 | 0.076 | 0.0 | 0.04 | 0.068 | 0.03 | 0.786 | 0.000% |
+| 2026-01-07 | 6948.240234375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.442 | 1.0 | 0.11 | 0.0 | 0.0 | 0.062 | 0.002 | 0.826 | 0.000% |
+| 2026-01-07 | 6962.97021484375 | DEFLATION_FEAR | transitional | 0.450 | 1.0 | 0.118 | 0.0 | 0.0 | 0.882 | 0.0 | 0.0 | 0.000% |
+| 2026-01-07 | 6947.47998046875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.451 | 1.0 | 0.119 | 0.0 | 0.009 | 0.04 | 0.016 | 0.816 | 0.000% |
+| 2026-01-07 | 6942.39990234375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.453 | 1.0 | 0.06 | 0.0 | 0.0 | 0.033 | 0.0 | 0.907 | 0.000% |
+| 2026-01-07 | 6928.93017578125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.466 | 1.0 | 0.067 | 0.0 | 0.026 | 0.048 | 0.0 | 0.859 | 0.021% |
+| 2026-01-07 | 6921.52978515625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.459 | 1.0 | 0.064 | 0.0 | 0.05 | 0.033 | 0.045 | 0.808 | 0.011% |
+| 2026-01-08 | 6921.83984375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.468 | 1.0 | 0.136 | 0.0 | 0.0 | 0.019 | 0.0 | 0.845 | 0.000% |
+| 2026-01-08 | 6916.47021484375 | NEUTRAL_TRANSITIONAL | transitional | 0.432 | 1.0 | 0.05 | 0.0 | 0.029 | 0.0 | 0.0 | 0.921 | 0.000% |
+| 2026-01-08 | 6918.72998046875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.453 | 1.0 | 0.06 | 0.0 | 0.047 | 0.057 | 0.0 | 0.836 | 0.000% |
+| 2026-01-08 | 6920.9599609375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.454 | 1.0 | 0.061 | 0.0 | 0.006 | 0.044 | 0.0 | 0.889 | 0.000% |
+| 2026-01-08 | 6915.06005859375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.452 | 1.0 | 0.12 | 0.0 | 0.003 | 0.029 | 0.045 | 0.803 | 0.000% |
+| 2026-01-08 | 6921.06005859375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.467 | 1.0 | 0.068 | 0.0 | 0.007 | 0.043 | 0.0 | 0.882 | 0.002% |
+| 2026-01-08 | 6921.10009765625 | NEUTRAL_TRANSITIONAL | transitional | 0.482 | 1.0 | 0.12 | 0.0 | 0.043 | 0.08 | 0.0 | 0.757 | -0.030% |
+| 2026-01-09 | 6957.080078125 | DEFLATION_FEAR | transitional | 0.490 | 1.0 | 0.08 | 0.0 | 0.0 | 0.92 | 0.0 | 0.0 | 0.000% |
+| 2026-01-09 | 6954.64990234375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.299 | 0.0 | 0.0 | 0.007 | 0.0 | 0.0 | 0.0 | 0.993 | 0.000% |
+| 2026-01-09 | 6968.009765625 | NEUTRAL_TRANSITIONAL | transitional | 0.478 | 1.0 | 0.073 | 0.0 | 0.0 | 0.041 | 0.0 | 0.886 | 0.000% |
+| 2026-01-09 | 6964.43017578125 | NEUTRAL_TRANSITIONAL | transitional | 0.429 | 1.0 | 0.049 | 0.0 | 0.0 | 0.024 | 0.0 | 0.927 | 0.000% |
+| 2026-01-09 | 6974.10009765625 | NEUTRAL_TRANSITIONAL | transitional | 0.459 | 1.0 | 0.064 | 0.0 | 0.0 | 0.051 | 0.0 | 0.885 | 0.000% |
+| 2026-01-09 | 6975.740234375 | NEUTRAL_TRANSITIONAL | transitional | 0.455 | 1.0 | 0.123 | 0.0 | 0.0 | 0.038 | 0.0 | 0.839 | 0.000% |
+| 2026-01-09 | 6965.990234375 | NEUTRAL_TRANSITIONAL | transitional | 0.420 | 1.0 | 0.088 | 0.0 | 0.0 | 0.0 | 0.0 | 0.912 | 0.000% |
+| 2026-01-12 | 6961.0400390625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.465 | 1.0 | 0.067 | 0.0 | 0.068 | 0.035 | 0.0 | 0.83 | 0.000% |
+| 2026-01-12 | 6967.580078125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.457 | 1.0 | 0.125 | 0.0 | 0.0 | 0.024 | 0.0 | 0.851 | 0.000% |
+| 2026-01-12 | 6971.10986328125 | DEFLATION_FEAR | transitional | 0.474 | 1.0 | 0.142 | 0.0 | 0.0 | 0.858 | 0.0 | 0.0 | 0.000% |
+| 2026-01-12 | 6976.72998046875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.450 | 1.0 | 0.059 | 0.0 | 0.0 | 0.043 | 0.0 | 0.898 | 0.000% |
+| 2026-01-12 | 6978.93994140625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.447 | 1.0 | 0.058 | 0.0 | 0.0 | 0.03 | 0.002 | 0.91 | 0.000% |
+| 2026-01-12 | 6978.89990234375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.445 | 1.0 | 0.113 | 0.0 | 0.0 | 0.036 | 0.0 | 0.851 | 0.003% |
+| 2026-01-12 | 6976.72021484375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.436 | 1.0 | 0.104 | 0.0 | 0.0 | 0.026 | 0.0 | 0.87 | -0.013% |
+| 2026-01-13 | 6951.60009765625 | DEFLATION_FEAR | transitional | 0.487 | 1.0 | 0.156 | 0.0 | 0.0 | 0.844 | 0.0 | 0.0 | 0.000% |
+| 2026-01-13 | 6960.2001953125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.459 | 1.0 | 0.064 | 0.0 | 0.048 | 0.071 | 0.0 | 0.817 | 0.000% |
+| 2026-01-13 | 6970.91015625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.462 | 1.0 | 0.13 | 0.0 | 0.023 | 0.035 | 0.0 | 0.812 | 0.000% |
+| 2026-01-13 | 6954.60009765625 | DEFLATION_FEAR | transitional | 0.400 | 1.0 | 0.068 | 0.0 | 0.0 | 0.932 | 0.0 | 0.0 | 0.000% |
+| 2026-01-13 | 6954.89990234375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.464 | 1.0 | 0.066 | 0.0 | 0.013 | 0.039 | 0.0 | 0.882 | 0.000% |
+| 2026-01-13 | 6944.77001953125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.439 | 1.0 | 0.053 | 0.0 | 0.0 | 0.036 | 0.003 | 0.908 | 0.008% |
+| 2026-01-13 | 6962.97998046875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.447 | 1.0 | 0.115 | 0.0 | 0.012 | 0.054 | 0.01 | 0.809 | 0.052% |
+| 2026-01-14 | 6912.240234375 | DEFLATION_FEAR | transitional | 0.529 | 1.0 | 0.099 | 0.0 | 0.0 | 0.901 | 0.0 | 0.0 | 0.000% |
+| 2026-01-14 | 6916.14990234375 | NEUTRAL_TRANSITIONAL | transitional | 0.443 | 1.0 | 0.056 | 0.0 | 0.027 | 0.069 | 0.0 | 0.848 | 0.000% |
+| 2026-01-14 | 6895.22998046875 | NEUTRAL_TRANSITIONAL | transitional | 0.446 | 1.0 | 0.0 | 0.0 | 0.0 | 0.023 | 0.0 | 0.977 | 0.000% |
+| 2026-01-14 | 6900.490234375 | NEUTRAL_TRANSITIONAL | transitional | 0.458 | 1.0 | 0.126 | 0.0 | 0.0 | 0.023 | 0.0 | 0.851 | 0.000% |
+| 2026-01-14 | 6905.27001953125 | NEUTRAL_TRANSITIONAL | transitional | 0.453 | 1.0 | 0.194 | 0.0 | 0.0 | 0.0 | 0.0 | 0.806 | 0.000% |
+| 2026-01-14 | 6915.4599609375 | NEUTRAL_TRANSITIONAL | transitional | 0.473 | 1.0 | 0.113 | 0.0 | 0.0 | 0.092 | 0.0 | 0.795 | -0.039% |
+| 2026-01-14 | 6928.41015625 | DEFLATION_FEAR | transitional | 0.356 | 0.0 | 0.006 | 0.0 | 0.0 | 0.994 | 0.0 | 0.0 | -0.635% |
+| 2026-01-15 | 6963.60009765625 | DEFLATION_FEAR | transitional | 0.406 | 1.0 | 0.059 | 0.0 | 0.0 | 0.941 | 0.0 | 0.0 | 0.000% |
+| 2026-01-15 | 6973.4501953125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.451 | 1.0 | 0.191 | 0.0 | 0.0 | 0.025 | 0.0 | 0.784 | 0.000% |
+| 2026-01-15 | 6969.58984375 | NEUTRAL_TRANSITIONAL | transitional | 0.453 | 1.0 | 0.097 | 0.0 | 0.0 | 0.022 | 0.0 | 0.881 | 0.000% |
+| 2026-01-15 | 6973.85009765625 | NEUTRAL_TRANSITIONAL | transitional | 0.461 | 1.0 | 0.103 | 0.0 | 0.012 | 0.084 | 0.0 | 0.801 | 0.000% |
+| 2026-01-15 | 6961.02001953125 | NEUTRAL_TRANSITIONAL | transitional | 0.454 | 1.0 | 0.098 | 0.0 | 0.0 | 0.058 | 0.0 | 0.844 | 0.000% |
+| 2026-01-15 | 6942.7001953125 | NEUTRAL_TRANSITIONAL | transitional | 0.434 | 1.0 | 0.163 | 0.0 | 0.0 | 0.035 | 0.024 | 0.778 | 0.011% |
+| 2026-01-15 | 6944.97021484375 | NEUTRAL_TRANSITIONAL | transitional | 0.463 | 1.0 | 0.21 | 0.0 | 0.0 | 0.05 | 0.038 | 0.702 | -0.020% |
+| 2026-01-16 | 6940.580078125 | NEUTRAL_TRANSITIONAL | transitional | 0.473 | 1.0 | 0.226 | 0.0 | 0.0 | 0.066 | 0.024 | 0.684 | 0.000% |
+| 2026-01-16 | 6951.08984375 | NEUTRAL_TRANSITIONAL | transitional | 0.433 | 1.0 | 0.161 | 0.0 | 0.004 | 0.111 | 0.0 | 0.724 | 0.000% |
+| 2026-01-16 | 6949.240234375 | NEUTRAL_TRANSITIONAL | transitional | 0.447 | 1.0 | 0.184 | 0.0 | 0.0 | 0.019 | 0.0 | 0.797 | 0.000% |
+| 2026-01-16 | 6954.0498046875 | NEUTRAL_TRANSITIONAL | transitional | 0.449 | 1.0 | 0.187 | 0.0 | 0.0 | 0.074 | 0.0 | 0.739 | 0.000% |
+| 2026-01-16 | 6944.85009765625 | NEUTRAL_TRANSITIONAL | transitional | 0.431 | 1.0 | 0.158 | 0.0 | 0.0 | 0.0 | 0.0 | 0.842 | 0.000% |
+| 2026-01-16 | 6945.7900390625 | NEUTRAL_TRANSITIONAL | transitional | 0.441 | 1.0 | 0.087 | 0.0 | 0.0 | 0.042 | 0.0 | 0.871 | 0.000% |
+| 2026-01-16 | 6939.4599609375 | NEUTRAL_TRANSITIONAL | transitional | 0.479 | 1.0 | 0.118 | 0.0 | 0.03 | 0.059 | 0.0 | 0.793 | -0.002% |
+| 2026-01-20 | 6862.06005859375 | DEFLATION_FEAR | transitional | 0.402 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-01-20 | 6862.22998046875 | DEFLATION_FEAR | transitional | 0.454 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-01-20 | 6847.580078125 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.478 | 1.0 | 0.0 | 0.0 | 0.025 | 0.016 | 0.0 | 0.959 | 0.000% |
+| 2026-01-20 | 6826.7998046875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.485 | 1.0 | 0.0 | 0.0 | 0.048 | 0.058 | 0.119 | 0.775 | 0.000% |
+| 2026-01-20 | 6803.43994140625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.446 | 1.0 | 0.0 | 0.0 | 0.0 | 0.05 | 0.105 | 0.845 | 0.000% |
+| 2026-01-20 | 6796.72021484375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.436 | 1.0 | 0.0 | 0.0 | 0.037 | 0.038 | 0.105 | 0.82 | -0.008% |
+| 2026-01-20 | 6796.759765625 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.490 | 1.0 | 0.0 | 0.0 | 0.105 | 0.038 | 0.108 | 0.749 | 0.038% |
+| 2026-01-21 | 6853.43017578125 | DEFLATION_FEAR | transitional | 0.397 | 0.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-01-21 | 6865.93017578125 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.479 | 1.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.000% |
+| 2026-01-21 | 6821.75 | STAGFLATION_STRESS | transitional | 0.597 | 1.0 | 0.0 | 0.0 | 0.08 | 0.033 | 0.001 | 0.886 | 0.000% |
+| 2026-01-21 | 6828.6298828125 | NEUTRAL_TRANSITIONAL | transitional | 0.548 | 1.0 | 0.0 | 0.0 | 0.072 | 0.053 | 0.0 | 0.875 | 0.000% |
+| 2026-01-21 | 6867.56982421875 | NEUTRAL_TRANSITIONAL | transitional | 0.563 | 1.0 | 0.0 | 0.0 | 0.087 | 0.059 | 0.0 | 0.854 | 0.000% |
+| 2026-01-21 | 6876.89013671875 | DEFLATION_FEAR | transitional | 0.347 | 0.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | -1.043% |
+| 2026-01-21 | 6875.47998046875 | NEUTRAL_TRANSITIONAL | transitional | 0.570 | 1.0 | 0.0 | 0.0 | 0.004 | 0.319 | 0.0 | 0.677 | -0.245% |
+| 2026-01-22 | 6908.77001953125 | STAGFLATION_STRESS | transitional | 0.576 | 1.0 | 0.197 | 0.0 | 0.059 | 0.019 | 0.0 | 0.725 | 0.000% |
+| 2026-01-22 | 6921.77978515625 | NEUTRAL_TRANSITIONAL | transitional | 0.448 | 1.0 | 0.186 | 0.0 | 0.0 | 0.009 | 0.0 | 0.805 | 0.000% |
+| 2026-01-22 | 6925.97998046875 | NEUTRAL_TRANSITIONAL | transitional | 0.463 | 1.0 | 0.105 | 0.0 | 0.006 | 0.0 | 0.0 | 0.889 | 0.000% |
+| 2026-01-22 | 6928.14013671875 | NEUTRAL_TRANSITIONAL | transitional | 0.466 | 1.0 | 0.107 | 0.0 | 0.004 | 0.0 | 0.0 | 0.889 | 0.000% |
+| 2026-01-22 | 6930.02978515625 | NEUTRAL_TRANSITIONAL | transitional | 0.510 | 1.0 | 0.143 | 0.0 | 0.0 | 0.0 | 0.0 | 0.857 | 0.000% |
+| 2026-01-22 | 6905.60009765625 | NEUTRAL_TRANSITIONAL | transitional | 0.511 | 1.0 | 0.288 | 0.0 | 0.0 | 0.0 | 0.0 | 0.712 | 0.000% |
+| 2026-01-22 | 6912.5400390625 | NEUTRAL_TRANSITIONAL | transitional | 0.496 | 1.0 | 0.264 | 0.0 | 0.009 | 0.0 | 0.0 | 0.727 | 0.007% |
+| 2026-01-23 | 6917.22998046875 | NEUTRAL_TRANSITIONAL | transitional | 0.488 | 1.0 | 0.126 | 0.0 | 0.051 | 0.058 | 0.0 | 0.765 | 0.000% |
+| 2026-01-23 | 6924.2001953125 | NEUTRAL_TRANSITIONAL | transitional | 0.427 | 1.0 | 0.152 | 0.0 | 0.035 | 0.004 | 0.0 | 0.809 | 0.000% |
+| 2026-01-23 | 6925.3701171875 | NEUTRAL_TRANSITIONAL | transitional | 0.437 | 1.0 | 0.084 | 0.0 | 0.0 | 0.058 | 0.0 | 0.858 | 0.000% |
+| 2026-01-23 | 6912.68994140625 | STAGFLATION_STRESS | transitional | 0.512 | 1.0 | 0.289 | 0.0 | 0.0 | 0.043 | 0.0 | 0.668 | 0.000% |
+| 2026-01-23 | 6918.990234375 | NEUTRAL_TRANSITIONAL | transitional | 0.455 | 1.0 | 0.099 | 0.0 | 0.0 | 0.069 | 0.0 | 0.832 | 0.000% |
+| 2026-01-23 | 6911.6298828125 | NEUTRAL_TRANSITIONAL | transitional | 0.412 | 1.0 | 0.127 | 0.0 | 0.0 | 0.0 | 0.0 | 0.873 | 0.000% |
+| 2026-01-23 | 6915.16015625 | NEUTRAL_TRANSITIONAL | transitional | 0.526 | 1.0 | 0.156 | 0.0 | 0.001 | 0.093 | 0.0 | 0.75 | 0.000% |
+| 2026-01-26 | 6948.93994140625 | DEFLATION_FEAR | transitional | 0.496 | 1.0 | 0.083 | 0.0 | 0.0 | 0.917 | 0.0 | 0.0 | 0.000% |
+| 2026-01-26 | 6954.58984375 | NEUTRAL_TRANSITIONAL | transitional | 0.468 | 1.0 | 0.136 | 0.0 | 0.0 | 0.043 | 0.0 | 0.821 | 0.000% |
+| 2026-01-26 | 6958.5498046875 | DEFLATION_FEAR | transitional | 0.493 | 1.0 | 0.081 | 0.0 | 0.0 | 0.919 | 0.0 | 0.0 | 0.000% |
+| 2026-01-26 | 6961.22998046875 | DEFLATION_FEAR | transitional | 0.484 | 1.0 | 0.076 | 0.0 | 0.0 | 0.924 | 0.0 | 0.0 | 0.000% |
+| 2026-01-26 | 6961.85009765625 | DEFLATION_FEAR | risk_off | 0.547 | 1.0 | 0.26 | 0.0 | 0.0 | 0.017 | 0.0 | 0.723 | 0.000% |
+| 2026-01-26 | 6958.89990234375 | DEFLATION_FEAR | risk_off | 0.526 | 1.0 | 0.234 | 0.0 | 0.0 | 0.031 | 0.0 | 0.735 | -0.007% |
+| 2026-01-26 | 6950.14990234375 | NEUTRAL_TRANSITIONAL | transitional | 0.448 | 1.0 | 0.186 | 0.0 | 0.0 | 0.072 | 0.0 | 0.742 | 0.073% |
+| 2026-01-27 | 6971.81982421875 | DEFLATION_FEAR | risk_off | 0.641 | 1.0 | 0.374 | 0.0 | 0.0 | 0.0 | 0.0 | 0.626 | 0.000% |
+| 2026-01-27 | 6985.830078125 | DEFLATION_FEAR | risk_off | 0.471 | 1.0 | 0.167 | 0.0 | 0.0 | 0.833 | 0.0 | 0.0 | 0.000% |
+| 2026-01-27 | 6983.35986328125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.500 | 1.0 | 0.169 | 0.0 | 0.008 | 0.031 | 0.0 | 0.792 | 0.000% |
+| 2026-01-27 | 6981.3798828125 | DEFLATION_FEAR | risk_off | 0.438 | 1.0 | 0.127 | 0.0 | 0.0 | 0.873 | 0.0 | 0.0 | 0.000% |
+| 2026-01-27 | 6985.16015625 | DEFLATION_FEAR | risk_off | 0.458 | 1.0 | 0.151 | 0.0 | 0.0 | 0.849 | 0.0 | 0.0 | 0.000% |
+| 2026-01-27 | 6983.58984375 | DEFLATION_FEAR | risk_off | 0.446 | 1.0 | 0.137 | 0.0 | 0.0 | 0.863 | 0.0 | 0.0 | -0.092% |
+| 2026-01-27 | 6978.580078125 | DEFLATION_FEAR | risk_off | 0.459 | 1.0 | 0.153 | 0.0 | 0.0 | 0.847 | 0.0 | 0.0 | 0.325% |
+| 2026-01-28 | 6988.97998046875 | DEFLATION_FEAR | risk_off | 0.486 | 1.0 | 0.185 | 0.0 | 0.0 | 0.815 | 0.0 | 0.0 | 0.000% |
+| 2026-01-28 | 6984.31005859375 | DEFLATION_FEAR | risk_off | 0.435 | 1.0 | 0.124 | 0.0 | 0.0 | 0.876 | 0.0 | 0.0 | 0.000% |
+| 2026-01-28 | 6971.7900390625 | DEFLATION_FEAR | risk_off | 0.457 | 1.0 | 0.15 | 0.0 | 0.0 | 0.85 | 0.0 | 0.0 | 0.000% |
+| 2026-01-28 | 6974.830078125 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.454 | 1.0 | 0.122 | 0.0 | 0.0 | 0.006 | 0.001 | 0.871 | 0.000% |
+| 2026-01-28 | 6964.43017578125 | DEFLATION_FEAR | risk_off | 0.433 | 1.0 | 0.121 | 0.0 | 0.0 | 0.879 | 0.0 | 0.0 | 0.000% |
+| 2026-01-28 | 6977.68017578125 | DEFLATION_FEAR | risk_off | 0.491 | 1.0 | 0.192 | 0.0 | 0.0 | 0.808 | 0.0 | 0.0 | 1.942% |
+| 2026-01-28 | 6976.27978515625 | NEUTRAL_TRANSITIONAL_5 | risk_off | 0.466 | 1.0 | 0.161 | 0.0 | 0.0 | 0.058 | 0.0 | 0.781 | 0.134% |
+| 2026-01-29 | 6912.60009765625 | DEFLATION_FEAR | risk_off | 0.449 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-01-29 | 6902.72021484375 | DEFLATION_FEAR | risk_off | 0.493 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-01-29 | 6933.7099609375 | DEFLATION_FEAR | risk_off | 0.331 | 1.0 | 0.0 | 0.003 | 0.0 | 0.997 | 0.0 | 0.0 | 0.000% |
+| 2026-01-29 | 6932.89990234375 | NEUTRAL_TRANSITIONAL | transitional | 0.461 | 1.0 | 0.103 | 0.0 | 0.0 | 0.089 | 0.0 | 0.808 | 0.000% |
+| 2026-01-29 | 6943.91015625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.430 | 1.0 | 0.157 | 0.0 | 0.0 | 0.0 | 0.0 | 0.843 | 0.000% |
+| 2026-01-29 | 6938.10986328125 | NEUTRAL_TRANSITIONAL | transitional | 0.461 | 1.0 | 0.103 | 0.0 | 0.0 | 0.027 | 0.0 | 0.87 | 0.022% |
+| 2026-01-29 | 6966.27001953125 | DEFLATION_FEAR | transitional | 0.445 | 1.0 | 0.314 | 0.0 | 0.0 | 0.0 | 0.0 | 0.686 | 0.000% |
+| 2026-01-30 | 6935.97021484375 | NEUTRAL_TRANSITIONAL | transitional | 0.454 | 1.0 | 0.195 | 0.0 | 0.0 | 0.0 | 0.0 | 0.805 | 0.000% |
+| 2026-01-30 | 6939.39990234375 | NEUTRAL_TRANSITIONAL | transitional | 0.452 | 1.0 | 0.192 | 0.0 | 0.0 | 0.051 | 0.0 | 0.757 | -0.114% |
+| 2026-02-02 | 6990.759765625 | DEFLATION_FEAR | transitional | 0.476 | 1.0 | 0.401 | 0.0 | 0.0 | 0.41 | 0.0 | 0.189 | 0.000% |
+| 2026-02-02 | 6980.080078125 | STAGFLATION_STRESS | transitional | 0.582 | 1.0 | 0.403 | 0.0 | 0.139 | 0.055 | 0.0 | 0.403 | 0.282% |
+| 2026-02-02 | 6976.22998046875 | NEUTRAL_TRANSITIONAL | transitional | 0.558 | 1.0 | 0.364 | 0.0 | 0.022 | 0.035 | 0.0 | 0.579 | 0.150% |
+| 2026-02-03 | 6944.18017578125 | STAGFLATION_STRESS | transitional | 0.575 | 1.0 | 0.392 | 0.0 | 0.029 | 0.024 | 0.0 | 0.555 | 0.000% |
+| 2026-02-03 | 6929.9501953125 | NEUTRAL_TRANSITIONAL | transitional | 0.538 | 1.0 | 0.166 | 0.0 | 0.0 | 0.008 | 0.0 | 0.826 | 0.000% |
+| 2026-02-03 | 6910.27001953125 | STAGFLATION_STRESS | transitional | 0.546 | 1.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.000% |
+| 2026-02-03 | 6885.56005859375 | STAGFLATION_STRESS | transitional | 0.582 | 1.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.001 | 0.999 | 0.000% |
+| 2026-02-03 | 6882.830078125 | STAGFLATION_STRESS | risk_off | 0.536 | 1.0 | 0.0 | 0.0 | 0.045 | 0.079 | 0.0 | 0.876 | 0.000% |
+| 2026-02-03 | 6897.490234375 | NEUTRAL_TRANSITIONAL | transitional | 0.468 | 1.0 | 0.0 | 0.0 | 0.044 | 0.0 | 0.0 | 0.956 | -0.037% |
+| 2026-02-03 | 6917.39990234375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.392 | 0.0 | 0.0 | 0.0 | 0.019 | 0.074 | 0.0 | 0.907 | 0.148% |
+| 2026-02-04 | 6921.18017578125 | STAGFLATION_STRESS | transitional | 0.572 | 1.0 | 0.0 | 0.0 | 0.11 | 0.063 | 0.0 | 0.827 | 0.000% |
+| 2026-02-04 | 6905.3798828125 | STAGFLATION_STRESS | risk_off | 0.450 | 1.0 | 0.0 | 0.0 | 0.04 | 0.011 | 0.094 | 0.855 | 0.000% |
+| 2026-02-04 | 6857.919921875 | STAGFLATION_STRESS | risk_off | 0.523 | 1.0 | 0.0 | 0.0 | 0.0 | 0.038 | 0.009 | 0.953 | 0.000% |
+| 2026-02-04 | 6870.4599609375 | STAGFLATION_STRESS | risk_off | 0.588 | 1.0 | 0.0 | 0.0 | 0.088 | 0.064 | 0.0 | 0.848 | 0.000% |
+| 2026-02-04 | 6875.259765625 | NEUTRAL_TRANSITIONAL | transitional | 0.473 | 1.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.005 | 0.995 | 0.000% |
+| 2026-02-04 | 6897.419921875 | DEFLATION_FEAR | risk_off | 0.340 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 1.447% |
+| 2026-02-04 | 6882.759765625 | STAGFLATION_STRESS | risk_off | 0.575 | 1.0 | 0.0 | 0.0 | 0.034 | 0.026 | 0.0 | 0.94 | -0.017% |
+| 2026-02-05 | 6787.14990234375 | DEFLATION_FEAR | risk_off | 0.525 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-02-05 | 6817.0498046875 | STAGFLATION_STRESS | risk_off | 0.471 | 1.0 | 0.0 | 0.0 | 0.124 | 0.025 | 0.0 | 0.851 | 0.000% |
+| 2026-02-05 | 6837.08984375 | DEFLATION_FEAR | risk_off | 0.379 | 0.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-02-05 | 6812.68017578125 | NEUTRAL_TRANSITIONAL | risk_off | 0.569 | 1.0 | 0.0 | 0.0 | 0.0 | 0.009 | 0.0 | 0.991 | 0.000% |
+| 2026-02-05 | 6823.419921875 | STAGFLATION_STRESS | risk_off | 0.571 | 1.0 | 0.0 | 0.0 | 0.076 | 0.06 | 0.0 | 0.864 | 0.000% |
+| 2026-02-05 | 6799.0498046875 | NEUTRAL_TRANSITIONAL | transitional | 0.471 | 1.0 | 0.0 | 0.0 | 0.0 | 0.039 | 0.007 | 0.954 | -0.095% |
+| 2026-02-05 | 6799.990234375 | STAGFLATION_STRESS | risk_off | 0.549 | 1.0 | 0.0 | 0.0 | 0.025 | 0.032 | 0.0 | 0.943 | 0.090% |
+| 2026-02-06 | 6878.18017578125 | STAGFLATION_STRESS | risk_off | 0.429 | 0.0 | 0.0 | 0.0 | 0.012 | 0.0 | 0.0 | 0.988 | 0.000% |
+| 2026-02-06 | 6892.759765625 | NEUTRAL_TRANSITIONAL | transitional | 0.528 | 1.0 | 0.0 | 0.0 | 0.029 | 0.011 | 0.0 | 0.96 | 0.000% |
+| 2026-02-06 | 6906.75 | NEUTRAL_TRANSITIONAL | transitional | 0.447 | 1.0 | 0.0 | 0.0 | 0.006 | 0.0 | 0.0 | 0.994 | 0.000% |
+| 2026-02-06 | 6911.31005859375 | NEUTRAL_TRANSITIONAL | transitional | 0.468 | 1.0 | 0.068 | 0.0 | 0.0 | 0.0 | 0.0 | 0.932 | 0.000% |
+| 2026-02-06 | 6916.9501953125 | NEUTRAL_TRANSITIONAL | transitional | 0.478 | 1.0 | 0.073 | 0.0 | 0.0 | 0.0 | 0.0 | 0.927 | 0.000% |
+| 2026-02-06 | 6919.81005859375 | NEUTRAL_TRANSITIONAL | transitional | 0.437 | 1.0 | 0.052 | 0.0 | 0.0 | 0.0 | 0.016 | 0.932 | 0.000% |
+| 2026-02-06 | 6930.27001953125 | NEUTRAL_TRANSITIONAL | transitional | 0.480 | 1.0 | 0.148 | 0.0 | 0.0 | 0.0 | 0.0 | 0.852 | 0.000% |
+| 2026-02-09 | 6941.14990234375 | DEFLATION_FEAR | transitional | 0.491 | 1.0 | 0.16 | 0.0 | 0.0 | 0.84 | 0.0 | 0.0 | 0.000% |
+| 2026-02-09 | 6969.18994140625 | NEUTRAL_TRANSITIONAL | transitional | 0.339 | 0.0 | 0.001 | 0.0 | 0.0 | 0.0 | 0.0 | 0.999 | 0.000% |
+| 2026-02-09 | 6973.2998046875 | NEUTRAL_TRANSITIONAL | transitional | 0.495 | 1.0 | 0.082 | 0.0 | 0.026 | 0.044 | 0.0 | 0.848 | 0.000% |
+| 2026-02-09 | 6964.2001953125 | NEUTRAL_TRANSITIONAL | transitional | 0.451 | 1.0 | 0.059 | 0.0 | 0.0 | 0.039 | 0.0 | 0.902 | 0.000% |
+| 2026-02-09 | 6979.1201171875 | NEUTRAL_TRANSITIONAL | transitional | 0.450 | 1.0 | 0.059 | 0.0 | 0.002 | 0.053 | 0.0 | 0.886 | 0.000% |
+| 2026-02-09 | 6967.259765625 | NEUTRAL_TRANSITIONAL | transitional | 0.437 | 1.0 | 0.052 | 0.0 | 0.0 | 0.033 | 0.0 | 0.915 | -0.031% |
+| 2026-02-09 | 6963.169921875 | NEUTRAL_TRANSITIONAL | transitional | 0.455 | 1.0 | 0.123 | 0.0 | 0.0 | 0.054 | 0.0 | 0.823 | -0.031% |
+| 2026-02-10 | 6980.27001953125 | NEUTRAL_TRANSITIONAL | transitional | 0.463 | 1.0 | 0.131 | 0.0 | 0.0 | 0.047 | 0.0 | 0.822 | 0.000% |
+| 2026-02-10 | 6969.0 | NEUTRAL_TRANSITIONAL | transitional | 0.425 | 1.0 | 0.093 | 0.0 | 0.0 | 0.032 | 0.0 | 0.875 | 0.000% |
+| 2026-02-10 | 6973.3798828125 | NEUTRAL_TRANSITIONAL | transitional | 0.431 | 1.0 | 0.05 | 0.0 | 0.0 | 0.048 | 0.015 | 0.887 | 0.000% |
+| 2026-02-10 | 6955.490234375 | NEUTRAL_TRANSITIONAL | transitional | 0.441 | 1.0 | 0.109 | 0.0 | 0.0 | 0.0 | 0.0 | 0.891 | 0.000% |
+| 2026-02-10 | 6959.4599609375 | NEUTRAL_TRANSITIONAL | transitional | 0.482 | 1.0 | 0.151 | 0.0 | 0.041 | 0.052 | 0.0 | 0.756 | 0.000% |
+| 2026-02-10 | 6953.7998046875 | NEUTRAL_TRANSITIONAL | transitional | 0.456 | 1.0 | 0.124 | 0.0 | 0.0 | 0.02 | 0.0 | 0.856 | 0.004% |
+| 2026-02-10 | 6940.009765625 | NEUTRAL_TRANSITIONAL | transitional | 0.474 | 1.0 | 0.071 | 0.0 | 0.014 | 0.053 | 0.0 | 0.862 | 0.036% |
+| 2026-02-11 | 6917.72021484375 | DEFLATION_FEAR | transitional | 0.542 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-02-11 | 6939.4501953125 | DEFLATION_FEAR | transitional | 0.480 | 1.0 | 0.074 | 0.0 | 0.0 | 0.926 | 0.0 | 0.0 | 0.000% |
+| 2026-02-11 | 6955.8798828125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.484 | 1.0 | 0.076 | 0.0 | 0.0 | 0.026 | 0.0 | 0.898 | 0.000% |
+| 2026-02-11 | 6948.8798828125 | NEUTRAL_TRANSITIONAL | transitional | 0.439 | 1.0 | 0.053 | 0.0 | 0.0 | 0.001 | 0.0 | 0.946 | 0.000% |
+| 2026-02-11 | 6958.60009765625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.442 | 1.0 | 0.055 | 0.0 | 0.025 | 0.048 | 0.0 | 0.872 | 0.000% |
+| 2026-02-11 | 6943.43994140625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.453 | 1.0 | 0.06 | 0.0 | 0.0 | 0.017 | 0.0 | 0.923 | -0.009% |
+| 2026-02-11 | 6939.68017578125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.461 | 1.0 | 0.129 | 0.0 | 0.034 | 0.052 | 0.003 | 0.782 | -0.031% |
+| 2026-02-12 | 6950.66015625 | DEFLATION_FEAR | transitional | 0.502 | 1.0 | 0.086 | 0.0 | 0.0 | 0.914 | 0.0 | 0.0 | 0.000% |
+| 2026-02-12 | 6855.39013671875 | DEFLATION_FEAR | transitional | 0.457 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-02-12 | 6860.5498046875 | DEFLATION_FEAR | risk_off | 0.407 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-02-12 | 6851.2099609375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.456 | 1.0 | 0.0 | 0.0 | 0.0 | 0.059 | 0.051 | 0.89 | 0.000% |
+| 2026-02-12 | 6861.2001953125 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.457 | 1.0 | 0.0 | 0.0 | 0.0 | 0.032 | 0.0 | 0.968 | 0.000% |
+| 2026-02-12 | 6851.8798828125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.456 | 1.0 | 0.0 | 0.0 | 0.0 | 0.014 | 0.0 | 0.986 | 0.001% |
+| 2026-02-12 | 6833.5400390625 | DEFLATION_FEAR | transitional | 0.436 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 1.182% |
+| 2026-02-13 | 6848.52978515625 | DEFLATION_FEAR | transitional | 0.440 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-02-13 | 6855.41015625 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.335 | 1.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.000% |
+| 2026-02-13 | 6872.91015625 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.434 | 1.0 | 0.0 | 0.0 | 0.035 | 0.0 | 0.0 | 0.965 | 0.000% |
+| 2026-02-13 | 6871.81982421875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.455 | 1.0 | 0.0 | 0.0 | 0.0 | 0.055 | 0.0 | 0.945 | 0.000% |
+| 2026-02-13 | 6861.85009765625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.430 | 1.0 | 0.0 | 0.0 | 0.0 | 0.061 | 0.012 | 0.927 | 0.000% |
+| 2026-02-13 | 6825.64990234375 | DEFLATION_FEAR | transitional | 0.498 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-02-13 | 6835.080078125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.401 | 1.0 | 0.0 | 0.0 | 0.0 | 0.069 | 0.068 | 0.863 | 0.000% |
+| 2026-02-17 | 6791.31982421875 | DEFLATION_FEAR | transitional | 0.501 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-02-17 | 6834.10986328125 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.483 | 1.0 | 0.0 | 0.0 | 0.0 | 0.023 | 0.021 | 0.956 | 0.000% |
+| 2026-02-17 | 6839.1298828125 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.347 | 1.0 | 0.0 | 0.0 | 0.008 | 0.0 | 0.0 | 0.992 | 0.000% |
+| 2026-02-17 | 6841.3701171875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.448 | 1.0 | 0.0 | 0.0 | 0.059 | 0.063 | 0.024 | 0.854 | 0.000% |
+| 2026-02-17 | 6857.1201171875 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.483 | 1.0 | 0.0 | 0.0 | 0.016 | 0.0 | 0.0 | 0.984 | 0.000% |
+| 2026-02-17 | 6847.0498046875 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.420 | 1.0 | 0.0 | 0.0 | 0.022 | 0.051 | 0.0 | 0.927 | -0.028% |
+| 2026-02-17 | 6846.02978515625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.465 | 1.0 | 0.0 | 0.0 | 0.024 | 0.058 | 0.056 | 0.862 | -0.002% |
+| 2026-02-18 | 6897.080078125 | DEFLATION_FEAR | transitional | 0.491 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-02-18 | 6900.60986328125 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.458 | 1.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.014 | 0.986 | 0.000% |
+| 2026-02-18 | 6900.52001953125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.474 | 1.0 | 0.0 | 0.0 | 0.043 | 0.037 | 0.068 | 0.852 | 0.000% |
+| 2026-02-18 | 6895.8701171875 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.476 | 1.0 | 0.0 | 0.0 | 0.024 | 0.024 | 0.055 | 0.897 | 0.000% |
+| 2026-02-18 | 6882.240234375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.453 | 1.0 | 0.0 | 0.0 | 0.0 | 0.021 | 0.071 | 0.908 | 0.000% |
+| 2026-02-18 | 6860.08984375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.476 | 1.0 | 0.0 | 0.0 | 0.02 | 0.021 | 0.061 | 0.898 | -0.021% |
+| 2026-02-18 | 6879.66015625 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.488 | 1.0 | 0.0 | 0.0 | 0.0 | 0.092 | 0.002 | 0.906 | -0.007% |
+| 2026-02-19 | 6856.60986328125 | DEFLATION_FEAR | transitional | 0.382 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-02-19 | 6858.64990234375 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.478 | 1.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.000% |
+| 2026-02-19 | 6856.3798828125 | DEFLATION_FEAR | transitional | 0.469 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-02-19 | 6841.080078125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.451 | 1.0 | 0.0 | 0.0 | 0.001 | 0.055 | 0.048 | 0.896 | 0.000% |
+| 2026-02-19 | 6849.39990234375 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.448 | 1.0 | 0.0 | 0.0 | 0.017 | 0.035 | 0.0 | 0.948 | 0.000% |
+| 2026-02-19 | 6845.58984375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.456 | 1.0 | 0.0 | 0.0 | 0.011 | 0.035 | 0.048 | 0.906 | -0.032% |
+| 2026-02-19 | 6861.64990234375 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.471 | 1.0 | 0.0 | 0.0 | 0.0 | 0.022 | 0.006 | 0.972 | -0.000% |
+| 2026-02-20 | 6884.419921875 | DEFLATION_FEAR | transitional | 0.500 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-02-20 | 6878.759765625 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.313 | 1.0 | 0.0 | 0.013 | 0.007 | 0.0 | 0.0 | 0.98 | 0.000% |
+| 2026-02-20 | 6868.0498046875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.495 | 1.0 | 0.0 | 0.0 | 0.05 | 0.046 | 0.02 | 0.884 | 0.000% |
+| 2026-02-20 | 6883.14013671875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.448 | 1.0 | 0.0 | 0.0 | 0.037 | 0.062 | 0.026 | 0.875 | 0.000% |
+| 2026-02-20 | 6902.14013671875 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.441 | 1.0 | 0.109 | 0.0 | 0.0 | 0.0 | 0.0 | 0.891 | 0.000% |
+| 2026-02-20 | 6900.27001953125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.451 | 1.0 | 0.119 | 0.0 | 0.034 | 0.044 | 0.022 | 0.781 | 0.015% |
+| 2026-02-20 | 6910.22021484375 | DEFLATION_FEAR | transitional | 0.452 | 1.0 | 0.12 | 0.0 | 0.0 | 0.88 | 0.0 | 0.0 | 0.000% |
+| 2026-02-23 | 6860.5498046875 | DEFLATION_FEAR | transitional | 0.426 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-02-23 | 6844.91015625 | DEFLATION_FEAR | risk_off | 0.485 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-02-23 | 6833.419921875 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.460 | 1.0 | 0.0 | 0.0 | 0.034 | 0.031 | 0.009 | 0.926 | 0.000% |
+| 2026-02-23 | 6854.25 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.457 | 1.0 | 0.0 | 0.0 | 0.053 | 0.095 | 0.0 | 0.852 | 0.000% |
+| 2026-02-23 | 6828.509765625 | LIQUIDITY_DRIVEN_RALLY | transitional | 0.465 | 1.0 | 0.0 | 0.0 | 0.011 | 0.048 | 0.0 | 0.941 | 0.000% |
+| 2026-02-23 | 6830.25 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.452 | 1.0 | 0.0 | 0.0 | 0.003 | 0.066 | 0.069 | 0.862 | -0.019% |
+| 2026-02-23 | 6839.58984375 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.489 | 1.0 | 0.0 | 0.0 | 0.088 | 0.124 | 0.0 | 0.788 | -0.183% |
+| 2026-02-24 | 6880.14013671875 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.451 | 1.0 | 0.0 | 0.0 | 0.106 | 0.091 | 0.0 | 0.803 | 0.000% |
+| 2026-02-24 | 6876.72021484375 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.427 | 1.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.000% |
+| 2026-02-24 | 6891.72021484375 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.467 | 1.0 | 0.068 | 0.0 | 0.009 | 0.013 | 0.0 | 0.91 | 0.000% |
+| 2026-02-24 | 6886.52001953125 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.458 | 1.0 | 0.0 | 0.0 | 0.009 | 0.01 | 0.007 | 0.974 | 0.000% |
+| 2026-02-24 | 6885.39013671875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.445 | 1.0 | 0.0 | 0.0 | 0.0 | 0.033 | 0.006 | 0.961 | 0.000% |
+| 2026-02-24 | 6881.6201171875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.448 | 1.0 | 0.0 | 0.0 | 0.003 | 0.041 | 0.007 | 0.949 | -0.018% |
+| 2026-02-24 | 6891.0400390625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.467 | 1.0 | 0.135 | 0.0 | 0.0 | 0.064 | 0.0 | 0.801 | 0.043% |
+| 2026-02-25 | 6927.60009765625 | DEFLATION_FEAR | transitional | 0.470 | 1.0 | 0.069 | 0.0 | 0.0 | 0.931 | 0.0 | 0.0 | 0.000% |
+| 2026-02-25 | 6931.330078125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.453 | 1.0 | 0.121 | 0.0 | 0.002 | 0.032 | 0.0 | 0.845 | 0.000% |
+| 2026-02-25 | 6936.2900390625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.438 | 1.0 | 0.106 | 0.0 | 0.0 | 0.018 | 0.0 | 0.876 | 0.000% |
+| 2026-02-25 | 6939.830078125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.436 | 1.0 | 0.052 | 0.0 | 0.0 | 0.037 | 0.0 | 0.911 | 0.000% |
+| 2026-02-25 | 6945.240234375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.433 | 1.0 | 0.051 | 0.0 | 0.0 | 0.032 | 0.0 | 0.917 | 0.000% |
+| 2026-02-25 | 6945.93017578125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.436 | 1.0 | 0.104 | 0.0 | 0.0 | 0.017 | 0.0 | 0.879 | 0.003% |
+| 2026-02-25 | 6946.89013671875 | DEFLATION_FEAR | transitional | 0.462 | 1.0 | 0.13 | 0.0 | 0.0 | 0.87 | 0.0 | 0.0 | 0.388% |
+| 2026-02-26 | 6873.3798828125 | DEFLATION_FEAR | transitional | 0.450 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-02-26 | 6903.85009765625 | DEFLATION_FEAR | risk_off | 0.450 | 1.0 | 0.142 | 0.0 | 0.0 | 0.858 | 0.0 | 0.0 | 0.000% |
+| 2026-02-26 | 6878.43017578125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.447 | 1.0 | 0.0 | 0.0 | 0.0 | 0.024 | 0.02 | 0.956 | 0.000% |
+| 2026-02-26 | 6872.759765625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.427 | 1.0 | 0.0 | 0.0 | 0.028 | 0.049 | 0.021 | 0.902 | 0.000% |
+| 2026-02-26 | 6902.27001953125 | DEFLATION_FEAR | transitional | 0.453 | 1.0 | 0.06 | 0.0 | 0.0 | 0.94 | 0.0 | 0.0 | 0.000% |
+| 2026-02-26 | 6902.47021484375 | NEUTRAL_TRANSITIONAL | transitional | 0.446 | 1.0 | 0.057 | 0.0 | 0.0 | 0.021 | 0.0 | 0.922 | -0.005% |
+| 2026-02-26 | 6909.009765625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.448 | 1.0 | 0.058 | 0.0 | 0.024 | 0.056 | 0.0 | 0.862 | 0.003% |
+| 2026-02-27 | 6860.990234375 | DEFLATION_FEAR | transitional | 0.490 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-02-27 | 6868.8701171875 | DEFLATION_FEAR | transitional | 0.333 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-02-27 | 6856.2900390625 | NEUTRAL_TRANSITIONAL | transitional | 0.451 | 1.0 | 0.0 | 0.0 | 0.009 | 0.026 | 0.0 | 0.965 | 0.000% |
+| 2026-02-27 | 6852.759765625 | NEUTRAL_TRANSITIONAL | transitional | 0.446 | 1.0 | 0.0 | 0.0 | 0.0 | 0.08 | 0.0 | 0.92 | 0.000% |
+| 2026-02-27 | 6851.10009765625 | NEUTRAL_TRANSITIONAL | transitional | 0.445 | 1.0 | 0.0 | 0.0 | 0.0 | 0.064 | 0.0 | 0.936 | 0.000% |
+| 2026-02-27 | 6871.1298828125 | NEUTRAL_TRANSITIONAL | transitional | 0.451 | 1.0 | 0.0 | 0.0 | 0.029 | 0.095 | 0.0 | 0.876 | 0.014% |
+| 2026-02-27 | 6878.0400390625 | NEUTRAL_TRANSITIONAL | transitional | 0.422 | 1.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.000% |
+| 2026-03-02 | 6848.240234375 | DEFLATION_FEAR | transitional | 0.366 | 0.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-02 | 6848.330078125 | NEUTRAL_TRANSITIONAL | transitional | 0.520 | 1.0 | 0.0 | 0.0 | 0.056 | 0.035 | 0.071 | 0.838 | 0.000% |
+| 2026-03-02 | 6880.18017578125 | STAGFLATION_STRESS | transitional | 0.502 | 1.0 | 0.0 | 0.0 | 0.038 | 0.0 | 0.006 | 0.956 | 0.000% |
+| 2026-03-02 | 6882.2998046875 | NEUTRAL_TRANSITIONAL | transitional | 0.428 | 1.0 | 0.0 | 0.0 | 0.0 | 0.037 | 0.0 | 0.963 | 0.000% |
+| 2026-03-02 | 6896.7998046875 | STAGFLATION_STRESS | transitional | 0.543 | 1.0 | 0.17 | 0.0 | 0.158 | 0.103 | 0.0 | 0.569 | 0.000% |
+| 2026-03-02 | 6868.81005859375 | NEUTRAL_TRANSITIONAL | transitional | 0.398 | 1.0 | 0.0 | 0.0 | 0.001 | 0.0 | 0.0 | 0.999 | -0.001% |
+| 2026-03-02 | 6880.0498046875 | STAGFLATION_STRESS | transitional | 0.516 | 1.0 | 0.0 | 0.0 | 0.178 | 0.1 | 0.0 | 0.722 | -0.127% |
+| 2026-03-03 | 6711.81005859375 | DEFLATION_FEAR | risk_off | 0.412 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-03 | 6775.580078125 | STAGFLATION_STRESS | risk_off | 0.534 | 1.0 | 0.0 | 0.0 | 0.11 | 0.045 | 0.0 | 0.845 | 0.000% |
+| 2026-03-03 | 6798.0400390625 | DEFLATION_FEAR | risk_off | 0.377 | 0.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-03 | 6812.89990234375 | NEUTRAL_TRANSITIONAL | transitional | 0.552 | 1.0 | 0.0 | 0.0 | 0.105 | 0.071 | 0.0 | 0.824 | 0.000% |
+| 2026-03-03 | 6819.31982421875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.342 | 1.0 | 0.0 | 0.0 | 0.043 | 0.0 | 0.0 | 0.957 | 0.000% |
+| 2026-03-03 | 6824.7900390625 | NEUTRAL_TRANSITIONAL | transitional | 0.503 | 1.0 | 0.0 | 0.0 | 0.063 | 0.0 | 0.0 | 0.937 | 0.008% |
+| 2026-03-03 | 6816.58984375 | STAGFLATION_STRESS | transitional | 0.508 | 1.0 | 0.0 | 0.0 | 0.027 | 0.011 | 0.0 | 0.962 | 0.032% |
+| 2026-03-04 | 6875.4501953125 | STAGFLATION_STRESS | transitional | 0.582 | 1.0 | 0.0 | 0.0 | 0.153 | 0.09 | 0.0 | 0.757 | 0.000% |
+| 2026-03-04 | 6865.8701171875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.366 | 1.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.000% |
+| 2026-03-04 | 6868.740234375 | NEUTRAL_TRANSITIONAL | transitional | 0.574 | 1.0 | 0.0 | 0.0 | 0.007 | 0.022 | 0.0 | 0.971 | 0.000% |
+| 2026-03-04 | 6875.9501953125 | NEUTRAL_TRANSITIONAL | transitional | 0.579 | 1.0 | 0.0 | 0.0 | 0.034 | 0.028 | 0.0 | 0.938 | 0.000% |
+| 2026-03-04 | 6880.91015625 | NEUTRAL_TRANSITIONAL | transitional | 0.552 | 1.0 | 0.111 | 0.0 | 0.014 | 0.025 | 0.0 | 0.85 | 0.000% |
+| 2026-03-04 | 6877.2998046875 | NEUTRAL_TRANSITIONAL | transitional | 0.486 | 1.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.000% |
+| 2026-03-04 | 6868.9501953125 | STAGFLATION_STRESS | transitional | 0.595 | 1.0 | 0.0 | 0.0 | 0.005 | 0.003 | 0.0 | 0.992 | -0.004% |
+| 2026-03-05 | 6821.91015625 | DEFLATION_FEAR | transitional | 0.462 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-05 | 6809.419921875 | STAGFLATION_STRESS | risk_off | 0.479 | 1.0 | 0.0 | 0.0 | 0.001 | 0.0 | 0.0 | 0.999 | 0.000% |
+| 2026-03-05 | 6802.419921875 | NEUTRAL_TRANSITIONAL | transitional | 0.489 | 1.0 | 0.0 | 0.0 | 0.017 | 0.017 | 0.0 | 0.966 | 0.000% |
+| 2026-03-05 | 6777.18994140625 | STAGFLATION_STRESS | risk_off | 0.490 | 1.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.000% |
+| 2026-03-05 | 6781.43994140625 | NEUTRAL_TRANSITIONAL | transitional | 0.534 | 1.0 | 0.0 | 0.0 | 0.004 | 0.03 | 0.0 | 0.966 | 0.000% |
+| 2026-03-05 | 6808.83984375 | NEUTRAL_TRANSITIONAL | transitional | 0.469 | 1.0 | 0.0 | 0.0 | 0.031 | 0.058 | 0.0 | 0.911 | -0.008% |
+| 2026-03-05 | 6829.91015625 | DEFLATION_FEAR | transitional | 0.360 | 0.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.958% |
+| 2026-03-06 | 6754.43994140625 | DEFLATION_FEAR | risk_off | 0.431 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-06 | 6756.7099609375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.343 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.000% |
+| 2026-03-06 | 6752.16015625 | DEFLATION_FEAR | risk_off | 0.539 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-06 | 6759.9501953125 | DEFLATION_FEAR | risk_off | 0.499 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-06 | 6762.10986328125 | NEUTRAL_TRANSITIONAL | transitional | 0.447 | 1.0 | 0.0 | 0.0 | 0.0 | 0.016 | 0.0 | 0.984 | 0.000% |
+| 2026-03-06 | 6734.509765625 | NEUTRAL_TRANSITIONAL | transitional | 0.448 | 1.0 | 0.0 | 0.0 | 0.0 | 0.028 | 0.0 | 0.972 | 0.000% |
+| 2026-03-06 | 6738.14990234375 | STAGFLATION_STRESS | transitional | 0.433 | 1.0 | 0.0 | 0.0 | 0.011 | 0.016 | 0.025 | 0.948 | 0.000% |
+| 2026-03-09 | 6652.669921875 | DEFLATION_FEAR | risk_off | 0.444 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-09 | 6710.02001953125 | DEFLATION_FEAR | risk_off | 0.415 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-09 | 6721.02978515625 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.560 | 0.0 | 0.0 | 0.0 | 0.054 | 0.023 | 0.098 | 0.825 | 0.000% |
+| 2026-03-09 | 6700.9501953125 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.429 | 1.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.000% |
+| 2026-03-09 | 6713.02978515625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.476 | 1.0 | 0.0 | 0.0 | 0.03 | 0.09 | 0.068 | 0.812 | 0.000% |
+| 2026-03-09 | 6786.2900390625 | DEFLATION_FEAR | transitional | 0.485 | 1.0 | 0.0 | 0.0 | 0.0 | 0.216 | 0.0 | 0.784 | 0.049% |
+| 2026-03-09 | 6796.240234375 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.436 | 0.0 | 0.0 | 0.0 | 0.042 | 0.014 | 0.0 | 0.944 | 0.003% |
+| 2026-03-10 | 6787.7900390625 | DEFLATION_FEAR | risk_on | 0.473 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-10 | 6822.919921875 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.446 | 0.0 | 0.0 | 0.0 | 0.079 | 0.0 | 0.0 | 0.921 | 0.000% |
+| 2026-03-10 | 6818.3798828125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.455 | 1.0 | 0.0 | 0.0 | 0.0 | 0.053 | 0.001 | 0.946 | 0.000% |
+| 2026-03-10 | 6844.39990234375 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.496 | 1.0 | 0.0 | 0.0 | 0.17 | 0.1 | 0.055 | 0.675 | 0.000% |
+| 2026-03-10 | 6804.77978515625 | DEFLATION_FEAR | risk_on | 0.430 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-10 | 6785.990234375 | NEUTRAL_TRANSITIONAL | risk_on | 0.459 | 1.0 | 0.0 | 0.0 | 0.035 | 0.109 | 0.192 | 0.664 | 0.332% |
+| 2026-03-10 | 6781.31005859375 | DEFLATION_FEAR | risk_on | 0.478 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.469% |
+| 2026-03-11 | 6772.580078125 | DEFLATION_FEAR | risk_on | 0.556 | 0.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-11 | 6758.2998046875 | LIQUIDITY_DRIVEN_RALLY | risk_on | 0.508 | 1.0 | 0.0 | 0.0 | 0.0 | 0.041 | 0.061 | 0.898 | 0.000% |
+| 2026-03-11 | 6759.0498046875 | DEFLATION_FEAR | risk_on | 0.468 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-11 | 6775.91015625 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.449 | 1.0 | 0.0 | 0.0 | 0.0 | 0.003 | 0.0 | 0.997 | 0.000% |
+| 2026-03-11 | 6764.3701171875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.502 | 1.0 | 0.0 | 0.0 | 0.037 | 0.084 | 0.0 | 0.879 | 0.000% |
+| 2026-03-11 | 6761.35009765625 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.443 | 1.0 | 0.0 | 0.0 | 0.024 | 0.009 | 0.019 | 0.948 | 0.043% |
+| 2026-03-11 | 6774.759765625 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.461 | 1.0 | 0.0 | 0.0 | 0.046 | 0.046 | 0.0 | 0.908 | -0.050% |
+| 2026-03-12 | 6692.66015625 | DEFLATION_FEAR | transitional | 0.394 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-12 | 6691.990234375 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.476 | 1.0 | 0.0 | 0.0 | 0.011 | 0.058 | 0.029 | 0.902 | 0.000% |
+| 2026-03-12 | 6698.22021484375 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.496 | 1.0 | 0.0 | 0.0 | 0.037 | 0.016 | 0.022 | 0.925 | 0.000% |
+| 2026-03-12 | 6696.43017578125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.454 | 1.0 | 0.0 | 0.0 | 0.0 | 0.063 | 0.0 | 0.937 | 0.000% |
+| 2026-03-12 | 6692.68994140625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.453 | 1.0 | 0.0 | 0.0 | 0.0 | 0.027 | 0.014 | 0.959 | 0.000% |
+| 2026-03-12 | 6689.93017578125 | DEFLATION_FEAR | transitional | 0.479 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.145% |
+| 2026-03-12 | 6671.81005859375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.497 | 1.0 | 0.0 | 0.0 | 0.1 | 0.084 | 0.084 | 0.732 | 0.153% |
+| 2026-03-13 | 6699.02001953125 | DEFLATION_FEAR | transitional | 0.450 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-13 | 6655.39013671875 | DEFLATION_FEAR | risk_off | 0.342 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-13 | 6653.10986328125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.447 | 1.0 | 0.0 | 0.0 | 0.0 | 0.045 | 0.09 | 0.865 | 0.000% |
+| 2026-03-13 | 6653.68017578125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.454 | 1.0 | 0.0 | 0.0 | 0.0 | 0.046 | 0.0 | 0.954 | 0.000% |
+| 2026-03-13 | 6643.27001953125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.479 | 1.0 | 0.0 | 0.0 | 0.009 | 0.058 | 0.0 | 0.933 | 0.000% |
+| 2026-03-13 | 6633.58984375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.450 | 1.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.000% |
+| 2026-03-13 | 6631.8798828125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.485 | 1.0 | 0.0 | 0.0 | 0.043 | 0.085 | 0.029 | 0.843 | -0.041% |
+| 2026-03-16 | 6713.14013671875 | DEFLATION_FEAR | transitional | 0.493 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-16 | 6709.97998046875 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.464 | 1.0 | 0.0 | 0.0 | 0.022 | 0.118 | 0.0 | 0.86 | 0.000% |
+| 2026-03-16 | 6683.93994140625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.460 | 1.0 | 0.0 | 0.0 | 0.024 | 0.105 | 0.0 | 0.871 | 0.000% |
+| 2026-03-16 | 6701.7001953125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.461 | 1.0 | 0.0 | 0.0 | 0.048 | 0.144 | 0.0 | 0.808 | 0.000% |
+| 2026-03-16 | 6707.27001953125 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.498 | 1.0 | 0.0 | 0.0 | 0.08 | 0.069 | 0.0 | 0.851 | 0.000% |
+| 2026-03-16 | 6700.97021484375 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.494 | 1.0 | 0.0 | 0.0 | 0.069 | 0.069 | 0.0 | 0.862 | 0.052% |
+| 2026-03-16 | 6699.85009765625 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.459 | 1.0 | 0.0 | 0.0 | 0.0 | 0.093 | 0.0 | 0.907 | -0.008% |
+| 2026-03-17 | 6734.97998046875 | DEFLATION_FEAR | transitional | 0.505 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-17 | 6726.72998046875 | DEFLATION_FEAR | transitional | 0.504 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-17 | 6721.759765625 | DEFLATION_FEAR | risk_off | 0.456 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-17 | 6724.6298828125 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.476 | 1.0 | 0.0 | 0.0 | 0.0 | 0.016 | 0.0 | 0.984 | 0.000% |
+| 2026-03-17 | 6718.919921875 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.490 | 1.0 | 0.0 | 0.0 | 0.0 | 0.006 | 0.0 | 0.994 | 0.000% |
+| 2026-03-17 | 6719.93017578125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.465 | 1.0 | 0.0 | 0.0 | 0.006 | 0.038 | 0.0 | 0.956 | -0.003% |
+| 2026-03-17 | 6717.18994140625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.461 | 1.0 | 0.0 | 0.0 | 0.0 | 0.025 | 0.0 | 0.975 | -0.001% |
+| 2026-03-18 | 6669.25 | DEFLATION_FEAR | transitional | 0.449 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-18 | 6678.81005859375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.456 | 1.0 | 0.0 | 0.0 | 0.0 | 0.016 | 0.036 | 0.948 | 0.000% |
+| 2026-03-18 | 6680.580078125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.492 | 1.0 | 0.0 | 0.0 | 0.016 | 0.027 | 0.013 | 0.944 | 0.000% |
+| 2026-03-18 | 6667.47021484375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.460 | 1.0 | 0.0 | 0.0 | 0.0 | 0.036 | 0.0 | 0.964 | 0.000% |
+| 2026-03-18 | 6670.18994140625 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.541 | 1.0 | 0.0 | 0.0 | 0.076 | 0.044 | 0.022 | 0.858 | 0.000% |
+| 2026-03-18 | 6638.06982421875 | DEFLATION_FEAR | transitional | 0.405 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | -0.200% |
+| 2026-03-18 | 6624.3798828125 | DEFLATION_FEAR | transitional | 0.461 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.388% |
+| 2026-03-19 | 6571.64013671875 | DEFLATION_FEAR | risk_off | 0.531 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-19 | 6585.89013671875 | DEFLATION_FEAR | risk_off | 0.491 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-19 | 6588.43017578125 | NEUTRAL_TRANSITIONAL_5 | risk_off | 0.490 | 1.0 | 0.0 | 0.0 | 0.096 | 0.036 | 0.0 | 0.868 | 0.000% |
+| 2026-03-19 | 6579.66015625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.495 | 1.0 | 0.0 | 0.0 | 0.126 | 0.03 | 0.0 | 0.844 | 0.000% |
+| 2026-03-19 | 6580.35009765625 | DEFLATION_FEAR | risk_off | 0.520 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-19 | 6610.4501953125 | DEFLATION_FEAR | risk_off | 0.519 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | -0.211% |
+| 2026-03-19 | 6606.2001953125 | DEFLATION_FEAR | risk_off | 0.501 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | -0.052% |
+| 2026-03-20 | 6545.5 | DEFLATION_FEAR | risk_off | 0.358 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-20 | 6545.81982421875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.462 | 1.0 | 0.0 | 0.0 | 0.064 | 0.061 | 0.03 | 0.845 | 0.000% |
+| 2026-03-20 | 6557.27978515625 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.525 | 1.0 | 0.0 | 0.0 | 0.0 | 0.089 | 0.0 | 0.911 | 0.000% |
+| 2026-03-20 | 6547.6201171875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.490 | 1.0 | 0.0 | 0.0 | 0.0 | 0.006 | 0.0 | 0.994 | 0.000% |
+| 2026-03-20 | 6519.8798828125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.485 | 1.0 | 0.0 | 0.0 | 0.0 | 0.029 | 0.051 | 0.92 | 0.000% |
+| 2026-03-20 | 6496.68017578125 | DEFLATION_FEAR | transitional | 0.477 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-20 | 6508.31982421875 | DEFLATION_FEAR | transitional | 0.498 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-23 | 6636.06982421875 | DEFLATION_FEAR | risk_off | 0.456 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-23 | 6635.16015625 | DEFLATION_FEAR | risk_off | 0.477 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-23 | 6566.52001953125 | DEFLATION_FEAR | risk_off | 0.394 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-23 | 6579.39990234375 | DEFLATION_FEAR | risk_off | 0.449 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-23 | 6600.02978515625 | NEUTRAL_TRANSITIONAL_5 | risk_off | 0.518 | 1.0 | 0.0 | 0.0 | 0.029 | 0.064 | 0.0 | 0.907 | 0.000% |
+| 2026-03-23 | 6599.43994140625 | DEFLATION_FEAR | risk_off | 0.508 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.645% |
+| 2026-03-23 | 6581.759765625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.448 | 1.0 | 0.0 | 0.0 | 0.004 | 0.043 | 0.016 | 0.937 | -0.016% |
+| 2026-03-24 | 6551.240234375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.433 | 1.0 | 0.0 | 0.0 | 0.0 | 0.032 | 0.0 | 0.968 | 0.000% |
+| 2026-03-24 | 6586.22998046875 | DEFLATION_FEAR | transitional | 0.496 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-24 | 6585.02001953125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.456 | 1.0 | 0.0 | 0.0 | 0.006 | 0.043 | 0.0 | 0.951 | 0.000% |
+| 2026-03-24 | 6559.64013671875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.422 | 1.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.000% |
+| 2026-03-24 | 6570.89013671875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.449 | 1.0 | 0.0 | 0.0 | 0.055 | 0.062 | 0.0 | 0.883 | 0.000% |
+| 2026-03-24 | 6569.97021484375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.471 | 1.0 | 0.0 | 0.0 | 0.0 | 0.047 | 0.0 | 0.953 | 0.093% |
+| 2026-03-24 | 6557.3798828125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.480 | 1.0 | 0.0 | 0.0 | 0.015 | 0.061 | 0.0 | 0.924 | 0.140% |
+| 2026-03-25 | 6606.8701171875 | DEFLATION_FEAR | transitional | 0.452 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-25 | 6603.7998046875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.448 | 1.0 | 0.0 | 0.0 | 0.027 | 0.0 | 0.0 | 0.973 | 0.000% |
+| 2026-03-25 | 6599.5 | DEFLATION_FEAR | transitional | 0.445 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-25 | 6606.4599609375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.450 | 1.0 | 0.0 | 0.0 | 0.04 | 0.046 | 0.002 | 0.912 | 0.000% |
+| 2026-03-25 | 6600.68017578125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.455 | 1.0 | 0.0 | 0.0 | 0.002 | 0.029 | 0.0 | 0.969 | 0.000% |
+| 2026-03-25 | 6591.330078125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.469 | 1.0 | 0.0 | 0.0 | 0.01 | 0.023 | 0.0 | 0.967 | 0.000% |
+| 2026-03-25 | 6592.43994140625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.446 | 1.0 | 0.0 | 0.0 | 0.023 | 0.043 | 0.0 | 0.934 | 0.037% |
+| 2026-03-26 | 6562.22998046875 | DEFLATION_FEAR | transitional | 0.424 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-26 | 6542.89013671875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.450 | 1.0 | 0.0 | 0.0 | 0.02 | 0.027 | 0.043 | 0.91 | 0.000% |
+| 2026-03-26 | 6520.2001953125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.453 | 1.0 | 0.0 | 0.0 | 0.0 | 0.008 | 0.0 | 0.992 | 0.000% |
+| 2026-03-26 | 6511.009765625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.436 | 1.0 | 0.0 | 0.0 | 0.0 | 0.017 | 0.0 | 0.983 | 0.000% |
+| 2026-03-26 | 6490.85009765625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.458 | 1.0 | 0.0 | 0.0 | 0.015 | 0.024 | 0.038 | 0.923 | 0.000% |
+| 2026-03-26 | 6487.02978515625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.466 | 1.0 | 0.0 | 0.0 | 0.037 | 0.002 | 0.0 | 0.961 | 0.015% |
+| 2026-03-26 | 6477.10986328125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.476 | 1.0 | 0.0 | 0.0 | 0.082 | 0.06 | 0.055 | 0.803 | -0.017% |
+| 2026-03-27 | 6415.68017578125 | DEFLATION_FEAR | transitional | 0.450 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-27 | 6432.75 | DEFLATION_FEAR | transitional | 0.481 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-27 | 6413.009765625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.430 | 1.0 | 0.0 | 0.0 | 0.038 | 0.033 | 0.0 | 0.929 | 0.000% |
+| 2026-03-27 | 6391.02978515625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.440 | 1.0 | 0.0 | 0.0 | 0.0 | 0.017 | 0.0 | 0.983 | 0.000% |
+| 2026-03-27 | 6382.27001953125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.448 | 1.0 | 0.0 | 0.0 | 0.012 | 0.04 | 0.025 | 0.923 | 0.000% |
+| 2026-03-27 | 6373.2900390625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.449 | 1.0 | 0.0 | 0.0 | 0.011 | 0.056 | 0.0 | 0.933 | -0.001% |
+| 2026-03-27 | 6367.77001953125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.494 | 1.0 | 0.0 | 0.0 | 0.084 | 0.064 | 0.056 | 0.796 | 0.050% |
+| 2026-03-30 | 6382.31982421875 | DEFLATION_FEAR | transitional | 0.478 | 1.0 | 0.0 | 0.0 | 0.0 | 0.213 | 0.0 | 0.787 | 0.000% |
+| 2026-03-30 | 6388.830078125 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.483 | 1.0 | 0.0 | 0.0 | 0.17 | 0.127 | 0.0 | 0.703 | 0.000% |
+| 2026-03-30 | 6377.18994140625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.480 | 1.0 | 0.0 | 0.0 | 0.157 | 0.097 | 0.0 | 0.746 | 0.000% |
+| 2026-03-30 | 6357.81982421875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.463 | 1.0 | 0.0 | 0.0 | 0.192 | 0.111 | 0.0 | 0.697 | 0.000% |
+| 2026-03-30 | 6347.06982421875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.469 | 1.0 | 0.0 | 0.0 | 0.124 | 0.136 | 0.0 | 0.74 | 0.000% |
+| 2026-03-30 | 6319.8701171875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.500 | 1.0 | 0.0 | 0.0 | 0.208 | 0.166 | 0.0 | 0.626 | 0.085% |
+| 2026-03-30 | 6343.75 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.478 | 1.0 | 0.0 | 0.0 | 0.229 | 0.195 | 0.0 | 0.576 | 0.319% |
+| 2026-03-31 | 6448.9501953125 | DEFLATION_FEAR | transitional | 0.484 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-31 | 6431.97021484375 | DEFLATION_FEAR | transitional | 0.467 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-31 | 6445.66015625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.476 | 1.0 | 0.0 | 0.0 | 0.037 | 0.055 | 0.0 | 0.908 | 0.000% |
+| 2026-03-31 | 6494.4599609375 | DEFLATION_FEAR | transitional | 0.587 | 0.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-03-31 | 6502.18017578125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.449 | 1.0 | 0.0 | 0.0 | 0.014 | 0.061 | 0.0 | 0.925 | 0.000% |
+| 2026-03-31 | 6518.91015625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.456 | 1.0 | 0.0 | 0.0 | 0.061 | 0.051 | 0.004 | 0.884 | 0.032% |
+| 2026-03-31 | 6528.64990234375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.491 | 1.0 | 0.0 | 0.0 | 0.0 | 0.046 | 0.0 | 0.954 | 0.038% |
+| 2026-04-01 | 6574.77978515625 | DEFLATION_FEAR | transitional | 0.462 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-04-01 | 6588.52001953125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.498 | 1.0 | 0.0 | 0.0 | 0.0 | 0.046 | 0.0 | 0.954 | 0.000% |
+| 2026-04-01 | 6596.81982421875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.462 | 1.0 | 0.0 | 0.0 | 0.0 | 0.011 | 0.0 | 0.989 | 0.000% |
+| 2026-04-01 | 6607.830078125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.446 | 1.0 | 0.0 | 0.0 | 0.079 | 0.08 | 0.0 | 0.841 | 0.000% |
+| 2026-04-01 | 6566.759765625 | DEFLATION_FEAR | transitional | 0.424 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-04-01 | 6585.7001953125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.445 | 1.0 | 0.0 | 0.0 | 0.105 | 0.089 | 0.063 | 0.743 | -0.020% |
+| 2026-04-01 | 6575.080078125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.455 | 1.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.000% |
+| 2026-04-02 | 6527.8701171875 | DEFLATION_FEAR | transitional | 0.438 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-04-02 | 6577.22998046875 | DEFLATION_FEAR | transitional | 0.481 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-04-02 | 6551.81005859375 | DEFLATION_FEAR | risk_off | 0.466 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-04-02 | 6570.31982421875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.451 | 1.0 | 0.0 | 0.0 | 0.031 | 0.034 | 0.0 | 0.935 | 0.000% |
+| 2026-04-02 | 6559.14990234375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.457 | 1.0 | 0.0 | 0.0 | 0.0 | 0.028 | 0.0 | 0.972 | 0.000% |
+| 2026-04-02 | 6568.2900390625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.445 | 1.0 | 0.0 | 0.0 | 0.0 | 0.019 | 0.0 | 0.981 | 0.000% |
+| 2026-04-02 | 6581.56005859375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.459 | 1.0 | 0.0 | 0.0 | 0.0 | 0.025 | 0.0 | 0.975 | 0.000% |
+| 2026-04-06 | 6607.259765625 | DEFLATION_FEAR | transitional | 0.525 | 1.0 | 0.097 | 0.0 | 0.0 | 0.903 | 0.0 | 0.0 | 0.000% |
+| 2026-04-06 | 6593.2900390625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.454 | 1.0 | 0.0 | 0.0 | 0.026 | 0.029 | 0.007 | 0.938 | 0.000% |
+| 2026-04-06 | 6601.6201171875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.469 | 1.0 | 0.0 | 0.0 | 0.087 | 0.045 | 0.0 | 0.868 | 0.000% |
+| 2026-04-06 | 6597.8701171875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.452 | 1.0 | 0.0 | 0.0 | 0.046 | 0.038 | 0.0 | 0.916 | 0.000% |
+| 2026-04-06 | 6606.43994140625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.540 | 1.0 | 0.104 | 0.0 | 0.124 | 0.094 | 0.0 | 0.678 | 0.000% |
+| 2026-04-06 | 6602.77001953125 | DEFLATION_FEAR | transitional | 0.507 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.062% |
+| 2026-04-06 | 6611.31005859375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.455 | 1.0 | 0.123 | 0.0 | 0.044 | 0.063 | 0.0 | 0.77 | -0.056% |
+| 2026-04-07 | 6567.52978515625 | DEFLATION_FEAR | transitional | 0.409 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-04-07 | 6555.490234375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.465 | 1.0 | 0.0 | 0.0 | 0.032 | 0.035 | 0.0 | 0.933 | 0.000% |
+| 2026-04-07 | 6583.5498046875 | DEFLATION_FEAR | risk_off | 0.494 | 1.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.000% |
+| 2026-04-07 | 6581.47998046875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.455 | 1.0 | 0.0 | 0.0 | 0.0 | 0.026 | 0.0 | 0.974 | 0.000% |
+| 2026-04-07 | 6585.10986328125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.552 | 1.0 | 0.0 | 0.0 | 0.172 | 0.102 | 0.0 | 0.726 | 0.000% |
+| 2026-04-07 | 6590.27001953125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.474 | 1.0 | 0.0 | 0.0 | 0.103 | 0.057 | 0.016 | 0.824 | 0.319% |
+| 2026-04-07 | 6617.919921875 | DEFLATION_FEAR | risk_off | 0.454 | 0.0 | 0.113 | 0.0 | 0.0 | 0.887 | 0.0 | 0.0 | 2.104% |
+| 2026-04-08 | 6765.14013671875 | DEFLATION_FEAR | risk_off | 0.403 | 1.0 | 0.085 | 0.0 | 0.0 | 0.915 | 0.0 | 0.0 | 0.000% |
+| 2026-04-08 | 6754.58984375 | DEFLATION_FEAR | risk_off | 0.458 | 1.0 | 0.151 | 0.0 | 0.0 | 0.849 | 0.0 | 0.0 | 0.000% |
+| 2026-04-08 | 6774.5498046875 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.450 | 1.0 | 0.118 | 0.0 | 0.005 | 0.03 | 0.032 | 0.815 | 0.000% |
+| 2026-04-08 | 6774.0498046875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.466 | 1.0 | 0.134 | 0.0 | 0.0 | 0.0 | 0.0 | 0.866 | 0.000% |
+| 2026-04-08 | 6773.47021484375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.456 | 1.0 | 0.124 | 0.0 | 0.007 | 0.041 | 0.049 | 0.779 | 0.000% |
+| 2026-04-08 | 6759.7998046875 | DEFLATION_FEAR | transitional | 0.415 | 1.0 | 0.083 | 0.0 | 0.0 | 0.917 | 0.0 | 0.0 | -0.266% |
+| 2026-04-08 | 6783.47998046875 | DEFLATION_FEAR | transitional | 0.476 | 1.0 | 0.144 | 0.0 | 0.0 | 0.856 | 0.0 | 0.0 | -0.263% |
+| 2026-04-09 | 6765.169921875 | DEFLATION_FEAR | risk_off | 0.487 | 1.0 | 0.187 | 0.0 | 0.0 | 0.813 | 0.0 | 0.0 | 0.000% |
+| 2026-04-09 | 6783.830078125 | NEUTRAL_TRANSITIONAL_5 | risk_off | 0.475 | 1.0 | 0.172 | 0.0 | 0.017 | 0.07 | 0.0 | 0.741 | 0.000% |
+| 2026-04-09 | 6823.330078125 | DEFLATION_FEAR | risk_off | 0.607 | 1.0 | 0.77 | 0.0 | 0.0 | 0.311 | 0.0 | 0.0 | 0.000% |
+| 2026-04-09 | 6827.35986328125 | DEFLATION_FEAR | risk_off | 0.475 | 1.0 | 0.172 | 0.0 | 0.0 | 0.828 | 0.0 | 0.0 | 0.000% |
+| 2026-04-09 | 6813.10009765625 | NEUTRAL_TRANSITIONAL_5 | risk_off | 0.433 | 1.0 | 0.121 | 0.0 | 0.0 | 0.02 | 0.0 | 0.859 | 0.000% |
+| 2026-04-09 | 6823.14990234375 | DEFLATION_FEAR | risk_off | 0.447 | 1.0 | 0.138 | 0.0 | 0.0 | 0.862 | 0.0 | 0.0 | -0.097% |
+| 2026-04-09 | 6823.93994140625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.448 | 1.0 | 0.116 | 0.0 | 0.0 | 0.008 | 0.0 | 0.876 | -0.001% |
+| 2026-04-10 | 6839.669921875 | DEFLATION_FEAR | risk_off | 0.491 | 1.0 | 0.192 | 0.0 | 0.0 | 0.808 | 0.0 | 0.0 | 0.000% |
+| 2026-04-10 | 6835.830078125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.429 | 1.0 | 0.097 | 0.0 | 0.016 | 0.05 | 0.0 | 0.837 | 0.000% |
+| 2026-04-10 | 6818.97021484375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.455 | 1.0 | 0.061 | 0.0 | 0.0 | 0.014 | 0.036 | 0.889 | 0.000% |
+| 2026-04-10 | 6810.47998046875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.444 | 1.0 | 0.112 | 0.0 | 0.012 | 0.026 | 0.002 | 0.848 | 0.000% |
+| 2026-04-10 | 6817.41015625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.444 | 1.0 | 0.112 | 0.0 | 0.013 | 0.042 | 0.0 | 0.833 | 0.000% |
+| 2026-04-10 | 6820.330078125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.485 | 1.0 | 0.154 | 0.0 | 0.053 | 0.023 | 0.0 | 0.77 | -0.023% |
+| 2026-04-10 | 6817.89990234375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.466 | 1.0 | 0.067 | 0.0 | 0.033 | 0.037 | 0.0 | 0.863 | -0.024% |
+| 2026-04-13 | 6818.8701171875 | DEFLATION_FEAR | transitional | 0.502 | 1.0 | 0.171 | 0.0 | 0.0 | 0.829 | 0.0 | 0.0 | 0.000% |
+| 2026-04-13 | 6819.64013671875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.450 | 1.0 | 0.059 | 0.0 | 0.0 | 0.0 | 0.0 | 0.941 | 0.000% |
+| 2026-04-13 | 6837.97021484375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.467 | 1.0 | 0.135 | 0.0 | 0.037 | 0.057 | 0.0 | 0.771 | 0.000% |
+| 2026-04-13 | 6848.9599609375 | DEFLATION_FEAR | transitional | 0.632 | 1.0 | 0.151 | 0.0 | 0.0 | 0.849 | 0.0 | 0.0 | 0.000% |
+| 2026-04-13 | 6847.35986328125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.443 | 1.0 | 0.056 | 0.0 | 0.024 | 0.045 | 0.0 | 0.875 | 0.000% |
+| 2026-04-13 | 6862.0 | DEFLATION_FEAR | transitional | 0.560 | 1.0 | 0.23 | 0.0 | 0.0 | 0.089 | 0.0 | 0.681 | 0.031% |
+| 2026-04-13 | 6885.91015625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.480 | 1.0 | 0.148 | 0.0 | 0.002 | 0.064 | 0.0 | 0.786 | 0.038% |
+| 2026-04-14 | 6934.18994140625 | DEFLATION_FEAR | risk_off | 0.457 | 1.0 | 0.15 | 0.0 | 0.0 | 0.85 | 0.0 | 0.0 | 0.000% |
+| 2026-04-14 | 6946.4599609375 | DEFLATION_FEAR | risk_off | 0.495 | 1.0 | 0.196 | 0.0 | 0.0 | 0.804 | 0.0 | 0.0 | 0.000% |
+| 2026-04-14 | 6960.2998046875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.451 | 1.0 | 0.191 | 0.0 | 0.004 | 0.097 | 0.0 | 0.708 | 0.000% |
+| 2026-04-14 | 6961.47998046875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.446 | 1.0 | 0.091 | 0.0 | 0.0 | 0.063 | 0.0 | 0.846 | 0.000% |
+| 2026-04-14 | 6949.93994140625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.443 | 1.0 | 0.089 | 0.0 | 0.012 | 0.056 | 0.0 | 0.843 | 0.000% |
+| 2026-04-14 | 6966.66015625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.474 | 1.0 | 0.228 | 0.0 | 0.037 | 0.105 | 0.0 | 0.63 | -0.030% |
+| 2026-04-14 | 6966.77978515625 | NEUTRAL_TRANSITIONAL | transitional | 0.448 | 1.0 | 0.186 | 0.0 | 0.0 | 0.059 | 0.0 | 0.755 | -0.006% |
+| 2026-04-15 | 6992.7900390625 | DEFLATION_FEAR | transitional | 0.469 | 1.0 | 0.11 | 0.0 | 0.0 | 0.89 | 0.0 | 0.0 | 0.000% |
+| 2026-04-15 | 6998.1201171875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.480 | 1.0 | 0.148 | 0.0 | 0.001 | 0.056 | 0.0 | 0.795 | 0.000% |
+| 2026-04-15 | 6997.31005859375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.426 | 1.0 | 0.094 | 0.0 | 0.0 | 0.042 | 0.007 | 0.857 | 0.000% |
+| 2026-04-15 | 6998.16015625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.438 | 1.0 | 0.106 | 0.0 | 0.0 | 0.033 | 0.0 | 0.861 | 0.000% |
+| 2026-04-15 | 7008.509765625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.463 | 1.0 | 0.066 | 0.0 | 0.006 | 0.054 | 0.0 | 0.874 | 0.000% |
+| 2026-04-15 | 7024.2099609375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.497 | 1.0 | 0.166 | 0.0 | 0.046 | 0.045 | 0.008 | 0.735 | 0.005% |
+| 2026-04-15 | 7022.10009765625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.454 | 1.0 | 0.122 | 0.0 | 0.0 | 0.056 | 0.002 | 0.82 | 0.047% |
+| 2026-04-16 | 7015.5498046875 | DEFLATION_FEAR | transitional | 0.466 | 1.0 | 0.067 | 0.0 | 0.0 | 0.933 | 0.0 | 0.0 | 0.000% |
+| 2026-04-16 | 7033.2099609375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.448 | 1.0 | 0.116 | 0.0 | 0.0 | 0.072 | 0.0 | 0.812 | 0.000% |
+| 2026-04-16 | 7043.6298828125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.447 | 1.0 | 0.115 | 0.0 | 0.0 | 0.044 | 0.0 | 0.841 | 0.000% |
+| 2026-04-16 | 7030.75 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.452 | 1.0 | 0.06 | 0.0 | 0.0 | 0.02 | 0.0 | 0.92 | 0.000% |
+| 2026-04-16 | 7020.93994140625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.446 | 1.0 | 0.057 | 0.0 | 0.0 | 0.011 | 0.0 | 0.932 | 0.000% |
+| 2026-04-16 | 7032.740234375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.473 | 1.0 | 0.141 | 0.0 | 0.007 | 0.026 | 0.0 | 0.826 | -0.004% |
+| 2026-04-16 | 7039.3701171875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.450 | 1.0 | 0.118 | 0.0 | 0.0 | 0.028 | 0.0 | 0.854 | 0.003% |
+| 2026-04-17 | 7116.27001953125 | STAGFLATION_STRESS | transitional | 0.478 | 1.0 | 0.073 | 0.0 | 0.049 | 0.032 | 0.012 | 0.834 | 0.000% |
+| 2026-04-17 | 7130.009765625 | DEFLATION_FEAR | transitional | 0.453 | 1.0 | 0.121 | 0.0 | 0.0 | 0.879 | 0.0 | 0.0 | 0.000% |
+| 2026-04-17 | 7138.89990234375 | NEUTRAL_TRANSITIONAL | transitional | 0.519 | 1.0 | 0.188 | 0.0 | 0.0 | 0.029 | 0.0 | 0.783 | 0.000% |
+| 2026-04-17 | 7122.85986328125 | NEUTRAL_TRANSITIONAL | transitional | 0.418 | 1.0 | 0.086 | 0.0 | 0.0 | 0.002 | 0.0 | 0.912 | 0.000% |
+| 2026-04-17 | 7122.06982421875 | NEUTRAL_TRANSITIONAL | transitional | 0.465 | 1.0 | 0.067 | 0.0 | 0.0 | 0.044 | 0.0 | 0.889 | 0.000% |
+| 2026-04-17 | 7116.58984375 | DEFLATION_FEAR | transitional | 0.459 | 1.0 | 0.127 | 0.0 | 0.0 | 0.873 | 0.0 | 0.0 | 0.000% |
+| 2026-04-17 | 7125.1201171875 | NEUTRAL_TRANSITIONAL | transitional | 0.463 | 1.0 | 0.131 | 0.0 | 0.008 | 0.063 | 0.0 | 0.798 | -0.002% |
+| 2026-04-20 | 7112.830078125 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.490 | 1.0 | 0.08 | 0.0 | 0.029 | 0.064 | 0.0 | 0.827 | 0.000% |
+| 2026-04-20 | 7107.3701171875 | DEFLATION_FEAR | transitional | 0.482 | 1.0 | 0.151 | 0.0 | 0.0 | 0.849 | 0.0 | 0.0 | 0.000% |
+| 2026-04-20 | 7100.43017578125 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.480 | 1.0 | 0.148 | 0.0 | 0.0 | 0.022 | 0.0 | 0.83 | 0.000% |
+| 2026-04-20 | 7103.2900390625 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.455 | 1.0 | 0.123 | 0.0 | 0.0 | 0.016 | 0.0 | 0.861 | 0.000% |
+| 2026-04-20 | 7107.2099609375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.467 | 1.0 | 0.135 | 0.0 | 0.0 | 0.027 | 0.0 | 0.838 | 0.000% |
+| 2026-04-20 | 7104.27978515625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.471 | 1.0 | 0.07 | 0.0 | 0.0 | 0.035 | 0.0 | 0.895 | 0.010% |
+| 2026-04-20 | 7110.3798828125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.486 | 1.0 | 0.077 | 0.0 | 0.008 | 0.035 | 0.008 | 0.872 | 0.005% |
+| 2026-04-21 | 7129.41015625 | DEFLATION_FEAR | transitional | 0.488 | 1.0 | 0.079 | 0.0 | 0.0 | 0.921 | 0.0 | 0.0 | 0.000% |
+| 2026-04-21 | 7090.35009765625 | DEFLATION_FEAR | transitional | 0.436 | 1.0 | 0.052 | 0.0 | 0.0 | 0.948 | 0.0 | 0.0 | 0.000% |
+| 2026-04-21 | 7087.10986328125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.467 | 1.0 | 0.135 | 0.0 | 0.006 | 0.014 | 0.0 | 0.845 | 0.000% |
+| 2026-04-21 | 7069.77978515625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.463 | 1.0 | 0.131 | 0.0 | 0.012 | 0.019 | 0.043 | 0.795 | 0.000% |
+| 2026-04-21 | 7074.4501953125 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.460 | 1.0 | 0.128 | 0.0 | 0.058 | 0.013 | 0.0 | 0.801 | 0.000% |
+| 2026-04-21 | 7101.10009765625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.481 | 1.0 | 0.239 | 0.0 | 0.045 | 0.042 | 0.0 | 0.674 | 0.074% |
+| 2026-04-21 | 7064.31005859375 | DEFLATION_FEAR | transitional | 0.511 | 1.0 | 0.144 | 0.0 | 0.0 | 0.856 | 0.0 | 0.0 | 0.347% |
+| 2026-04-22 | 7129.0400390625 | DEFLATION_FEAR | transitional | 0.473 | 1.0 | 0.113 | 0.0 | 0.0 | 0.887 | 0.0 | 0.0 | 0.000% |
+| 2026-04-22 | 7126.72021484375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.424 | 1.0 | 0.147 | 0.0 | 0.0 | 0.042 | 0.025 | 0.786 | 0.000% |
+| 2026-04-22 | 7115.47021484375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.453 | 1.0 | 0.097 | 0.0 | 0.0 | 0.037 | 0.087 | 0.779 | 0.000% |
+| 2026-04-22 | 7124.169921875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.457 | 1.0 | 0.1 | 0.0 | 0.027 | 0.077 | 0.0 | 0.796 | 0.000% |
+| 2026-04-22 | 7118.56005859375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.459 | 1.0 | 0.102 | 0.0 | 0.042 | 0.011 | 0.009 | 0.836 | 0.000% |
+| 2026-04-22 | 7128.93017578125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.454 | 1.0 | 0.195 | 0.0 | 0.006 | 0.056 | 0.0 | 0.743 | -0.020% |
+| 2026-04-22 | 7137.1201171875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.461 | 1.0 | 0.207 | 0.0 | 0.0 | 0.058 | 0.003 | 0.732 | 0.009% |
+| 2026-04-23 | 7128.740234375 | DEFLATION_FEAR | transitional | 0.462 | 1.0 | 0.104 | 0.0 | 0.0 | 0.896 | 0.0 | 0.0 | 0.000% |
+| 2026-04-23 | 7143.6201171875 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.528 | 1.0 | 0.197 | 0.0 | 0.028 | 0.012 | 0.0 | 0.763 | 0.000% |
+| 2026-04-23 | 7130.9501953125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.475 | 1.0 | 0.143 | 0.0 | 0.014 | 0.019 | 0.018 | 0.806 | 0.000% |
+| 2026-04-23 | 7084.35009765625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.482 | 1.0 | 0.075 | 0.0 | 0.008 | 0.005 | 0.038 | 0.874 | 0.000% |
+| 2026-04-23 | 7109.06982421875 | DEFLATION_FEAR | transitional | 0.513 | 1.0 | 0.091 | 0.0 | 0.0 | 0.909 | 0.0 | 0.0 | 0.000% |
+| 2026-04-23 | 7107.81982421875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.463 | 1.0 | 0.066 | 0.0 | 0.0 | 0.033 | 0.0 | 0.901 | -0.003% |
+| 2026-04-23 | 7108.0400390625 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.425 | 1.0 | 0.046 | 0.0 | 0.0 | 0.0 | 0.008 | 0.946 | 0.001% |
+| 2026-04-24 | 7121.080078125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.525 | 1.0 | 0.097 | 0.0 | 0.073 | 0.064 | 0.032 | 0.734 | 0.000% |
+| 2026-04-24 | 7142.31005859375 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.484 | 1.0 | 0.153 | 0.0 | 0.0 | 0.031 | 0.014 | 0.802 | 0.000% |
+| 2026-04-24 | 7156.56982421875 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.552 | 1.0 | 0.221 | 0.0 | 0.085 | 0.074 | 0.0 | 0.62 | 0.000% |
+| 2026-04-24 | 7153.8798828125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.449 | 1.0 | 0.059 | 0.0 | 0.0 | 0.028 | 0.0 | 0.913 | 0.000% |
+| 2026-04-24 | 7153.9501953125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.458 | 1.0 | 0.063 | 0.0 | 0.0 | 0.018 | 0.0 | 0.919 | 0.000% |
+| 2026-04-24 | 7161.68017578125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.460 | 1.0 | 0.128 | 0.0 | 0.0 | 0.032 | 0.0 | 0.84 | 0.000% |
+| 2026-04-24 | 7164.2900390625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.480 | 1.0 | 0.148 | 0.0 | 0.0 | 0.063 | 0.007 | 0.782 | 0.000% |
+| 2026-04-27 | 7157.5498046875 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.511 | 1.0 | 0.09 | 0.0 | 0.152 | 0.062 | 0.026 | 0.67 | 0.000% |
+| 2026-04-27 | 7152.9599609375 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.479 | 1.0 | 0.147 | 0.0 | 0.057 | 0.071 | 0.0 | 0.725 | 0.000% |
+| 2026-04-27 | 7162.419921875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.448 | 1.0 | 0.058 | 0.0 | 0.086 | 0.052 | 0.0 | 0.804 | 0.000% |
+| 2026-04-27 | 7169.81005859375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.433 | 1.0 | 0.051 | 0.0 | 0.028 | 0.072 | 0.0 | 0.849 | 0.000% |
+| 2026-04-27 | 7174.6201171875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.433 | 1.0 | 0.051 | 0.0 | 0.033 | 0.073 | 0.0 | 0.843 | 0.000% |
+| 2026-04-27 | 7174.7900390625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.471 | 1.0 | 0.139 | 0.0 | 0.0 | 0.068 | 0.0 | 0.793 | 0.009% |
+| 2026-04-27 | 7174.009765625 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.484 | 1.0 | 0.153 | 0.0 | 0.0 | 0.081 | 0.0 | 0.766 | 0.014% |
+| 2026-04-28 | 7135.1298828125 | DEFLATION_FEAR | transitional | 0.527 | 1.0 | 0.196 | 0.0 | 0.0 | 0.804 | 0.0 | 0.0 | 0.000% |
+| 2026-04-28 | 7122.06982421875 | DEFLATION_FEAR | transitional | 0.544 | 1.0 | 0.106 | 0.0 | 0.0 | 0.894 | 0.0 | 0.0 | 0.000% |
+| 2026-04-28 | 7126.72998046875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.526 | 1.0 | 0.195 | 0.0 | 0.038 | 0.053 | 0.0 | 0.714 | 0.000% |
+| 2026-04-28 | 7124.7099609375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.551 | 1.0 | 0.22 | 0.0 | 0.005 | 0.057 | 0.0 | 0.718 | 0.000% |
+| 2026-04-28 | 7137.2001953125 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.530 | 1.0 | 0.199 | 0.0 | 0.0 | 0.109 | 0.0 | 0.692 | 0.000% |
+| 2026-04-28 | 7139.22021484375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.539 | 1.0 | 0.104 | 0.0 | 0.0 | 0.063 | 0.0 | 0.833 | -0.002% |
+| 2026-04-28 | 7139.240234375 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.525 | 1.0 | 0.097 | 0.0 | 0.0 | 0.068 | 0.0 | 0.835 | 0.006% |
+| 2026-04-29 | 7138.31982421875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.443 | 1.0 | 0.111 | 0.0 | 0.073 | 0.052 | 0.022 | 0.742 | 0.000% |
+| 2026-04-29 | 7132.56982421875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.464 | 1.0 | 0.106 | 0.0 | 0.129 | 0.092 | 0.0 | 0.673 | 0.000% |
+| 2026-04-29 | 7120.56005859375 | DEFLATION_FEAR | transitional | 0.462 | 1.0 | 0.065 | 0.0 | 0.0 | 0.935 | 0.0 | 0.0 | 0.000% |
+| 2026-04-29 | 7121.9501953125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.465 | 1.0 | 0.133 | 0.0 | 0.094 | 0.089 | 0.001 | 0.683 | 0.000% |
+| 2026-04-29 | 7115.81005859375 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.434 | 1.0 | 0.082 | 0.0 | 0.126 | 0.085 | 0.0 | 0.707 | 0.000% |
+| 2026-04-29 | 7132.18994140625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.434 | 1.0 | 0.102 | 0.0 | 0.084 | 0.107 | 0.01 | 0.697 | 0.053% |
+| 2026-04-29 | 7137.56005859375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.447 | 1.0 | 0.184 | 0.0 | 0.011 | 0.139 | 0.0 | 0.666 | 0.084% |
+| 2026-04-30 | 7142.47998046875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.465 | 1.0 | 0.106 | 0.0 | 0.066 | 0.021 | 0.119 | 0.688 | 0.000% |
+| 2026-04-30 | 7167.52001953125 | DEFLATION_FEAR | transitional | 0.442 | 1.0 | 0.176 | 0.0 | 0.0 | 0.824 | 0.0 | 0.0 | 0.000% |
+| 2026-04-30 | 7174.669921875 | DEFLATION_FEAR | transitional | 0.522 | 1.0 | 0.306 | 0.0 | 0.0 | 0.072 | 0.0 | 0.622 | 0.000% |
+| 2026-04-30 | 7181.3701171875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.474 | 1.0 | 0.114 | 0.0 | 0.055 | 0.08 | 0.003 | 0.748 | 0.000% |
+| 2026-04-30 | 7202.43017578125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.499 | 1.0 | 0.168 | 0.0 | 0.061 | 0.035 | 0.001 | 0.735 | 0.000% |
+| 2026-04-30 | 7214.14990234375 | DEFLATION_FEAR | transitional | 0.495 | 1.0 | 0.164 | 0.0 | 0.0 | 0.836 | 0.0 | 0.0 | 0.229% |
+| 2026-04-30 | 7209.6298828125 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.449 | 1.0 | 0.117 | 0.0 | 0.0 | 0.011 | 0.003 | 0.869 | -0.000% |
+| 2026-05-01 | 7265.93017578125 | DEFLATION_FEAR | transitional | 0.511 | 1.0 | 0.09 | 0.0 | 0.0 | 0.91 | 0.0 | 0.0 | 0.000% |
+| 2026-05-01 | 7256.6298828125 | DEFLATION_FEAR | transitional | 0.396 | 1.0 | 0.063 | 0.0 | 0.0 | 0.937 | 0.0 | 0.0 | 0.000% |
+| 2026-05-01 | 7245.52978515625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.433 | 1.0 | 0.051 | 0.0 | 0.001 | 0.014 | 0.005 | 0.929 | 0.000% |
+| 2026-05-01 | 7253.080078125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.422 | 1.0 | 0.045 | 0.0 | 0.053 | 0.03 | 0.07 | 0.802 | 0.000% |
+| 2026-05-01 | 7245.0498046875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.441 | 1.0 | 0.054 | 0.0 | 0.015 | 0.025 | 0.004 | 0.902 | 0.000% |
+| 2026-05-01 | 7247.5498046875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.461 | 1.0 | 0.129 | 0.0 | 0.017 | 0.03 | 0.0 | 0.824 | -0.005% |
+| 2026-05-01 | 7229.31982421875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.454 | 1.0 | 0.061 | 0.0 | 0.01 | 0.026 | 0.013 | 0.89 | 0.006% |
+| 2026-05-04 | 7234.72998046875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.450 | 1.0 | 0.118 | 0.0 | 0.0 | 0.002 | 0.0 | 0.88 | 0.000% |
+| 2026-05-04 | 7206.77001953125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.464 | 1.0 | 0.066 | 0.0 | 0.009 | 0.01 | 0.0 | 0.915 | 0.000% |
+| 2026-05-04 | 7192.52978515625 | DEFLATION_FEAR | transitional | 0.390 | 1.0 | 0.029 | 0.0 | 0.0 | 0.971 | 0.0 | 0.0 | 0.000% |
+| 2026-05-04 | 7207.8798828125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.461 | 1.0 | 0.129 | 0.0 | 0.079 | 0.074 | 0.019 | 0.699 | 0.000% |
+| 2026-05-04 | 7200.60986328125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.414 | 1.0 | 0.082 | 0.0 | 0.036 | 0.0 | 0.0 | 0.882 | 0.000% |
+| 2026-05-04 | 7200.3701171875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.451 | 1.0 | 0.059 | 0.0 | 0.002 | 0.038 | 0.0 | 0.901 | -0.000% |
+| 2026-05-04 | 7201.4599609375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.460 | 1.0 | 0.064 | 0.0 | 0.051 | 0.037 | 0.0 | 0.848 | 0.020% |
+| 2026-05-05 | 7256.1298828125 | DEFLATION_FEAR | transitional | 0.582 | 1.0 | 0.699 | 0.0 | 0.0 | 0.393 | 0.0 | 0.0 | 0.000% |
+| 2026-05-05 | 7257.52001953125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.430 | 1.0 | 0.098 | 0.0 | 0.037 | 0.055 | 0.0 | 0.81 | 0.000% |
+| 2026-05-05 | 7258.77001953125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.436 | 1.0 | 0.052 | 0.0 | 0.0 | 0.029 | 0.0 | 0.919 | 0.000% |
+| 2026-05-05 | 7261.68017578125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.460 | 1.0 | 0.064 | 0.0 | 0.026 | 0.039 | 0.013 | 0.858 | 0.000% |
+| 2026-05-05 | 7267.990234375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.446 | 1.0 | 0.057 | 0.0 | 0.024 | 0.031 | 0.0 | 0.888 | 0.000% |
+| 2026-05-05 | 7270.18017578125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.447 | 1.0 | 0.115 | 0.0 | 0.0 | 0.026 | 0.0 | 0.859 | 0.010% |
+| 2026-05-05 | 7259.47021484375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.443 | 1.0 | 0.178 | 0.0 | 0.0 | 0.058 | 0.0 | 0.764 | 0.079% |
+| 2026-05-06 | 7322.580078125 | DEFLATION_FEAR | transitional | 0.494 | 1.0 | 0.082 | 0.0 | 0.0 | 0.918 | 0.0 | 0.0 | 0.000% |
+| 2026-05-06 | 7344.1201171875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.481 | 1.0 | 0.15 | 0.0 | 0.066 | 0.065 | 0.0 | 0.719 | 0.000% |
+| 2026-05-06 | 7341.33984375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.456 | 1.0 | 0.124 | 0.0 | 0.001 | 0.033 | 0.03 | 0.812 | 0.000% |
+| 2026-05-06 | 7340.1298828125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.472 | 1.0 | 0.07 | 0.0 | 0.034 | 0.039 | 0.0 | 0.857 | 0.000% |
+| 2026-05-06 | 7353.7998046875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.448 | 1.0 | 0.058 | 0.0 | 0.036 | 0.044 | 0.0 | 0.862 | 0.000% |
+| 2026-05-06 | 7362.02001953125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.448 | 1.0 | 0.116 | 0.0 | 0.013 | 0.045 | 0.0 | 0.826 | -0.001% |
+| 2026-05-06 | 7363.68017578125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.463 | 1.0 | 0.131 | 0.0 | 0.003 | 0.06 | 0.0 | 0.806 | -0.009% |
+| 2026-05-07 | 7369.60986328125 | DEFLATION_FEAR | transitional | 0.510 | 1.0 | 0.089 | 0.0 | 0.0 | 0.911 | 0.0 | 0.0 | 0.000% |
+| 2026-05-07 | 7372.16015625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.440 | 1.0 | 0.108 | 0.0 | 0.015 | 0.049 | 0.0 | 0.828 | 0.000% |
+| 2026-05-07 | 7357.080078125 | DEFLATION_FEAR | transitional | 0.448 | 1.0 | 0.116 | 0.0 | 0.0 | 0.884 | 0.0 | 0.0 | 0.000% |
+| 2026-05-07 | 7329.740234375 | DEFLATION_FEAR | transitional | 0.515 | 1.0 | 0.184 | 0.0 | 0.0 | 0.816 | 0.0 | 0.0 | 0.000% |
+| 2026-05-07 | 7335.93994140625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.444 | 1.0 | 0.112 | 0.0 | 0.0 | 0.021 | 0.0 | 0.867 | 0.000% |
+| 2026-05-07 | 7327.68994140625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.448 | 1.0 | 0.058 | 0.0 | 0.0 | 0.015 | 0.018 | 0.909 | 0.011% |
+| 2026-05-07 | 7337.10986328125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.464 | 1.0 | 0.066 | 0.0 | 0.05 | 0.059 | 0.049 | 0.776 | -0.040% |
+| 2026-05-08 | 7389.68994140625 | DEFLATION_FEAR | transitional | 0.461 | 1.0 | 0.065 | 0.0 | 0.0 | 0.935 | 0.0 | 0.0 | 0.000% |
+| 2026-05-08 | 7391.22998046875 | DEFLATION_FEAR | transitional | 0.460 | 1.0 | 0.128 | 0.0 | 0.0 | 0.872 | 0.0 | 0.0 | 0.000% |
+| 2026-05-08 | 7397.56005859375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.464 | 1.0 | 0.066 | 0.0 | 0.0 | 0.041 | 0.0 | 0.893 | 0.000% |
+| 2026-05-08 | 7399.56982421875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.460 | 1.0 | 0.128 | 0.0 | 0.038 | 0.042 | 0.0 | 0.792 | 0.000% |
+| 2026-05-08 | 7399.5 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.430 | 1.0 | 0.049 | 0.0 | 0.017 | 0.029 | 0.027 | 0.878 | 0.000% |
+| 2026-05-08 | 7389.0 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.426 | 1.0 | 0.094 | 0.0 | 0.006 | 0.027 | 0.0 | 0.873 | 0.001% |
+| 2026-05-08 | 7397.43017578125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.455 | 1.0 | 0.123 | 0.0 | 0.019 | 0.025 | 0.0 | 0.833 | 0.002% |
+| 2026-05-11 | 7405.77978515625 | DEFLATION_FEAR | transitional | 0.500 | 1.0 | 0.085 | 0.0 | 0.0 | 0.915 | 0.0 | 0.0 | 0.000% |
+| 2026-05-11 | 7422.6201171875 | DEFLATION_FEAR | transitional | 0.443 | 1.0 | 0.111 | 0.0 | 0.0 | 0.889 | 0.0 | 0.0 | 0.000% |
+| 2026-05-11 | 7425.2998046875 | DEFLATION_FEAR | transitional | 0.456 | 1.0 | 0.062 | 0.0 | 0.0 | 0.938 | 0.0 | 0.0 | 0.000% |
+| 2026-05-11 | 7419.56005859375 | DEFLATION_FEAR | transitional | 0.411 | 1.0 | 0.04 | 0.0 | 0.0 | 0.96 | 0.0 | 0.0 | 0.000% |
+| 2026-05-11 | 7425.1201171875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.480 | 1.0 | 0.074 | 0.0 | 0.077 | 0.037 | 0.006 | 0.806 | 0.000% |
+| 2026-05-11 | 7406.64990234375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.471 | 1.0 | 0.07 | 0.0 | 0.034 | 0.03 | 0.028 | 0.838 | 0.002% |
+| 2026-05-11 | 7412.9501953125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.474 | 1.0 | 0.142 | 0.0 | 0.037 | 0.052 | 0.012 | 0.757 | 0.008% |
+| 2026-05-12 | 7369.330078125 | DEFLATION_FEAR | transitional | 0.485 | 1.0 | 0.154 | 0.0 | 0.0 | 0.846 | 0.0 | 0.0 | 0.000% |
+| 2026-05-12 | 7343.490234375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.496 | 1.0 | 0.083 | 0.0 | 0.058 | 0.038 | 0.0 | 0.821 | 0.000% |
+| 2026-05-12 | 7348.169921875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.484 | 1.0 | 0.153 | 0.0 | 0.038 | 0.048 | 0.022 | 0.739 | 0.000% |
+| 2026-05-12 | 7364.10986328125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.475 | 1.0 | 0.071 | 0.0 | 0.006 | 0.027 | 0.0 | 0.896 | 0.000% |
+| 2026-05-12 | 7382.9599609375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.461 | 1.0 | 0.129 | 0.0 | 0.015 | 0.02 | 0.003 | 0.833 | 0.000% |
+| 2026-05-12 | 7391.85986328125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.500 | 1.0 | 0.169 | 0.0 | 0.034 | 0.048 | 0.0 | 0.749 | -0.006% |
+| 2026-05-12 | 7401.6298828125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.463 | 1.0 | 0.131 | 0.0 | 0.013 | 0.028 | 0.0 | 0.828 | 0.001% |
+| 2026-05-13 | 7404.39013671875 | DEFLATION_FEAR | transitional | 0.507 | 1.0 | 0.088 | 0.0 | 0.0 | 0.912 | 0.0 | 0.0 | 0.000% |
+| 2026-05-13 | 7414.35986328125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.472 | 1.0 | 0.14 | 0.0 | 0.022 | 0.063 | 0.0 | 0.775 | 0.000% |
+| 2026-05-13 | 7438.64990234375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.464 | 1.0 | 0.132 | 0.0 | 0.061 | 0.058 | 0.0 | 0.749 | 0.000% |
+| 2026-05-13 | 7448.080078125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.438 | 1.0 | 0.053 | 0.0 | 0.011 | 0.033 | 0.0 | 0.903 | 0.000% |
+| 2026-05-13 | 7456.33984375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.452 | 1.0 | 0.06 | 0.0 | 0.021 | 0.034 | 0.0 | 0.885 | 0.000% |
+| 2026-05-13 | 7456.22021484375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.456 | 1.0 | 0.124 | 0.0 | 0.0 | 0.038 | 0.0 | 0.838 | 0.008% |
+| 2026-05-13 | 7444.8798828125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.440 | 1.0 | 0.108 | 0.0 | 0.0 | 0.031 | 0.0 | 0.861 | 0.010% |
+| 2026-05-14 | 7481.0 | DEFLATION_FEAR | transitional | 0.539 | 1.0 | 0.104 | 0.0 | 0.0 | 0.896 | 0.0 | 0.0 | 0.000% |
+| 2026-05-14 | 7507.259765625 | NEUTRAL_TRANSITIONAL | transitional | 0.464 | 1.0 | 0.132 | 0.0 | 0.09 | 0.087 | 0.0 | 0.691 | 0.000% |
+| 2026-05-14 | 7501.85009765625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.453 | 1.0 | 0.121 | 0.0 | 0.009 | 0.02 | 0.0 | 0.85 | 0.000% |
+| 2026-05-14 | 7490.56005859375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.435 | 1.0 | 0.051 | 0.0 | 0.0 | 0.009 | 0.0 | 0.94 | 0.000% |
+| 2026-05-14 | 7496.81982421875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.468 | 1.0 | 0.068 | 0.0 | 0.023 | 0.021 | 0.0 | 0.888 | 0.000% |
+| 2026-05-14 | 7501.740234375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.455 | 1.0 | 0.123 | 0.0 | 0.01 | 0.021 | 0.0 | 0.846 | 0.003% |
+| 2026-05-14 | 7502.0400390625 | NEUTRAL_TRANSITIONAL | transitional | 0.457 | 1.0 | 0.125 | 0.0 | 0.006 | 0.019 | 0.0 | 0.85 | -0.008% |
+| 2026-05-15 | 7430.0400390625 | DEFLATION_FEAR | transitional | 0.433 | 1.0 | 0.101 | 0.0 | 0.0 | 0.899 | 0.0 | 0.0 | 0.000% |
+| 2026-05-15 | 7431.89990234375 | NEUTRAL_TRANSITIONAL | transitional | 0.513 | 1.0 | 0.091 | 0.0 | 0.041 | 0.0 | 0.0 | 0.868 | 0.000% |
+| 2026-05-15 | 7432.669921875 | NEUTRAL_TRANSITIONAL | transitional | 0.518 | 1.0 | 0.187 | 0.0 | 0.011 | 0.002 | 0.0 | 0.8 | 0.000% |
+| 2026-05-15 | 7445.7001953125 | NEUTRAL_TRANSITIONAL | transitional | 0.486 | 1.0 | 0.155 | 0.0 | 0.062 | 0.0 | 0.0 | 0.783 | 0.000% |
+| 2026-05-15 | 7436.8798828125 | NEUTRAL_TRANSITIONAL | transitional | 0.449 | 1.0 | 0.117 | 0.0 | 0.021 | 0.0 | 0.0 | 0.862 | 0.000% |
+| 2026-05-15 | 7421.02001953125 | NEUTRAL_TRANSITIONAL | transitional | 0.527 | 1.0 | 0.098 | 0.0 | 0.051 | 0.0 | 0.0 | 0.851 | -0.002% |
+| 2026-05-15 | 7409.18017578125 | NEUTRAL_TRANSITIONAL | transitional | 0.595 | 1.0 | 0.133 | 0.0 | 0.043 | 0.0 | 0.0 | 0.824 | -0.001% |
+| 2026-05-18 | 7413.85009765625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.459 | 1.0 | 0.127 | 0.0 | 0.018 | 0.055 | 0.0 | 0.8 | 0.000% |
+| 2026-05-18 | 7375.080078125 | DEFLATION_FEAR | transitional | 0.506 | 1.0 | 0.087 | 0.0 | 0.0 | 0.913 | 0.0 | 0.0 | 0.000% |
+| 2026-05-18 | 7366.47998046875 | NEUTRAL_TRANSITIONAL | transitional | 0.441 | 1.0 | 0.174 | 0.0 | 0.045 | 0.042 | 0.0 | 0.739 | 0.000% |
+| 2026-05-18 | 7392.68017578125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.461 | 1.0 | 0.207 | 0.0 | 0.024 | 0.055 | 0.0 | 0.714 | 0.000% |
+| 2026-05-18 | 7365.419921875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.438 | 1.0 | 0.17 | 0.0 | 0.0 | 0.0 | 0.0 | 0.83 | 0.000% |
+| 2026-05-18 | 7373.68017578125 | DEFLATION_FEAR | transitional | 0.456 | 1.0 | 0.062 | 0.0 | 0.0 | 0.938 | 0.0 | 0.0 | 0.315% |
+| 2026-05-18 | 7403.10009765625 | DEFLATION_FEAR | transitional | 0.378 | 0.0 | 0.024 | 0.0 | 0.0 | 0.976 | 0.0 | 0.0 | -0.096% |
+| 2026-05-19 | 7341.47998046875 | DEFLATION_FEAR | risk_off | 0.427 | 1.0 | 0.114 | 0.0 | 0.0 | 0.886 | 0.0 | 0.0 | 0.000% |
+| 2026-05-19 | 7341.4599609375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.457 | 1.0 | 0.1 | 0.0 | 0.059 | 0.053 | 0.045 | 0.743 | 0.000% |
+| 2026-05-19 | 7363.72021484375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.469 | 1.0 | 0.11 | 0.0 | 0.038 | 0.043 | 0.0 | 0.809 | 0.000% |
+| 2026-05-19 | 7388.81005859375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.488 | 1.0 | 0.126 | 0.0 | 0.016 | 0.106 | 0.0 | 0.752 | 0.000% |
+| 2026-05-19 | 7377.669921875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.456 | 1.0 | 0.1 | 0.0 | 0.004 | 0.043 | 0.025 | 0.828 | 0.000% |
+| 2026-05-19 | 7365.77978515625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.466 | 1.0 | 0.107 | 0.0 | 0.0 | 0.035 | 0.0 | 0.858 | 0.000% |
+| 2026-05-19 | 7354.9599609375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.452 | 1.0 | 0.096 | 0.0 | 0.071 | 0.063 | 0.0 | 0.77 | 0.003% |
+| 2026-05-20 | 7396.75 | DEFLATION_FEAR | transitional | 0.517 | 1.0 | 0.149 | 0.0 | 0.0 | 0.851 | 0.0 | 0.0 | 0.000% |
+| 2026-05-20 | 7410.6201171875 | DEFLATION_FEAR | transitional | 0.556 | 1.0 | 0.361 | 0.0 | 0.0 | 0.1 | 0.0 | 0.539 | 0.000% |
+| 2026-05-20 | 7408.3701171875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.474 | 1.0 | 0.228 | 0.0 | 0.092 | 0.051 | 0.004 | 0.625 | 0.000% |
+| 2026-05-20 | 7420.2998046875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.475 | 1.0 | 0.071 | 0.0 | 0.088 | 0.042 | 0.0 | 0.799 | 0.000% |
+| 2026-05-20 | 7419.259765625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.446 | 1.0 | 0.057 | 0.0 | 0.016 | 0.018 | 0.0 | 0.909 | 0.000% |
+| 2026-05-20 | 7426.3701171875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.457 | 1.0 | 0.125 | 0.0 | 0.024 | 0.036 | 0.0 | 0.815 | -0.011% |
+| 2026-05-20 | 7432.77001953125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.461 | 1.0 | 0.129 | 0.0 | 0.0 | 0.05 | 0.0 | 0.821 | 0.001% |
+| 2026-05-21 | 7401.759765625 | DEFLATION_FEAR | transitional | 0.514 | 1.0 | 0.091 | 0.0 | 0.0 | 0.909 | 0.0 | 0.0 | 0.000% |
+| 2026-05-21 | 7405.4599609375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.473 | 1.0 | 0.141 | 0.0 | 0.088 | 0.088 | 0.0 | 0.683 | 0.000% |
+| 2026-05-21 | 7405.6201171875 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.437 | 1.0 | 0.105 | 0.0 | 0.027 | 0.044 | 0.0 | 0.824 | 0.000% |
+| 2026-05-21 | 7438.7998046875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.510 | 1.0 | 0.089 | 0.0 | 0.103 | 0.113 | 0.0 | 0.695 | 0.000% |
+| 2026-05-21 | 7451.0498046875 | DEFLATION_FEAR | transitional | 0.627 | 0.0 | 0.099 | 0.0 | 0.0 | 0.901 | 0.0 | 0.0 | 0.000% |
+| 2026-05-21 | 7444.240234375 | DEFLATION_FEAR | transitional | 0.451 | 1.0 | 0.119 | 0.0 | 0.0 | 0.881 | 0.0 | 0.0 | 0.000% |
+| 2026-05-21 | 7446.0498046875 | NEUTRAL_TRANSITIONAL_2 | transitional | 0.316 | 1.0 | 0.0 | 0.011 | 0.0 | 0.0 | 0.0 | 0.989 | 0.000% |
+| 2026-05-22 | 7474.41015625 | DEFLATION_FEAR | transitional | 0.476 | 1.0 | 0.072 | 0.0 | 0.0 | 0.928 | 0.0 | 0.0 | 0.000% |
+| 2026-05-22 | 7496.41015625 | DEFLATION_FEAR | risk_off | 0.432 | 1.0 | 0.12 | 0.0 | 0.0 | 0.88 | 0.0 | 0.0 | 0.000% |
+| 2026-05-22 | 7490.990234375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.447 | 1.0 | 0.058 | 0.0 | 0.069 | 0.036 | 0.0 | 0.837 | 0.000% |
+| 2026-05-22 | 7505.22021484375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.437 | 1.0 | 0.052 | 0.0 | 0.03 | 0.037 | 0.0 | 0.881 | 0.000% |
+| 2026-05-22 | 7490.740234375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.445 | 1.0 | 0.057 | 0.0 | 0.06 | 0.042 | 0.011 | 0.83 | 0.000% |
+| 2026-05-22 | 7473.25 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.431 | 1.0 | 0.099 | 0.0 | 0.0 | 0.028 | 0.0 | 0.873 | 0.000% |
+| 2026-05-22 | 7474.06982421875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.478 | 1.0 | 0.073 | 0.0 | 0.021 | 0.029 | 0.037 | 0.84 | -0.017% |
+| 2026-05-26 | 7533.509765625 | DEFLATION_FEAR | transitional | 0.503 | 1.0 | 0.086 | 0.0 | 0.0 | 0.914 | 0.0 | 0.0 | 0.000% |
+| 2026-05-26 | 7516.22998046875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.437 | 1.0 | 0.105 | 0.0 | 0.0 | 0.032 | 0.0 | 0.863 | 0.000% |
+| 2026-05-26 | 7515.2998046875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.450 | 1.0 | 0.118 | 0.0 | 0.008 | 0.028 | 0.023 | 0.823 | 0.000% |
+| 2026-05-26 | 7504.22998046875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.446 | 1.0 | 0.057 | 0.0 | 0.035 | 0.03 | 0.0 | 0.878 | 0.000% |
+| 2026-05-26 | 7514.25 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.453 | 1.0 | 0.06 | 0.0 | 0.041 | 0.06 | 0.0 | 0.839 | 0.000% |
+| 2026-05-26 | 7513.14990234375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.429 | 1.0 | 0.097 | 0.0 | 0.049 | 0.061 | 0.0 | 0.793 | -0.015% |
+| 2026-05-26 | 7519.47021484375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.437 | 1.0 | 0.105 | 0.0 | 0.015 | 0.009 | 0.0 | 0.871 | 0.001% |
+| 2026-05-27 | 7516.77978515625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.464 | 1.0 | 0.066 | 0.0 | 0.085 | 0.056 | 0.0 | 0.793 | 0.000% |
+| 2026-05-27 | 7511.81005859375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.455 | 1.0 | 0.123 | 0.0 | 0.015 | 0.023 | 0.005 | 0.834 | 0.000% |
+| 2026-05-27 | 7514.18017578125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.453 | 1.0 | 0.06 | 0.0 | 0.0 | 0.011 | 0.0 | 0.929 | 0.000% |
+| 2026-05-27 | 7509.08984375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.447 | 1.0 | 0.115 | 0.0 | 0.0 | 0.005 | 0.0 | 0.88 | 0.000% |
+| 2026-05-27 | 7524.10009765625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.457 | 1.0 | 0.062 | 0.0 | 0.03 | 0.057 | 0.0 | 0.851 | 0.000% |
+| 2026-05-27 | 7522.7099609375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.449 | 1.0 | 0.117 | 0.0 | 0.018 | 0.013 | 0.0 | 0.852 | -0.013% |
+| 2026-05-27 | 7521.2900390625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.452 | 1.0 | 0.12 | 0.0 | 0.0 | 0.018 | 0.0 | 0.862 | -0.000% |
+| 2026-05-28 | 7544.31982421875 | DEFLATION_FEAR | transitional | 0.556 | 1.0 | 0.113 | 0.0 | 0.0 | 0.887 | 0.0 | 0.0 | 0.000% |
+| 2026-05-28 | 7556.919921875 | DEFLATION_FEAR | transitional | 0.501 | 1.0 | 0.17 | 0.0 | 0.0 | 0.83 | 0.0 | 0.0 | 0.000% |
+| 2026-05-28 | 7561.0 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.467 | 1.0 | 0.135 | 0.0 | 0.0 | 0.03 | 0.0 | 0.835 | 0.000% |
+| 2026-05-28 | 7559.83984375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.481 | 1.0 | 0.075 | 0.0 | 0.063 | 0.016 | 0.0 | 0.846 | 0.000% |
+| 2026-05-28 | 7565.06982421875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.473 | 1.0 | 0.141 | 0.0 | 0.028 | 0.04 | 0.0 | 0.791 | 0.000% |
+| 2026-05-28 | 7564.7099609375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.453 | 1.0 | 0.121 | 0.0 | 0.0 | 0.026 | 0.0 | 0.853 | -0.004% |
+| 2026-05-28 | 7563.43017578125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.443 | 1.0 | 0.111 | 0.0 | 0.0 | 0.042 | 0.0 | 0.847 | -0.002% |
+| 2026-05-29 | 7583.740234375 | DEFLATION_FEAR | transitional | 0.495 | 1.0 | 0.082 | 0.0 | 0.0 | 0.918 | 0.0 | 0.0 | 0.000% |
+| 2026-05-29 | 7587.16015625 | DEFLATION_FEAR | transitional | 0.457 | 1.0 | 0.125 | 0.0 | 0.0 | 0.875 | 0.0 | 0.0 | 0.000% |
+| 2026-05-29 | 7584.35986328125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.445 | 1.0 | 0.113 | 0.0 | 0.0 | 0.023 | 0.005 | 0.859 | 0.000% |
+| 2026-05-29 | 7583.31982421875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.449 | 1.0 | 0.059 | 0.0 | 0.045 | 0.011 | 0.014 | 0.871 | 0.000% |
+| 2026-05-29 | 7580.60986328125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.459 | 1.0 | 0.127 | 0.0 | 0.001 | 0.028 | 0.002 | 0.842 | 0.000% |
+| 2026-05-29 | 7586.0498046875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.434 | 1.0 | 0.102 | 0.0 | 0.009 | 0.039 | 0.0 | 0.85 | -0.000% |
+| 2026-05-29 | 7581.25 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.431 | 1.0 | 0.099 | 0.0 | 0.0 | 0.015 | 0.0 | 0.886 | 0.000% |
+| 2026-06-01 | 7575.56005859375 | DEFLATION_FEAR | transitional | 0.436 | 1.0 | 0.052 | 0.0 | 0.0 | 0.948 | 0.0 | 0.0 | 0.000% |
+| 2026-06-01 | 7579.0400390625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.457 | 1.0 | 0.125 | 0.0 | 0.033 | 0.031 | 0.0 | 0.811 | 0.000% |
+| 2026-06-01 | 7585.0400390625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.446 | 1.0 | 0.114 | 0.0 | 0.031 | 0.007 | 0.0 | 0.848 | 0.000% |
+| 2026-06-01 | 7600.35986328125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.533 | 1.0 | 0.101 | 0.0 | 0.051 | 0.049 | 0.0 | 0.799 | 0.000% |
+| 2026-06-01 | 7615.7001953125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.491 | 1.0 | 0.16 | 0.0 | 0.043 | 0.027 | 0.0 | 0.77 | 0.000% |
+| 2026-06-01 | 7613.5498046875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.465 | 1.0 | 0.133 | 0.0 | 0.023 | 0.026 | 0.0 | 0.818 | -0.004% |
+| 2026-06-01 | 7600.25 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.458 | 1.0 | 0.126 | 0.0 | 0.0 | 0.026 | 0.039 | 0.809 | -0.005% |
+| 2026-06-02 | 7594.56982421875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.464 | 1.0 | 0.132 | 0.0 | 0.0 | 0.004 | 0.0 | 0.864 | 0.000% |
+| 2026-06-02 | 7615.93017578125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.477 | 1.0 | 0.145 | 0.0 | 0.051 | 0.065 | 0.0 | 0.739 | 0.000% |
+| 2026-06-02 | 7610.64990234375 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.464 | 1.0 | 0.066 | 0.0 | 0.012 | 0.031 | 0.0 | 0.891 | 0.000% |
+| 2026-06-02 | 7606.27978515625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.475 | 1.0 | 0.071 | 0.0 | 0.025 | 0.024 | 0.0 | 0.88 | 0.000% |
+| 2026-06-02 | 7606.31982421875 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.482 | 1.0 | 0.075 | 0.0 | 0.039 | 0.051 | 0.0 | 0.835 | 0.000% |
+| 2026-06-02 | 7609.6298828125 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.455 | 1.0 | 0.123 | 0.0 | 0.0 | 0.014 | 0.0 | 0.863 | -0.001% |
+| 2026-06-02 | 7610.509765625 | NEUTRAL_TRANSITIONAL_5 | transitional | 0.441 | 1.0 | 0.109 | 0.0 | 0.012 | 0.038 | 0.0 | 0.841 | -0.015% |

@@ -4,24 +4,34 @@ MACRO ANALYST AGENT - CONCEPT AND MODEL
 1. WHAT IT IS
 This is a 24/7 autonomous quantitative agent that monitors global markets, processes data through deep learning classifiers, and generates institutional-grade macro reports. It runs completely automatically in the background using your computer's scheduler or inside isolated Docker microservices. The presentation layer uses an ultra-minimal "Brutalist Terminal" text-block layout to ensure a data-dense, cross-platform reading experience designed for instant mobile parsing.
 
-2. THE ACTIVE-ACTIVE FAILOVER & GARCH BAYESIAN OS (v4.9.0 Evolution)
-Following the v4.9.0 upgrades, the agent operates as a containerized, event-driven Mixture of Experts (MoE) & GARCH Bayesian OS. The architecture incorporates several critical structural and mathematical upgrades:
+2. THE MULTI-ASSET ENSEMBLE OS & CAPITAL ROTATION ENGINE (v5.1.0 Evolution)
+Following the v5.1.0 upgrades, the agent operates as a containerized, event-driven Mixture of Experts (MoE) & Multi-Asset Ensemble OS. The architecture incorporates several critical structural and mathematical upgrades:
 
 - Event-Driven Pub-Sub Architecture: Standardizes pipeline execution via an in-memory `EventBus` (`src/observability/event_bus.py`). Triggers sequential, decoupled callbacks across five lifecycle phases.
 - Pydantic Validation Schemas: Enforces strict type-safety and structural data contracts utilizing Pydantic models (`src/schemas/models.py`) such as `MarketSnapshot` to eliminate data schema breaks.
-- High-Impact Economic Calendaring: The calendar adapter (`ForexFactoryAdapter` under `src/adapters/forexfactory_adapter.py`) fetches weekly high-impact events for USD, EUR, and JPY currencies, parsing them into `EconomicCalendar` type-safe structures.
-- Active-Resilient MoE Cognitive Layer: Integrates a dual-provider active-active LLM framework utilizing Google Gemini (`gemini-2.5-flash`) and Groq (`Llama 3`) models running in parallel:
-  * Macro Policy Expert: Evaluates RSS headlines, upcoming high-impact economic calendar events, and the 2s10s yield spread. Executes Groq first and dynamically fails back to Gemini on rate-limit quota exhaustion or network timeouts, prepending failover tracking logs.
-  * Market Psychology Expert: Evaluates RSS headlines, VIX z-scores, and volume activity heat. Executes Gemini first and dynamically fails back to Groq on failure.
-  * Rate-Limit Resilience: Standardizes a 10-attempt dynamic backoff retry loop (sleeps `(attempt + 1) * 10` seconds, up to 90s) in both adapters to bypass transient errors.
-- 60-Day Lookback Horizon & Return z-Scores: Expanded rolling statistical lookbacks from legacy 5-day windows to a robust **60-day window** (`ROLLING_DAYS = 60`). Statistical anomaly tracking is shifted from price-level standardizations to **Return-Based z-Scores** ($z = (\Delta\% - \text{mean}) / \text{std}$ of percentage changes) to prevent pricing drift.
+- High-Impact Economic Calendaring: The calendar adapter (`ForexFactoryAdapter` under `src/adapters/forexfactory_adapter.py`) fetches weekly high-impact events for USD, EUR, and JPY currencies, parsing them into `EconomicCalendar` structures.
+- Active-Resilient MoE Cognitive Layer: Integrates a dual-provider active-active LLM framework utilizing Google Gemini (`gemini-2.5-flash`) and Groq (`Llama 3`) models running in parallel.
+- Parallel LLM Echo Chamber Detector: Detects if both parallel MoE experts (Policy and Psychology) run on the same LLM provider due to rate-limit failovers. Applies a 0.70x penalty to the News Conviction Score to mitigate correlated narrative bias.
+- Dynamic Rolling Statistical Windows by Interval: Statistical z-score calculations in `feature_engine.py` adapt dynamically to the operational interval. It calculates bars dynamically to keep the lookback baseline at exactly **3 macro months (60 trading days equivalent)** across daily (`60` daily bars), hourly (e.g. `97` hourly bars for 4h), and weekly (`12` weekly bars) timeframes.
+- Return-Based z-Scores: Statistical anomaly tracking is computed as **Return-Based z-Scores** ($z = (\Delta\% - \text{mean}) / \text{std}$ of percentage changes) to prevent price level drift.
 - Treasury Yield & Spread z-Scores: Ingests 60-day yield return deltas (`delta_zscore` of US10Y) and 2s10s spread deltas (`spread_zscore`) in place of raw yield indices inside features engineered.
-- GARCH Bayesian Updates & Penalty Filter: If the computed SPX GARCH regime is `ELEVATED`, the system executes a Bayesian contraction, automatically **slashing HMM Risk-On probabilities (LIQUIDITY_DRIVEN_RALLY, RISK_ON_EXPANSION) by 50%**, redistributing the penalized probability mass back to `NEUTRAL_TRANSITIONAL` to suppress bullish bias prior to risk sizing.
-- Timeframe-Decoupled MLP & Inference Routing: Load localized models by CLI interval (`mlp_model_{interval}.pkl`) and dynamically routes features to specialized classifiers (`model_bull`, `model_bear`, `model_neutral`) based on HMM regime.
-- Regime-Specific Kelly Sizing Penalties: Ingests dominant HMM state vectors to apply dynamic risk-aversion penalties to target Kelly exposure:
-  * `risk_off` dominant HMM state: Dynamically slashes Kelly exposure by half (0.5x multiplier) to defend capital in high stress.
-  * `transitional` dominant HMM state: Dynamically discounts Kelly exposure by 25% (0.75x multiplier) to protect against uncertain/choppy sessions.
+- GARCH Bayesian Updates & HMM Regularization: 
+  * If the computed SPX GARCH regime is `ELEVATED` (proxy: vix_zscore > 1.0), the system executes a Bayesian contraction, automatically slashing HMM Risk-On probabilities by 50% and redistributing the penalized mass directly back to `NEUTRAL_TRANSITIONAL` to suppress bullish bias.
+  * Enforces **Uniform HMM Start Probabilities** ($\text{startprob\_} = 1/N$) before scoring samples to prevent degenerate single-bar inference traps in low-sample environments.
+- Dynamic Measurement Noise Covariance: To prevent sudden, single-bar HMM regime jumps that cause excessive trading turnover, the `RiskEngine` inflates the measurement noise covariance matrix to $R = \mathbf{I} \times 0.25$ (instead of $0.05$) when a sudden observation fear spike is detected ($z[1] > 0.6$ while prior $x[1] < 0.3$), requiring multi-bar confirmation.
+- Dynamic Brier Self-Calibration Filter: Tracks historical forecasts against actual forward returns using a **5-bar delayed grading window**, dynamically adjusting the model's calibration penalty to reduce sizing during accuracy degradation.
+- Ensemble Classifier Inference Routing: Ingests features into ensembles of three classifiers (MLP, Random Forest, Gradient Boosting) trained for S&P 500 (`spx`), Bitcoin (`btc`), Gold (`gld`), and Crude Oil (`wti`). Reports a Consensus Score based on prediction standard deviation.
+- Auto-Inversion Calibration Module: Automatically flips a model's directional probability ($\text{prob} = 1.0 - \text{prob}$) if its rolling Brier Score rises above `0.60`, turning lagging performance into a contrarian hedge.
+- Sizing Overrides & Safety Circuit Breakers: Evaluates indicators to trigger high-conviction overrides that bypass HMM regime penalties:
+  * Capitulation Override (Contrarian Buy): Active if SPX return z-score is oversold between `-1.5` and `-3.0`, institutional volume support is high (`ihi > 0.0`), and MLP is bullish (`mlp_prob > 0.5`). Applies a **0.9x guarded contrarian multiplier**.
+  * Momentum Ignition Override (Trend Buy): Active if SPX return z-score is strongly positive (`spx_ret_z > 1.0`), volume heat is positive (`ihi > 0.1`), and MLP probability is bullish ($0.4 < \text{mlp\_prob} \le 0.80$). Bypasses Brier penalties and applies an aggressive **1.25x momentum multiplier**.
+  * Black Swan Circuit Breaker: Automatically liquidates all equity exposure (`SPX_Kelly = 0.0`) if the SPX return z-score falls below `-3.5` standard deviations.
+  * Macro Trend Override: Blocks long positions (forces SPX Kelly to `0.0`) if SPX is in a technical downtrend (below 20 EMA).
+  * Retail Noise Filter: Slashes S&P 500 Kelly exposure by 50% if the market is not risk-off but institutional heat is negative (`ihi < 0.0`).
+- Capital Rotation Engine: Dynamically rotates capital (scales alternative allocations by 1.5x) to Gold (`gld`), Bitcoin (`btc`), and Oil (`wti`) if S&P 500 displays weakness ($\text{spx\_prob} < 0.40$). Normalizes total exposure to a hard limit of `1.2` (120% exposure) via the Global Portfolio Balancer.
+- Regime-Specific Alternative Asset Filters: Forces crypto (`btc`) and energy (`wti`) Kelly exposure to 0.0 in panic regimes (`DEFLATION_FEAR` or `CRISIS_DISLOCATION`), while boosting Gold as a safe haven.
 - Decoupled Consensus Engine Signal Mapping (`consensus_engine.py`): Voting conviction outputs are mapped directly into strict boundaries: `QUANT_DIVERGENCE_PANIC` (SHORT, 0.5x Kelly slash), `CONSENSUS_BEARISH` (SHORT), `CONSENSUS_BULLISH` (LONG, 1.2x sizing on expansion), and `MIXED_SIGNALS` (MIXED).
+- Phase 2 Live Telemetry Engine: Writes a structured real-time operational payload to `/Users/mac/agent/data/live_telemetry.json` (tracking timestamp, dominant regime, SPX/Safe Haven Kelly fractions, override status, and volume heat) on pipeline completion.
 - Yield Curve Proxy Fallbacks: Dynamically pulls proxy yields (`^TNX` for the 10Y and `^FVX` for the 5Y) directly from Yahoo Finance if FRED API keys are missing.
 - Containerized OS: Standardizes execution in isolated containerized environments using Docker and Docker-Compose.
 
@@ -67,36 +77,37 @@ The agent manages two distinct workflows natively via bash scripts (run_4h.sh, r
 - The Sunday Synthesis: A deep-dive research report summarizing the entire week and previewing the week ahead.
 - *Note: Daily 72-hour roll schedules (`build_72h_roll.py` and `run_daily.sh`) have been completely removed to streamline the pipeline.*
 
-8. OFFLINE MODEL TRAINING & BACKTESTING
-The deep learning models (HMM and MLP) are not static. The agent includes a robust, double-engine offline training pipeline (train_models.py) and historical backtesting engine (backtest.py) to periodically adapt to evolving market regimes:
+8. OFFLINE MODEL TRAINING, BACKTESTING & VISUALIZATION
+The machine learning models (HMM and Ensemble Classifiers) are not static. The agent includes a robust training pipeline (`train_models.py`), backtest engine (`quantitative_backtester.py`), and a visualizer script (`generate_visual_map.py`) to periodically adapt to evolving market regimes:
 
 - The HMM Regime Training Pipeline:
-  * Ingests 5 years of daily historical data across Equities (SPX), Volatility (GARCH volatility proxy), FX/Treasuries (DXY, USDCAD, 10Y yields, 10Y-2Y yield spread), Commodities (WTI Crude, Gold, Silver), and a Liquidity/Crypto Flow proxy.
+  * Ingests 5 years of daily historical data across Equities (SPX), Volatility (GARCH volatility proxy), FX/Treasuries (DXY, USDCAD, 10Y yields, 10Y-2Y yield spread), Commodities (WTI Crude, Gold, Silver), and a Bitcoin volume volatility proxy.
   * Standardizes the aligned 10-dimensional feature vector using a StandardScaler.
-  * Fits a Gaussian Hidden Markov Model (GaussianHMM) configured with N_HIDDEN_STATES = 6, a full covariance matrix structure, and 500 maximum EM iterations.
-  * Dynamically maps states by checking their emission means across daily SPX returns, 10-year yield shifts, and WTI moves:
-    - RISK_ON_EXPANSION: Pos. SPX return (>0.3%) & rising yields (>0.01%).
-    - LIQUIDITY_DRIVEN_RALLY: Pos. SPX return (>0.3%) & falling yields (<-0.01%).
-    - STAGFLATION_STRESS: Neg. SPX return (<-0.2%) & rising energy price (>0.5%).
-    - RATE_SHOCK: Neg. SPX return (<-0.2%) & expanding bond yields (>0.02%).
-    - DEFLATION_FEAR: Neg. SPX return (<-0.2%) & falling energy price (<-0.3%).
+  * Fits a Gaussian Hidden Markov Model (GaussianHMM) configured with N_HIDDEN_STATES = 6, a full covariance matrix structure, and 500 maximum EM iterations. Enforces uniform start probabilities (startprob_ = 1/N) to regularize posteriors.
+  * Dynamically maps states by checking their emission means across daily SPX returns, yield shifts, and WTI moves:
+    - RISK_ON_EXPANSION: Pos. SPX return & rising yields.
+    - LIQUIDITY_DRIVEN_RALLY: Pos. SPX return & falling yields.
+    - STAGFLATION_STRESS: Neg. SPX return & rising energy prices.
+    - RATE_SHOCK: Neg. SPX return & expanding bond yields.
+    - DEFLATION_FEAR: Neg. SPX return & falling energy prices.
+    - CRISIS_DISLOCATION: Neg. SPX return (catch-all for severe negative drift).
     - NEUTRAL_TRANSITIONAL: Stable market conditions.
 
-- The Supervised MLP Deep Classifier Pipeline:
-  * Targets a 5-day forward cumulative SPX return: Risk-On (y = 1, return > 1.5%), Risk-Off (y = 0, return < -1.5%), and Transitional (y = 2, otherwise).
-  * Train package runs a multi-layer perceptron neural network (MLPClassifier) with a (16, 8) hidden layer topology.
-  * Leverages a ReLU activation function, Adam optimization solver, and early stopping to protect against overfitting.
+- The Supervised Multi-Asset Ensemble Pipeline:
+  * Fits ensemble classifiers (MLP, Random Forest, and Gradient Boosting) for four separate assets (SPX, BTC, GLD, WTI) based on historical feature vectors.
+  * Targets a 5-period forward cumulative return: Bull (y = 1, return > threshold), Bear (y = 0, return < -threshold), and Transitional (y = 2, otherwise).
+  * Thresholds adapt dynamically to the interval (e.g. 1.5% for daily SPX, 3.0% for weekly SPX, scaled down for 4h/1h).
 
-- The Historical Backtest Engine (backtest.py):
-  * Loads the active models and decodes 2 years of historical daily market features into their mapped state label sequences.
-  * Measures the daily mean returns and annualizes SPX/WTI metrics across all 6 regimes, compiling a comprehensive, tabular performance audit (backtest_results.md) detailing frequencies, annualized returns, and yield moves (in basis points per day) to verify mathematical edge before live deployment.
-- The Interactive Math Visualizers (visualize_math_4h.ipynb & visualize_math_1w.ipynb):
-  * Displays dynamic visual analysis overlaid natively in VS Code, allowing visual audit of the quantitative engines for 4-Hour Briefings and Weekly Synthesis cycles.
-  * Overlays HMM-inferred market regimes directly onto the S&P 500 price index.
-  * Plots heatmaps of cross-asset structural stress vectors, including the **Volatility Term Structure** (VIX9D vs VIX curves) to expose backwardation points.
-  * **Gemini Geopolitical Shock Plots (Section 6):** Dynamically plots semantic news shocks against a horizontal red line indicating the critical **0.70 Geopolitical Shock Trigger** boundary.
-  * Visualizes the Epistemic Kelly sizing allocation curves and active exponential half-life duration decay factors.
-  * Embeds dynamic live report rendering (Section 5) directly inside VS Code below the mathematical charts, displaying the newly introduced MoE step-by-step reasoning and quantitative divergence states.
+- The Historical Backtest Engine (quantitative_backtester.py):
+  * Decodes historical features into regime labels, runs the Multi-Asset Kelly solver, and generates portfolio forward returns.
+  * Compiles a detailed performance log (backtest_extended_results.md) detailing daily allocations (SPX Long/Short, BTC, GLD, WTI, Cash) and portfolio PnL, as well as a Deep Learning Probability Calibration table showing win rates and returns per probability bucket.
+
+- The Stacked Portfolio Visualizer (generate_visual_map.py):
+  * Replaces legacy Jupyter notebooks with a centralized Python script.
+  * Parses backtest reports and plots high-resolution PNG charts (`reports/visualize_map.png`) showing:
+    - S&P 500 price trajectory and regime states.
+    - Ensemble probability calibration and threshold limits.
+    - Stacked Kelly allocation areas representing S&P 500 (Long & Short), Bitcoin, Oil, Gold, and Cash rotation over time.
 
 9. DATA PRIVACY & ZERO-SHARING SECURITY PROTOCOLS
 To protect proprietary quantitative intelligence and restrict leakage of sensitive credentials, the system enforces a local-only encapsulation boundary:

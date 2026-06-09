@@ -81,6 +81,8 @@ def check_mathematical_consistency(parsed_assets):
         return True
     except Exception:
         return False
+# Refactored for compliance: This function maintains a Local Cryptographic Signature Audit Trail for tracking snapshot integrity.
+# It is not a decentralized immutable ledger, but a local cryptographic signature audit trail.
 def append_to_immutable_chain(current_signature, output_utc):
     chain_log_path = os.path.join(os.path.dirname(__file__), '..', 'logs', 'immutable_chain.log')
     os.makedirs(os.path.dirname(chain_log_path), exist_ok=True)
@@ -93,7 +95,7 @@ def append_to_immutable_chain(current_signature, output_utc):
                 if len(lines) > 1:
                     prev_hash = lines[-1].strip().split(",")[-1]
         except Exception as e:
-            logger.error(f"TruChain L3: Log read error: {e}")
+            logger.error(f"Local Cryptographic Signature Audit Trail: Log read error: {e}")
     linked_block_hash = hashlib.sha256(f"{prev_hash}{current_signature}".encode('utf-8')).hexdigest()
     try:
         header_needed = not os.path.exists(chain_log_path)
@@ -102,8 +104,8 @@ def append_to_immutable_chain(current_signature, output_utc):
                 f.write("timestamp_utc,snapshot_signature,prev_block_hash,linked_block_hash\n")
             f.write(f"{output_utc},{current_signature},{prev_hash},{linked_block_hash}\n")
     except Exception as e:
-        logger.error(f"TruChain L3: Append failure: {e}")
-def compute_stats(series, garch_conditional_vol=None):
+        logger.error(f"Local Cryptographic Signature Audit Trail: Append failure: {e}")
+def compute_stats(series, garch_conditional_vol=None, rolling_window=ROLLING_DAYS):
     if series is None or len(series) < 2:
         return None
     current  = float(series.iloc[-1])
@@ -111,12 +113,12 @@ def compute_stats(series, garch_conditional_vol=None):
     delta    = current - prev
     delta_pct = (delta / prev * 100) if prev != 0 else 0
     # Price level stats
-    rolling  = series.tail(ROLLING_DAYS)
+    rolling  = series.tail(rolling_window)
     mean     = float(rolling.mean())
     std      = float(rolling.std()) if len(rolling) > 1 else 0
     
     # Return (delta_pct) z-score stats
-    rolling_returns = series.pct_change().dropna().tail(ROLLING_DAYS) * 100
+    rolling_returns = series.pct_change().dropna().tail(rolling_window) * 100
     ret_mean = float(rolling_returns.mean()) if len(rolling_returns) > 0 else 0
     ret_std = float(rolling_returns.std()) if len(rolling_returns) > 1 else 0
     
@@ -226,45 +228,81 @@ def compute_garch_volatility(ticker_symbol, lookback_days=250):
     except Exception as e:
         logger.error(f"GARCH error for {ticker_symbol}: {e}")
         return None, None, None
-def load_mlp_model(interval="1d"):
-    model_path = os.path.join(os.path.dirname(__file__), '..', '..', 'models', f'mlp_model_{interval}.pkl')
-    # Backward compatibility fallback
-    if not os.path.exists(model_path) and interval == "1d":
-        model_path = os.path.join(os.path.dirname(__file__), '..', '..', 'models', 'mlp_model.pkl')
-    try:
-        if os.path.exists(model_path):
-            return joblib.load(model_path)
-    except Exception as e:
-        logger.error(f"MLP Load Failure: {e}")
-    return None
-def run_mlp_inference(features_vector, mlp_package, current_regime: str):
+def load_mlp_models(interval="1d", assets=None):
+    if assets is None:
+        assets = ["spx", "btc", "gld", "wti"]
+    models = {}
+    for asset in assets:
+        model_path = os.path.join(os.path.dirname(__file__), '..', '..', 'models', f'mlp_model_{asset}_{interval}.pkl')
+        if not os.path.exists(model_path) and interval == "1d":
+            model_path = os.path.join(os.path.dirname(__file__), '..', '..', 'models', f'mlp_model_{asset}.pkl')
+        try:
+            if os.path.exists(model_path):
+                models[asset] = joblib.load(model_path)
+        except Exception as e:
+            logger.error(f"MLP Load Failure for {asset}: {e}")
+    return models
+
+def run_multi_mlp_inference(features_vector, mlp_packages_dict, current_regime: str):
+    results = {}
+    for asset, mlp_package in mlp_packages_dict.items():
+        res = run_mlp_inference(features_vector, mlp_package, current_regime, asset=asset)
+        if res:
+            results[asset] = res
+    return results
+
+def run_mlp_inference(features_vector, mlp_package, current_regime: str, asset="spx"):
     if mlp_package is None or current_regime is None:
         return None
     try:
         if "RISK" in current_regime or "RALLY" in current_regime:
-            model = mlp_package.get("model_bull", mlp_package.get("model_base"))
+            model = mlp_package.get("model_bull", mlp_package.get("model_base", mlp_package.get("model")))
         elif "STRESS" in current_regime or "SHOCK" in current_regime or "FEAR" in current_regime:
-            model = mlp_package.get("model_bear", mlp_package.get("model_base"))
+            model = mlp_package.get("model_bear", mlp_package.get("model_base", mlp_package.get("model")))
         else:
-            model = mlp_package.get("model_neutral", mlp_package.get("model_base"))
+            model = mlp_package.get("model_neutral", mlp_package.get("model_base", mlp_package.get("model")))
             
         scaler = mlp_package["scaler"]
         obs = np.array([features_vector])
         obs_scaled = scaler.transform(obs)
-        probs = model.predict_proba(obs_scaled)[0]
         
-        # Ensure no probability drops to absolute zero
-        probs = np.clip(probs, 0.01, 0.99)
-        probs /= probs.sum() # Re-normalize to 1.0
-
-        prob_down = round(float(probs[0]), 3)
-        prob_up = round(float(probs[1]), 3)
+        # Ensemble Prediction
+        models = [
+            mlp_package.get("model_mlp", mlp_package.get("model")),
+            mlp_package.get("model_rf"),
+            mlp_package.get("model_gb")
+        ]
+        
+        valid_models = [m for m in models if m is not None]
+        if not valid_models:
+            return None
+            
+        prob_up_list = []
+        for m in valid_models:
+            p = m.predict_proba(obs_scaled)[0]
+            if len(p) >= 2:
+                prob_up_list.append(float(p[1]))
+                
+        if not prob_up_list:
+            return None
+            
+        # Consensus Score calculation
+        mean_prob_up = np.mean(prob_up_list)
+        std_prob_up = np.std(prob_up_list) if len(prob_up_list) > 1 else 0.0
+        
+        # High consensus if standard deviation is low (models agree)
+        consensus_score = 1.0 if std_prob_up < 0.15 else 0.0
+        
+        prob_down = round(float(1.0 - mean_prob_up), 3)
+        prob_up = round(float(mean_prob_up), 3)
         predicted_class = 1 if prob_up > 0.5 else 0
         
         return {
             "bull_probability": prob_up,
             "bear_probability": prob_down,
-            "predicted_class": predicted_class
+            "neutral_probability": 0.0,
+            "predicted_class": predicted_class,
+            "consensus_score": consensus_score
         }
     except Exception as e:
         logger.error(f"MLP Inference Failure: {e}")
@@ -348,46 +386,50 @@ def calculate_bayesian_conditional_probability(setup_name, current_regime):
         return round(p_success, 2)
     except Exception:
         return 0.50
-def run_self_calibration(new_spx_ret, predictions_history_path):
+def run_self_calibration(history, current_spx_val, current_ihi, grading_delay=5, interval="1d"):
     """
-    Model Governance: Calculates rolling Brier Score to verify output accuracy.
-    BS = (1/N) * Sum( (forecast_probability - actual_binary_outcome)^2 )
+    Model Governance: Calculates rolling Brier Score with Retail Noise Filter.
+    Waits `grading_delay` bars before grading to match training horizon.
     """
-    brier_score = 0.15 # Default healthy baseline
+    brier_score = 0.15
     try:
-        # Load historical forecasts
-        history = []
-        if os.path.exists(predictions_history_path):
-            with open(predictions_history_path, 'r') as f:
-                history = json.load(f)
+        # Calculate threshold based on interval
+        threshold = 1.5
+        if interval == "1wk":
+            threshold *= 2.0
+        elif interval == "4h":
+            threshold *= 0.4
+        elif interval == "1h":
+            threshold *= 0.2
+            
+        # Grade the prediction made `grading_delay` bars ago
+        if len(history) > grading_delay:
+            forecast_to_grade = history[-(grading_delay + 1)]
+            if not forecast_to_grade.get("target_graded"):
+                # Compute return from the time prediction was made to now
+                ret = ((current_spx_val - forecast_to_grade["spx_val_at_prediction"]) / forecast_to_grade["spx_val_at_prediction"]) * 100
+                
+                # Baseline outcome uses interval-specific threshold to match training
+                actual_outcome = 1 if ret > threshold else 0
+                
+                forecast_to_grade["actual_outcome"] = actual_outcome
+                forecast_to_grade["target_graded"] = True
+                forecast_to_grade["squared_error"] = float((forecast_to_grade["predicted_risk_on"] - actual_outcome) ** 2)
         
-        # Binary target: 1 if SPX was positive, 0 otherwise
-        actual_outcome = 1 if new_spx_ret > 0 else 0
-        
-        # Grade the previous prediction if available
-        if history:
-            last_forecast = history[-1]
-            if "target_graded" not in last_forecast or not last_forecast["target_graded"]:
-                last_forecast["actual_outcome"] = actual_outcome
-                last_forecast["target_graded"] = True
-                # Brier score calculation: (prob_risk_on - actual_outcome)^2
-                last_forecast["squared_error"] = float((last_forecast["predicted_risk_on"] - actual_outcome) ** 2)
-        
-        # Limit history to 20 cycles
-        history = history[-20:]
+        # Limit history
+        history = history[-(grading_delay + 20):]
         
         # Calculate Brier score
-        graded_predictions = [p for p in history if p.get("target_graded", False)]
-        if len(graded_predictions) > 0:
-            brier_score = float(np.mean([p["squared_error"] for p in graded_predictions]))
-            # Brier > 0.25 is worse than guessing 0.5
+        graded = [p for p in history if p.get("target_graded", False)]
+        if len(graded) > 0:
+            brier_score = float(np.mean([p["squared_error"] for p in graded]))
             if brier_score > 0.25:
-                logger.warning(f"CRITICAL: Brier Score {brier_score} is worse than random. Model is severely degraded.")
+                logger.warning(f"CRITICAL: Brier Score {brier_score} indicates degraded performance.")
             
         return round(brier_score, 4), history
     except Exception as e:
         logger.error(f"Self-calibration error: {e}")
-        return 0.15, []
+        return 0.15, history
 def compute_equity_momentum_score(equities):
     weights = {"SPX": 0.35, "NDX": 0.18, "DAX": 0.18, "N225": 0.18, "TASI": 0.06, "DFM": 0.05}
     weighted_z = 0.0

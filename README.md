@@ -1,25 +1,25 @@
-# Macro Briefing Agent Setup Guide (v4.9.0)
+# Macro Briefing Agent Setup Guide (v5.1.0)
 
-Welcome to the **Macro Briefing Agent (v4.9.0)**—a 24/7 autonomous containerized **Active-Active Failover & GARCH Bayesian OS** and execution pipeline. This project decouples data ingestion, economic calendars, parallel LLM experts, consensus synthesis, and pub-sub event dispatching into an enterprise-grade framework.
+Welcome to the **Macro Briefing Agent (v5.1.0)**—a 24/7 autonomous containerized **Multi-Asset Ensemble OS & Capital Rotation** and execution pipeline. This project decouples data ingestion, economic calendars, parallel LLM experts, consensus synthesis, and pub-sub event dispatching into an enterprise-grade framework.
 
 
 ## Project Structure Overview
-Following the v4.9.0 Active-Active Failover & GARCH Bayesian OS upgrade, the project is organized into a highly decoupled, professional modular pipeline:
+Following the v5.1.0 Multi-Asset Ensemble OS & Capital Rotation upgrade, the project is organized into a highly decoupled, professional modular pipeline:
 - **`config/`**: Contains your API keys and webhook configurations (`fred_api_key.txt`, `webhook_config.txt`, `api_keys.json`, `tuning_configs.json`, etc.).
 - **`src/`**: Houses the core Python code organized as modular packages:
   - **`interfaces/`**: Standardized OOP interfaces (`data_broker.py`, `llm_provider.py`) defining loose-coupling contracts.
-  - **`adapters/`**: Physical retrieval clients (`yahoo_adapter.py` for yfinance/FRED yields, `gemini_adapter.py` for MoE parallel LLM Experts, `forexfactory_adapter.py` for USD/EUR/JPY calendar feeds) implementing interface layers.
+  - **`adapters/`**: Physical retrieval clients (`yahoo_adapter.py` for dynamic interval and yield history, `gemini_adapter.py` / `groq_adapter.py` for active-active failover MoE parallel Experts, `forexfactory_adapter.py` for economic calendars) implementing interface layers.
   - **`data_lake/`**: Database partition manager (`lake_manager.py`) handling daily-partitioned Parquet/JSONL.
-  - **`engines/`**: Specialized engines (`feature_engine.py` for indicator stats, `hmm_engine.py` for regimes, `risk_engine.py` for Kalman/Kelly sizing, `consensus_engine.py` for MoE synthesis & capital defence slashes).
+  - **`engines/`**: Specialized engines (`feature_engine.py` for dynamic stats & returns z-scores, `hmm_engine.py` for regime and GARCH penalty filters, `risk_engine.py` for covariance noise, Kelly overrides & multi-asset allocations, `consensus_engine.py` for signal mapping).
   - **`observability/`**: Standardized context logging (`logger.py`) and pub-sub event dispatching (`event_bus.py`).
   - **`schemas/`**: Strict type-validation layer (`models.py`) housing Pydantic models for the entire pipeline state.
   - **`fetch_market_data.py`**: Central Conductor orchestrating the ingestion and inference sequence using dependency injection.
   - **`build_report.py`, `build_weekly_synthesis.py`**: Presentation and formatting compilation scripts.
   - **`push_to_discord.py`**: Secured push delivery agent.
   - **`train_models.py`, `backtest.py`, `tune_hyperparameters.py`**: Model training, auditing, and tuning meta-agents.
-  - **`visualize_math_4h.ipynb`, `visualize_math_1w.ipynb`**: Visual overlay Jupyter Notebooks incorporating MoE reasoning blocks.
-- **`docs/`**: Documentation and System Architecture Manuals (`macro_agent_setup_v4.9.0.md`).
-- **`data/`**: Local data snapshots and caches.
+  - **`generate_visual_map.py`**: Centralized stacked portfolio visualization generator script.
+- **`docs/`**: Documentation and System Architecture Manuals (`macro_agent_setup_v5.1.0.md`).
+- **`data/`**: Local data snapshots, caches, and live telemetry outputs (`live_telemetry.json`).
 - **`data/raw/`**: The local partitioned Data Lake structured as `YYYY/MM/DD/` directories housing Parquet price tables and partitioned event logs (`events.jsonl`).
 - **`models/`**: Saved machine learning models and scaler binaries.
 - **`reports/`**: Mapped output briefings and backtest records.
@@ -28,7 +28,7 @@ Following the v4.9.0 Active-Active Failover & GARCH Bayesian OS upgrade, the pro
 
 ---
 
-## v4.9.0 Active-Active Failover & GARCH Bayesian OS
+## v5.1.0 Multi-Asset Ensemble OS & Capital Rotation
 
 The data pipeline operates as an enterprise-grade containerized event-driven OS featuring parallel LLM experts, step-by-step Chain-of-Thought (CoT) verification, and quantitative divergence protection filters:
 ```mermaid
@@ -40,18 +40,18 @@ graph TD
     classDef MoEStyle fill:#fffaf0,stroke:#feebc8,stroke-width:2px,color:#c05621;
     classDef OutputStyle fill:#f0fff4,stroke:#c6f6d5,stroke-width:2px,color:#22543d;
 
-    %% 1. Data Ingestion & Fallbacks
-    subgraph Ingestion["1. Data Ingestion & Fallbacks"]
-        YF["yfinance API"] --> YA["YahooAdapter (DataBroker)"]
+    %% 1. Data Ingestion & Timeframe Adapters
+    subgraph Ingestion["1. Multi-Timeframe Data Ingestion & Fallbacks"]
+        YF["yfinance API (Dynamic Interval)"] --> YA["YahooAdapter (fetch_yield_history)"]
         FRED["FRED API"] -->|"Optional Key"| YA
         YA -->|"Missing FRED Key Fallback"| Fallback["Yahoo proxy yields (^TNX & ^FVX)"]
         FF["Forex Factory API"] --> FA["ForexFactoryAdapter"]
-        News["RSS News Feeds"] --> GA["GeminiAdapter (LLMProvider)"]
+        News["RSS News Feeds"] --> GA["GeminiAdapter / GroqAdapter"]
     end
 
     %% 2. Processing & Conductor Phase
     subgraph Conductor["2. Event-Driven Conductor & Database Inception"]
-        Cond["fetch_market_data.py (Conductor Orchestrator)"]
+        Cond["fetch_market_data.py --interval [1d/1wk/4h/1h]"]
         Bus["EventBus (src/observability/event_bus.py)"]
         Lake["LakeManager (data_lake/)"]
         DailyPart["data/raw/YYYY/MM/DD/<br>(raw_daily_ohlcv.parquet, raw_hourly_ohlcv.parquet)"]
@@ -67,69 +67,105 @@ graph TD
         Lake -->|"Global Event Intercept"| EventLog
     end
 
-    %% 3. Quantitative Engines & Type-Safety Checkpoints
+    %% 3. Quantitative Mathematical Engines & Validation Checkpoints
     subgraph Engines["3. Quantitative Mathematical Engines & Type-Safety"]
-        FE["FeatureEngine"]
+        FE["FeatureEngine (Dynamic Rolling Window return z-scores)"]
         Schema1["Pydantic Schema: Feature Vector"]
-        HMM["HMMEngine (6-Regime GaussianHMM)"]
+        HMM["HMMEngine (Uniform Start & VIX GARCH Penalty Filter)"]
         Schema2["Pydantic Schema: RegimeState"]
-        RE["RiskEngine (Kalman & Kelly Sizing)"]
+        RE["RiskEngine (Dynamic Measurement Noise & Ensembles)"]
+        EnsembleInference["Ensemble Classifiers (MLP + RF + GB)<br>for SPX, BTC, GLD, WTI"]
+        CalibCheck{"Brier Score > 0.60?"}
+        AutoInversion["Auto-Inversion Module<br>(Flip Probability: 1-p)"]
+        ConsensusCheck["Model Consensus Scoring<br>(Standard Dev < 0.15)"]
         Schema3["Pydantic Schema: RiskState"]
         
         DailyPart --> FE
         FE -->|"Process stats, GARCH, Credit composite z"| Schema1
-        Schema1 -->|"10D Feature Vector"| HMM
-        HMM -->|"Regime probabilities"| Schema2
-        Schema2 -->|"KalmanFilter & Entropy"| RE
-        RE -->|"1.2x Kelly Sizing / 0.5x Slasher"| Schema3
+        Schema1 -->|"60D equivalent Return z-scores"| HMM
+        HMM -->|"VIX z-score GARCH Bayesian Penalty Filter"| Schema2
+        Schema2 -->|"KalmanFilter & Dynamic Measurement Noise R"| RE
+        RE --> EnsembleInference
+        EnsembleInference --> CalibCheck
+        CalibCheck -->|Yes| AutoInversion
+        CalibCheck -->|No| ConsensusCheck
+        AutoInversion --> ConsensusCheck
+        ConsensusCheck -->|"1.5x Kelly consensus boost / 0.5x penalty"| Schema3
     end
 
-    %% 4. Parallel LLM Experts (MoE)
-    subgraph MoE["4. Parallel LLM Experts & Chain-of-Thought (CoT)"]
-        ThreadPool["ThreadPoolExecutor (gemini-2.5-flash)"]
-        MacroEx["Macro Policy Expert<br>(Ingests headlines, calendar, spread)"]
-        PsychEx["Market Psychology Expert<br>(Ingests headlines, VIX, vol heat)"]
+    %% 4. Parallel LLM Experts (MoE) & Active-Active Resilient Failovers
+    subgraph MoE["4. Parallel LLM Experts & Active-Active Resilient Failovers"]
+        ThreadPool["ThreadPoolExecutor"]
+        MacroEx["Macro Policy Expert (Groq primary, Gemini Failback)"]
+        PsychEx["Market Psychology Expert (Gemini primary, Groq Failback)"]
         
         Schema3 -->|"Parallel ThreadPool execution"| ThreadPool
         ThreadPool -->|"Quant Context Ingestion"| MacroEx
         ThreadPool -->|"Quant Context Ingestion"| PsychEx
     end
 
-    %% 5. Consensus & Slasher
-    subgraph Consensus["5. Consensus Engine & Capital Defense"]
+    %% 5. Sizing Overrides & Multi-Asset Allocation
+    subgraph Consensus["5. Consensus Sizing Overrides & Multi-Asset Allocation"]
         MoECon["ConsensusEngine (engines/consensus_engine.py)"]
+        EchoCheck{"Parallel LLM Echo Chamber?<br>(Both on same provider)"}
+        EchoPenalty["Apply 0.70x News Conviction Penalty"]
         DivergeCheck{"VIX z-score > 1.5<br>& Bullish Headlines?"}
-        Flag["Set quantitative_divergence_flag = True<br>dynamically slashes Kelly by 0.5x"]
-        Normal["Neutral / Normal consensus sizing"]
+        SizingChecks{"Sizing Overrides & Circuit Breakers?"}
+        BlackSwan{"Black Swan: SPX Kelly = 0.0 (spx_ret_z < -3.5)"}
+        MacroTrend{"Macro Trend: Block Longs if below 20 EMA"}
+        RetailNoise{"Retail Filter: 0.5x Kelly if ihi < 0.0"}
+        CapitulationOverride{"Capitulation: 0.9x contrarian Kelly"}
+        MomentumOverride{"Momentum: 1.25x momentum Kelly"}
+        AssetAlloc["compute_multi_asset_kelly (Capital Rotation Engine)"]
+        Balancer["Global Portfolio Balancer (Normalize to 1.2 leverage ceiling)"]
         
         MacroEx -->|"CoT reasoning contract"| MoECon
         PsychEx -->|"CoT reasoning contract"| MoECon
-        MoECon -->|"Checks narrative-reality divergence"| DivergeCheck
-        DivergeCheck -->|YES| Flag
-        DivergeCheck -->|NO| Normal
+        MoECon --> EchoCheck
+        EchoCheck -->|Yes| EchoPenalty
+        EchoCheck -->|No| DivergeCheck
+        EchoPenalty --> DivergeCheck
+        DivergeCheck -->|"0.5x Kelly slash"| SizingChecks
+        DivergeCheck -->|Normal| SizingChecks
+        SizingChecks --> BlackSwan
+        SizingChecks --> MacroTrend
+        SizingChecks --> RetailNoise
+        SizingChecks --> CapitulationOverride
+        SizingChecks --> MomentumOverride
+        BlackSwan --> AssetAlloc
+        MacroTrend --> AssetAlloc
+        RetailNoise --> AssetAlloc
+        CapitulationOverride --> AssetAlloc
+        MomentumOverride --> AssetAlloc
+        AssetAlloc -->|"Rotate capital to alternative assets on SPX weakness"| Balancer
     end
 
-    %% 6. Snapshot & Reporting
-    subgraph Output["6. Persistent Event Logging & Delivery"]
+    %% 6. Snapshot, Reporting & Telemetry
+    subgraph Output["6. Persistent Event Logging, Presentation & Telemetry"]
         Snap["Validated Market Snapshot (market_snapshot.json)"]
-        BR["build_report.py (Consensus Compiler)"]
+        Telem["Live Telemetry File (live_telemetry.json)"]
+        VM["generate_visual_map.py"]
+        VisMap["visualize_map.png (Stacked allocation charts)"]
+        BR["build_report.py (v5.1.0 Multi-Asset Presenter)"]
         PD["push_to_discord.py"]
         Discord["Discord Channels"]
         
-        Flag -->|"Consolidate reasoning & scores"| Snap
-        Normal -->|"Consolidate reasoning & scores"| Snap
+        Balancer -->|"SPX Long & Short / BTC / GLD / WTI / Cash"| Snap
+        Balancer -->|"Live Telemetry Output"| Telem
         Snap -->|"Retrieve from events.jsonl"| BR
-        BR -->|"Renders MoE CoT block in Brutalist Markdown"| PD
+        Snap -->|"Parse backtest daily log"| VM
+        VM --> VisMap
+        BR -->|"Renders Multi-Asset allocations in Brutalist Markdown"| PD
         PD -->|"Discord Webhook"| Discord
     end
 
     %% Assign classes for beautiful HSL pastel styling
     class YF,FRED,YA,Fallback,FF,FA,News,GA IngestStyle;
     class Cond,Bus,Lake,DailyPart,EventLog ConductorStyle;
-    class FE,Schema1,HMM,Schema2,RE,Schema3 EngineStyle;
+    class FE,Schema1,HMM,Schema2,RE,EnsembleInference,CalibCheck,AutoInversion,ConsensusCheck,Schema3 EngineStyle;
     class ThreadPool,MacroEx,PsychEx MoEStyle;
-    class MoECon,DivergeCheck,Flag,Normal MoEStyle;
-    class Snap,BR,PD,Discord OutputStyle;
+    class MoECon,EchoCheck,EchoPenalty,DivergeCheck,SizingChecks,BlackSwan,MacroTrend,RetailNoise,CapitulationOverride,MomentumOverride,AssetAlloc,Balancer MoEStyle;
+    class Snap,Telem,VM,VisMap,BR,PD,Discord OutputStyle;
 ```
 
 ## Core Script Ecosystem & Ingestion Flow
@@ -257,10 +293,10 @@ To configure operational parameters, API keys, and configurations:
 
 ## 2. System Architecture & Technical Manual
 
-The agent is now structured under the **v4.9.0 Active-Active Failover & GARCH Bayesian OS**, featuring dual-provider active-active LLM failover, type-safe validations, in-memory `EventBus` pub-sub, and Docker container support.
+The agent is now structured under the **v5.1.0 Multi-Asset Ensemble OS & Capital Rotation**, featuring dual-provider active-active LLM failover, type-safe validations, in-memory `EventBus` pub-sub, and Docker container support.
 
 For a full breakdown of the mathematical engines, data ingestion layers, GARCH penalty filters, and consensus logic, please refer to the **Technical Developer Manual** located at:
-`docs/macro_agent_setup_v4.9.0.md`
+`docs/macro_agent_setup_v5.1.0.md`
 
 ---
 
@@ -342,22 +378,24 @@ The agent's deep learning components (HMM and MLP Classifier) are not static. Yo
 
 ---
 
-## 6. Interactive Mathematical Visualization (Jupyter)
+## 6. Stacked Portfolio Visualization (generate_visual_map.py)
 
-The agent includes interactive visual verification and analytics dashboards that run natively in your editor (e.g., VS Code with the Jupyter extension):
+The agent includes a centralized plotting and verification script to generate publication-grade stacked allocation charts:
 
-1. Ensure the graphing and notebook packages are installed:
+1. Ensure the graphing packages are installed:
    ```bash
-   pip3 install matplotlib seaborn jupyter
+   pip3 install matplotlib pandas
    ```
-2. Open either **`src/visualize_math_4h.ipynb`** (for 4-hour briefings) or **`src/visualize_math_1w.ipynb`** (for weekly synthesis summaries) in your IDE.
-3. Click **"Run All"** to execute the analytics cells.
-4. The notebook will automatically query your active model weights and historical data to render publication-grade plots and text layouts:
-   - **HMM Regimes Overlay:** Highlights underlying market regimes directly onto the S&P 500 price chart.
-   - **Fragility & Backwardation Heatmap:** Visualizes structural fragility states, including Volatility Term Structure backwards curves (VIX9D vs VIX).
-   - **Gemini Geopolitical Shock Visualizer:** Plots semantic shock decodes against a horizontal red line representing the critical **0.70 Geopolitical Shock Trigger** boundary.
-   - **Kelly Sizing Curves:** Plots the Fractional Kelly size allocations, calibration degradation, and transition decay paths.
-   - **Seamless Report Injection (Section 5):** The notebook automatically hunts down and embeds the most recent raw markdown report generated by your catch-up pipelines directly inside the notebook below the charts, giving you a complete top-to-bottom mathematical-to-narrative presentation.
+2. Execute the visual map generator script:
+   ```bash
+   python3 /Users/mac/agent/src/generate_visual_map.py
+   ```
+3. The script will automatically parse your latest extended backtest report (`reports/backtest_extended_results.md`) and output a high-resolution PNG chart to:
+   - **`reports/visualize_map.png`** (or interval-specific outputs like `visualize_map_4h.png`, etc.)
+4. The generated visual map renders a three-panel plot:
+   - **Macro Regime & S&P 500 Trajectory:** Plots the S&P 500 closing price overlaid with historical regime transitions.
+   - **Deep Learning Probability Calibration:** Displays the ensemble bull probabilities along the 50% threshold line.
+   - **Capital Rotation Engine (Active Allocation):** Plots a stacked area chart depicting the real-time capital rotation across S&P 500 (Long & Short), Gold (GLD), Bitcoin (BTC), Oil (WTI), and remaining Cash balances.
 
 ---
 
@@ -380,6 +418,27 @@ Whenever changes are made to the system architecture, automatically update the v
 - **Tiny change** (e.g., typo fix, formatting): Increment sub-patch version (x.x.x.1 to 9). Example: v1.3.1 -> v1.3.1.1
 
 ### Patch Notes:
+- **v5.1.0** (Multi-Asset Ensemble OS & Capital Rotation Engine):
+  - **[ADDED] Multi-Asset Ensemble ML Pipeline:** Trains distinct ensembles of three models (Multi-Layer Perceptron, Random Forest, Gradient Boosting) for S&P 500 (`spx`), Bitcoin (`btc`), Gold (`gld`), and Crude Oil (`wti`).
+  - **[ADDED] Model Consensus Scoring:** Calculates prediction agreement standard deviation across ensemble models; high consensus ($\sigma < 0.15$) dynamically scales up the target Kelly exposure by 1.5x, while low consensus scales it down by 0.5x.
+  - **[ADDED] Auto-Inversion Calibration Module:** Automatically inverts model probability output ($\text{prob} = 1.0 - \text{prob}$) if Brier Score rises above 0.60 to convert lagging overfitted performance into a contrarian hedge.
+  - **[ADDED] Sizing Overrides & Safety Circuit Breakers:**
+    - *Black Swan Circuit Breaker*: Instantly liquidates S&P 500 equity exposure (`SPX_Kelly = 0.0`) if SPX return z-score falls below `-3.5` standard deviations.
+    - *Macro Trend Override*: Blocks SPX long positions if SPX trades below its 20 EMA.
+    - *Retail Noise Filter*: Slashes SPX sizing by 50% if the market is not in a risk-off state but institutional heat is negative (`ihi < 0.0`).
+  - **[ADDED] Capital Rotation Engine:** Rotates capital (scales allocations by 1.5x) to alternative assets (Gold, Bitcoin, Oil) if S&P 500 displays weakness ($\text{spx\_prob} < 0.40$).
+  - **[ADDED] Parallel LLM Echo Chamber Detector:** Monitors parallel MoE experts and penalizes the News Conviction Score by 0.70x if both fall back to the same provider (e.g. Gemini-to-Groq).
+  - **[ADDED] Stacked Portfolio Visualizer:** Deployed `src/generate_visual_map.py` to parse backtest logs and output high-resolution stacked allocation maps (`reports/visualize_map.png`) showing real-time S&P 500, Bitcoin, Oil, Gold, and Cash rotation over time. Removed legacy Jupyter notebooks.
+- **v5.0.0** (Capitulation OS & Dual-Asset Allocation):
+  - **[ADDED] Dual-Asset Kelly Portfolio Sizing:** Replaced single-asset equity Kelly sizing with a multi-asset allocation schema distributing capital across Equities (`SPX_Kelly`), Safe Havens (`Safe_Haven_Kelly` overlays in Gold/Bonds active during crisis HMM states when SPX Kelly drops below 20%), and Cash.
+  - **[ADDED] Phase 2 Live Telemetry Engine:** Orchestrator outputs a structured payload to `data/live_telemetry.json` containing timestamp, dominant HMM regime, SPX Kelly fraction, Safe Haven fraction, Capitulation override status, and institutional heat index.
+  - **[ADDED] Dynamic Measurement Noise Covariance:** Implemented filter inflation in the Kalman filter; sudden observations spike in Risk-Off probability (`z[1] > 0.6` while prior prediction `x[1] < 0.3`) dynamically inflates measurement noise covariance matrix $R$ to `np.eye(n) * 0.25` (from `0.05`) to enforce multi-bar confirmation.
+  - **[ADDED] Capitulation & Momentum Ignition Overrides:**
+    - *Capitulation Override (Contrarian)*: Triggered when SPX returns are oversold (`spx_ret_z` between `-1.5` and `-3.0`), institutional volume support exists (`ihi > 0.0`), and MLP is bullish (`mlp_prob > 0.5`), bypassing risk-off penalties to apply a `0.9x` guarded contrarian Kelly sizer.
+    - *Momentum Ignition Override (Trend-Following)*: Triggered when SPX returns are strongly positive (`spx_ret_z > 1.0`), volume heat is positive (`ihi > 0.1`), and MLP is bullish (`mlp_prob > 0.4`), bypassing Brier penalties (`calibration_penalty = 1.0`) and applying a `1.25x` aggressive trend-following Kelly sizer.
+  - **[ADDED] Dynamic Rolling Window Return z-Scores:** Tailored lookback parameters dynamically by interval (60 daily bars for `1d`, 97 bars for `4h`, and 12 weekly bars for `1wk`) to consistently preserve a 60-day historical lookback equivalent.
+  - **[ADDED] Uniform HMM Start Probabilities:** Regularizes GaussianHMM fitting by dynamically setting start probabilities uniformly (`startprob_ = 1/N`) to prevent degenerate state traps.
+  - **[MODIFIED] Dual-Asset Presenter Refactor:** Standardized brutalist compilation layout in `src/build_report.py` and Jupyter interactive visualizers to display and chart the dual-asset portfolio weights.
 - **v4.9.0** (Active-Active Failover & GARCH Bayesian OS):
   - **[ADDED] GARCH Bayesian Updates & Penalty Filter:** Elevated SPX GARCH regimes dynamically trigger a 50% penalty on `RISK_ON_EXPANSION` and `LIQUIDITY_DRIVEN_RALLY` HMM probabilities, redistributing the mass to `NEUTRAL_TRANSITIONAL` to suppress bullish bias during volatility spikes.
   - **[ADDED] Active-Active Cross-Provider Failover:** Integrated `groq_adapter.py` utilizing Groq Llama 3 models. Structured a resilient failover flow: the Conductor dispatches Groq first for policy (failing back to Gemini) and Gemini first for psychology (failing back to Groq) to ensure 100% operational uptime.

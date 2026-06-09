@@ -5,7 +5,7 @@ from src.observability.logger import get_logger
 logger = get_logger("consensus-engine")
 
 class ConsensusEngine:
-    def synthesize(self, macro_res: Dict[str, Any], psych_res: Dict[str, Any], current_regime: str) -> NewsSignal:
+    def synthesize(self, macro_res: Dict[str, Any], psych_res: Dict[str, Any], current_regime: str, echo_chamber: bool = False) -> NewsSignal:
         try:
             hawkish_prob = macro_res.get("fed_policy_hawkishness_prob", 0.5)
             fear_greed = psych_res.get("fear_greed_sentiment_score", 0.5)
@@ -38,9 +38,14 @@ class ConsensusEngine:
                 impact_msg = "MIXED_SIGNALS"
                 conviction = (hawkish_prob + fear_greed) / 2.0
                 
+            final_conviction = conviction
+            if echo_chamber:
+                logger.info("LLM Echo Chamber detected: Applying 0.70x multiplier to News Conviction score.")
+                final_conviction *= 0.70
+                
             return NewsSignal(
                 signal=signal_type,
-                conviction=round(conviction, 3),
+                conviction=round(final_conviction, 3),
                 impact=impact_msg,
                 reasoning=combined_reasoning,
                 quantitative_divergence_flag=divergence

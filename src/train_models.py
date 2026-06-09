@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-train_models.py - v3.0.0
+train_models.py - v5.1.0
 Offline training script for HMM regime classifier and MLP Deep Classifier.
 Run quarterly. Saves trained models to data/
 """
@@ -13,11 +13,13 @@ import pandas as pd
 import joblib
 import yfinance as yf
 import requests
+import math
 from datetime import datetime, timezone, timedelta
 from hmmlearn.hmm import GaussianHMM
 from arch import arch_model
 from sklearn.preprocessing import StandardScaler
 from sklearn.neural_network import MLPClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 warnings.filterwarnings("ignore")
 logging.basicConfig(
     level=logging.INFO,
@@ -27,8 +29,6 @@ logging.basicConfig(
 TRAINING_YEARS   = 5
 N_HIDDEN_STATES  = 6
 N_ITERATIONS     = 500
-OUTPUT_PATH_HMM  = os.path.join(os.path.dirname(__file__), '..', 'models', 'hmm_model.pkl')
-OUTPUT_PATH_MLP  = os.path.join(os.path.dirname(__file__), '..', 'models', 'mlp_model.pkl')
 def get_fred_key():
     key = os.environ.get("FRED_API_KEY")
     if key:
@@ -40,12 +40,27 @@ def get_fred_key():
             if key and not key.startswith("PASTE"):
                 return key
     return None
-def fetch_training_data(years=TRAINING_YEARS):
-    logging.info(f"Fetching {years} years of training data...")
+def fetch_training_data(years=TRAINING_YEARS, interval="1d"):
     period = f"{years * 365}d"
+    if interval != "1d":
+        period = "730d" # Max allowed for intraday in Yahoo Finance
+    logging.info(f"Fetching {period} of training data with interval {interval}...")
+    
+    # Calculate dynamic rolling windows based on interval
+    macro_window = 60 # 60 days
+    short_window = 21 # 21 days (approx 1 trading month)
+    ultra_short = 10  # 10 days
+    
+    if interval.endswith("h"):
+        hours = float(interval.replace("h", "") or 1)
+        bars = 6.5 / hours
+        macro_window = int(60 * bars)
+        short_window = int(21 * bars)
+        ultra_short = int(10 * bars)
+        
     fred_key = get_fred_key()
-    tickers = ["^GSPC", "CL=F", "DX-Y.NYB", "SI=F", "USDCAD=X", "GC=F"]
-    data = yf.download(tickers, period=period, progress=False)
+    tickers = ["^GSPC", "CL=F", "DX-Y.NYB", "SI=F", "USDCAD=X", "GC=F", "BTC-USD", "^VIX"]
+    data = yf.download(tickers, period=period, interval=interval, progress=False)
     
     spx = data["Close"]["^GSPC"].dropna()
     wti = data["Close"]["CL=F"].dropna()
@@ -53,30 +68,43 @@ def fetch_training_data(years=TRAINING_YEARS):
     silver = data["Close"]["SI=F"].dropna()
     usdcad = data["Close"]["USDCAD=X"].dropna()
     gold = data["Close"]["GC=F"].dropna()
+    vix = data["Close"]["^VIX"].dropna()
     
     spx_vol = data["Volume"]["^GSPC"].dropna()
     spx_high = data["High"]["^GSPC"].dropna()
     spx_low = data["Low"]["^GSPC"].dropna()
 
-    for s in [spx, wti, dxy, silver, usdcad, gold, spx_vol, spx_high, spx_low]:
-        s.index = pd.to_datetime(s.index).tz_localize(None).normalize()
+    for idx, s in enumerate([spx, wti, dxy, silver, usdcad, gold, vix, spx_vol, spx_high, spx_low]):
+        s.index = pd.to_datetime(s.index).tz_localize(None)
+        if interval == "1d":
+            s.index = s.index.normalize()
+        s = s[~s.index.duplicated(keep='last')]
+        if idx == 0: spx = s
+        elif idx == 1: wti = s
+        elif idx == 2: dxy = s
+        elif idx == 3: silver = s
+        elif idx == 4: usdcad = s
+        elif idx == 5: gold = s
+        elif idx == 6: vix = s
+        elif idx == 7: spx_vol = s
+        elif idx == 8: spx_high = s
+        elif idx == 9: spx_low = s
 
     spx_ret = spx.pct_change() * 100
     wti_ret = wti.pct_change() * 100
     dxy_ret = dxy.pct_change() * 100
     gsr_ret = (gold / silver).pct_change() * 100
     usdcad_ret = usdcad.pct_change() * 100
-    logging.info("Fitting GARCH on SPX for training volatility series...")
-    try:
-        garch_model = arch_model(
-            spx_ret.dropna(), vol="Garch", p=1, q=1,
-            mean="Zero", rescale=False
-        )
-        garch_fit = garch_model.fit(disp="off", show_warning=False)
-        spx_garch_vol = garch_fit.conditional_volatility
-    except Exception as e:
-        logging.warning(f"GARCH training failed, using rolling std: {e}")
-        spx_garch_vol = spx_ret.rolling(21).std()
+    btc = data["Close"]["BTC-USD"].dropna()
+    btc.index = pd.to_datetime(btc.index).tz_localize(None)
+    if interval == "1d":
+        btc.index = btc.index.normalize()
+    btc = btc[~btc.index.duplicated(keep='last')]
+    btc_ret = btc.pct_change() * 100
+    btc_vol = btc_ret.rolling(short_window).std()
+    
+    # We remove GARCH calculation to avoid missing/drift, use raw VIX
+    
     us2y_series = None
     us10y_series = None
     if fred_key:
@@ -104,19 +132,24 @@ def fetch_training_data(years=TRAINING_YEARS):
                 logging.warning(f"FRED {series_id} fetch failed: {e}")
     df = pd.DataFrame({
         "spx_ret":       spx_ret,
-        "wti_ret":       wti_ret,
-        "dxy_ret":       dxy_ret,
-        "spx_garch_vol": spx_garch_vol,
-        "gsr_ret":       gsr_ret,
-        "usdcad_ret":    usdcad_ret,
+        "btc_ret":       btc_ret.reindex(spx_ret.index, method="ffill"),
+        "gld_ret":       gold.pct_change().reindex(spx_ret.index, method="ffill") * 100,
+        "wti_ret":       wti_ret.reindex(spx_ret.index, method="ffill"),
+        "dxy_ret":       dxy_ret.reindex(spx_ret.index, method="ffill"),
+        "vix":           vix.reindex(spx_ret.index, method="ffill"),
+        "gsr_ret":       gsr_ret.reindex(spx_ret.index, method="ffill"),
+        "usdcad_ret":    usdcad_ret.reindex(spx_ret.index, method="ffill"),
         "Volume":        spx_vol,
         "High":          spx_high,
         "Low":           spx_low,
         "Close":         spx
     })
     df.index = pd.to_datetime(df.index).tz_localize(None)
-    # Keyless Credit ETF historical proxy
-    df["crypto_mfi_z"] = df["spx_ret"].rolling(10).std() * 0.1
+    # Bitcoin Volatility Z-Score (replaces crypto_mfi_z)
+    df["btc_vol_z"] = df["btc_ret"].rolling(short_window).std().apply(lambda x: (x - x) if pd.isna(x) else x) # We will z-score it next
+    btc_vol_mean = df["btc_vol_z"].rolling(macro_window).mean()
+    btc_vol_std = df["btc_vol_z"].rolling(macro_window).std()
+    df["btc_vol_z"] = ((df["btc_vol_z"] - btc_vol_mean) / btc_vol_std.replace(0, np.nan)).fillna(0)
     if us10y_series is not None:
         us10y_delta = us10y_series.diff()
         df["us10y_delta"] = us10y_delta.reindex(df.index, method="ffill")
@@ -129,12 +162,14 @@ def fetch_training_data(years=TRAINING_YEARS):
     else:
         df["spread_delta"] = 0.0
         df["spread_level"] = 0.0
-    # Implied volatility index historical proxy
-    df["vix_zscore"] = df["spx_garch_vol"].rolling(21).apply(lambda x: (x[-1] - x.mean())/x.std() if x.std() > 0 else 0)
+    # VIX Z-Score (Actual VIX index)
+    vix_mean = df["vix"].rolling(macro_window).mean()
+    vix_std = df["vix"].rolling(macro_window).std()
+    df["vix_zscore"] = ((df["vix"] - vix_mean) / vix_std.replace(0, np.nan)).fillna(0)
     
     # Calculate Institutional Heat Index (Continuous)
-    vol_sma20 = df["Volume"].rolling(20).mean()
-    vol_std20 = df["Volume"].rolling(20).std()
+    vol_sma20 = df["Volume"].rolling(short_window).mean()
+    vol_std20 = df["Volume"].rolling(short_window).std()
     effort_z = (df["Volume"] - vol_sma20) / vol_std20
     range_size = df["High"] - df["Low"]
     result_vector = ((df["Close"] - df["Low"]) / range_size.replace(0, 0.0001)) - 0.5
@@ -146,27 +181,41 @@ def fetch_training_data(years=TRAINING_YEARS):
     df = df.dropna()
     logging.info(f"Training data shape: {df.shape}")
     return df
-def label_states_by_emission(hmm_model, feature_names):
+def label_states_by_emission(hmm_model, feature_names, interval="1d"):
     means = hmm_model.means_
     state_labels = {}
     spx_idx = feature_names.index("spx_ret")
     us10y_idx = feature_names.index("us10y_delta")
     wti_idx = feature_names.index("wti_ret")
+    
+    # Scale return thresholds for intraday (smaller average moves per bar)
+    scale_factor = 1.0
+    if interval.endswith("h"):
+        hours = float(interval.replace("h", "") or 1)
+        scale_factor = math.sqrt(hours / 6.5) # Volatility scales with square root of time
+        
+    spx_thresh_up = 0.05 * scale_factor
+    spx_thresh_dn = -0.05 * scale_factor
+    wti_thresh_up = 0.1 * scale_factor
+    wti_thresh_dn = -0.1 * scale_factor
+    
     assigned = set()
     for state_id in range(len(means)):
         spx_m  = means[state_id][spx_idx]
         us10y_m = means[state_id][us10y_idx]
         wti_m  = means[state_id][wti_idx]
-        if spx_m > 0.3 and us10y_m > 0.01:
+        if spx_m > spx_thresh_up and us10y_m > 0.002 * scale_factor:
             label = "RISK_ON_EXPANSION"
-        elif spx_m > 0.3 and us10y_m < -0.01:
+        elif spx_m > spx_thresh_up and us10y_m < -0.002 * scale_factor:
             label = "LIQUIDITY_DRIVEN_RALLY"
-        elif spx_m < -0.2 and wti_m > 0.5:
+        elif spx_m < spx_thresh_dn and wti_m > wti_thresh_up:
             label = "STAGFLATION_STRESS"
-        elif spx_m < -0.2 and us10y_m > 0.02:
+        elif spx_m < spx_thresh_dn and us10y_m > 0.005 * scale_factor:
             label = "RATE_SHOCK"
-        elif spx_m < -0.2 and wti_m < -0.3:
+        elif spx_m < spx_thresh_dn and wti_m < wti_thresh_dn:
             label = "DEFLATION_FEAR"
+        elif spx_m < spx_thresh_dn:
+            label = "CRISIS_DISLOCATION" # Catch-all for heavy negative drift
         else:
             label = "NEUTRAL_TRANSITIONAL"
         if label in assigned:
@@ -174,13 +223,23 @@ def label_states_by_emission(hmm_model, feature_names):
         assigned.add(label)
         state_labels[state_id] = label
     return state_labels
-def train_mlp_classifier(df, feature_names, output_path):
-    logging.info("Training MLP Deep Classifier...")
+def train_ensemble_classifier(df, feature_names, output_path, interval="1d", target_col="spx_ret", threshold=1.5):
+    logging.info(f"Training Ensemble Classifiers for {target_col}...")
     X = df[feature_names].values
     
-    # Target labeling: 0=Risk-Off (SPX drop), 1=Risk-On (SPX rally), 2=Transitional
-    forward_spx_5d = df["spx_ret"].shift(-5).rolling(5).sum().fillna(0)
-    y = np.where(forward_spx_5d > 1.5, 1, np.where(forward_spx_5d < -1.5, 0, 2))
+    # Target labeling: always 5 periods to match backtester logic
+    fwd_periods = 5
+    
+    # Scale threshold down for intraday or up for weekly
+    if interval == "1wk":
+        threshold *= 2.0
+    elif interval == "4h":
+        threshold *= 0.4
+    elif interval == "1h":
+        threshold *= 0.2
+        
+    forward_5d = df[target_col].shift(-fwd_periods).rolling(fwd_periods).sum().fillna(0)
+    y = np.where(forward_5d > threshold, 1, np.where(forward_5d < -threshold, 0, 2))
     
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
@@ -196,21 +255,41 @@ def train_mlp_classifier(df, feature_names, output_path):
     )
     mlp.fit(X_scaled, y)
     
+    # Random Forest: Robust against overfitting
+    rf = RandomForestClassifier(
+        n_estimators=100,
+        max_depth=5,
+        min_samples_leaf=5,
+        random_state=42
+    )
+    rf.fit(X_scaled, y)
+    
+    # Gradient Boosting: Sequential feature dominance
+    gb = GradientBoostingClassifier(
+        n_estimators=100,
+        learning_rate=0.05,
+        max_depth=3,
+        random_state=42
+    )
+    gb.fit(X_scaled, y)
+    
     mlp_package = {
-        "model": mlp,
+        "model_mlp": mlp,
+        "model_rf": rf,
+        "model_gb": gb,
         "scaler": scaler,
         "feature_names": feature_names,
         "trained_at": datetime.now(timezone.utc).isoformat()
     }
     joblib.dump(mlp_package, output_path)
-    logging.info(f"MLP Deep Classifier saved successfully to {output_path}")
-def train_hmm():
-    df = fetch_training_data()
+    logging.info(f"Ensemble Classifiers saved successfully to {output_path}")
+def train_hmm(interval="1d"):
+    df = fetch_training_data(interval=interval)
     
     # Aligned 10 features schema
     feature_names = [
         "spx_ret", "dxy_ret", "vix_zscore", "Inst_Heat_Index", "wti_ret", 
-        "gsr_ret", "us10y_delta", "spread_level", "crypto_mfi_z", "usdcad_ret"
+        "gsr_ret", "us10y_delta", "spread_level", "btc_vol_z", "usdcad_ret"
     ]
     
     X = df[feature_names].values
@@ -226,9 +305,11 @@ def train_hmm():
         verbose=False,
     )
     hmm.fit(X_scaled)
-    state_labels = label_states_by_emission(hmm, feature_names)
+    state_labels = label_states_by_emission(hmm, feature_names, interval=interval)
     logging.info(f"State labels assigned: {state_labels}")
-    os.makedirs(os.path.dirname(OUTPUT_PATH_HMM), exist_ok=True)
+    output_hmm = os.path.join(os.path.dirname(__file__), '..', 'models', f'hmm_model_{interval}.pkl' if interval != "1d" else 'hmm_model.pkl')
+    output_mlp = os.path.join(os.path.dirname(__file__), '..', 'models', f'mlp_model_{interval}.pkl' if interval != "1d" else 'mlp_model.pkl')
+    os.makedirs(os.path.dirname(output_hmm), exist_ok=True)
     model_package = {
         "hmm":           hmm,
         "scaler":        scaler,
@@ -237,12 +318,25 @@ def train_hmm():
         "trained_at":    datetime.now(timezone.utc).isoformat(),
         "n_observations": len(X),
     }
-    joblib.dump(model_package, OUTPUT_PATH_HMM)
-    logging.info(f"HMM Model saved to {OUTPUT_PATH_HMM}")
-    # Train supervised MLP classifier in parallel
-    train_mlp_classifier(df, feature_names, OUTPUT_PATH_MLP)
+    joblib.dump(model_package, output_hmm)
+    logging.info(f"HMM Model saved to {output_hmm}")
+    # Target Assets for Multi-Model ML Pipeline
+    assets = [
+        {"name": "spx", "col": "spx_ret", "threshold": 0.5},
+        {"name": "btc", "col": "btc_ret", "threshold": 3.0},
+        {"name": "gld", "col": "gld_ret", "threshold": 1.0},
+        {"name": "wti", "col": "wti_ret", "threshold": 2.5}
+    ]
     
-    print("[OK] Both HMM and Deep MLP classifiers trained successfully!")
+    for asset in assets:
+        output_mlp_asset = os.path.join(os.path.dirname(__file__), '..', 'models', f'mlp_model_{asset["name"]}_{interval}.pkl' if interval != "1d" else f'mlp_model_{asset["name"]}.pkl')
+        train_ensemble_classifier(df, feature_names, output_mlp_asset, interval=interval, target_col=asset["col"], threshold=asset["threshold"])
+        
+    logging.info("All Ensemble models trained successfully!")
     return model_package
 if __name__ == "__main__":
-    train_hmm()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--interval", type=str, default="1d", help="Data interval (e.g., 1d, 4h)")
+    args = parser.parse_args()
+    train_hmm(interval=args.interval)
