@@ -1,12 +1,12 @@
-# Macro Briefing Agent v5.2.0: Paper Trading & 14-Feature Space Manual
+# Macro Briefing Agent v5.3.0: Paper Trading & 14-Feature Space Manual
 
-This manual details the upgrades in **v5.2.0 (Multi-Asset Ensemble OS with Paper Trading & 14-Feature Space)**, introducing paper trading simulations, a 14-dimensional feature space, sub-directory data organization, hourly briefing pipelines, and excel/chart performance dashboards.
+This manual details the upgrades in **v5.3.0 (Single LLM & Multi-Asset Ensemble OS)**, building upon the v5.2.0 upgrades (paper trading simulations, a 14-dimensional feature space, sub-directory data organization, hourly briefing pipelines, and excel/chart performance dashboards).
 
 ---
 
 ## 1. Modular Pipeline & Directory Layout Reorganization
 
-Following the v5.2.0 upgrades, the system data files are organized into dedicated subdirectories to secure active state matrices and execution logs:
+Following the v5.3.0 upgrades, the system data files are organized into dedicated subdirectories to secure active state matrices and execution logs:
 
 * **`data/state/`**: Holds validations snapshots and priors (`market_snapshot.json`, `market_snapshot_prior.json`).
 * **`data/predictions/`**: Holds forecasts history calibration logs (`mlp_predictions_history_{interval}.json`).

@@ -1,14 +1,14 @@
-# Macro Briefing Agent Setup Guide (v5.2.0)
+# Macro Briefing Agent Setup Guide (v5.3.0)
 
-Welcome to the **Macro Briefing Agent (v5.2.0)**—a 24/7 autonomous containerized **Multi-Asset Ensemble OS with Paper Trading & 14-Feature Space** and execution pipeline. This project decouples data ingestion, economic calendars, parallel LLM experts, consensus synthesis, and pub-sub event dispatching into an enterprise-grade framework.
+Welcome to the **Macro Briefing Agent (v5.3.0)**—a 24/7 autonomous containerized **Single LLM & Multi-Asset Ensemble OS with Paper Trading & 14-Feature Space** and execution pipeline. This project decouples data ingestion, economic calendars, LLM synthesis, consensus scaling, and pub-sub event dispatching into an enterprise-grade framework.
 
 
 ## Project Structure Overview
-Following the v5.2.0 Multi-Asset Ensemble OS with Paper Trading & 14-Feature Space upgrade, the project is organized into a highly decoupled, professional modular pipeline:
+Following the v5.3.0 Single LLM & Multi-Asset Ensemble OS upgrade, the project is organized into a highly decoupled, professional modular pipeline:
 - **`config/`**: Contains your API keys and webhook configurations (`fred_api_key.txt`, `webhook_config.txt`, `api_keys.json`, `tuning_configs.json`, etc.).
 - **`src/`**: Houses the core Python code organized as modular packages:
   - **`interfaces/`**: Standardized OOP interfaces (`data_broker.py`, `llm_provider.py`) defining loose-coupling contracts.
-  - **`adapters/`**: Physical retrieval clients (`yahoo_adapter.py` for dynamic interval and yield history, `gemini_adapter.py` / `groq_adapter.py` for active-active failover MoE parallel Experts, `forexfactory_adapter.py` for economic calendars, `paper_broker.py` for simulated execution rebalancing) implementing interface layers.
+  - **`adapters/`**: Physical retrieval clients (`yahoo_adapter.py` for dynamic interval and yield history, `gemini_adapter.py` for LLM analysis, `forexfactory_adapter.py` for economic calendars, `paper_broker.py` for simulated execution rebalancing) implementing interface layers.
   - **`data_lake/`**: Database partition manager (`lake_manager.py`) handling daily-partitioned Parquet/JSONL.
   - **`engines/`**: Specialized engines (`feature_engine.py` for dynamic stats, return percentages and yield shifts, `hmm_engine.py` for regime and GARCH penalty filters, `risk_engine.py` for covariance noise, Kelly overrides & multi-asset allocations, `consensus_engine.py` for signal mapping).
   - **`observability/`**: Standardized context logging (`logger.py`) and pub-sub event dispatching (`event_bus.py`).
@@ -34,7 +34,7 @@ Following the v5.2.0 Multi-Asset Ensemble OS with Paper Trading & 14-Feature Spa
 
 ---
 
-## v5.2.0 Multi-Asset Ensemble OS with Paper Trading & 14-Feature Space
+## v5.3.0 Single LLM & Multi-Asset Ensemble OS
 
 The data pipeline operates as an enterprise-grade containerized event-driven OS featuring parallel LLM experts, step-by-step Chain-of-Thought (CoT) verification, and quantitative divergence protection filters:
 ```mermaid
@@ -52,7 +52,7 @@ graph TD
         FRED["FRED API"] -->|"Optional Key"| YA
         YA -->|"Missing FRED Key Fallback"| Fallback["Yahoo proxy yields (^TNX & ^FVX)"]
         FF["Forex Factory API"] --> FA["ForexFactoryAdapter"]
-        News["RSS News Feeds"] --> GA["GeminiAdapter / GroqAdapter"]
+        News["RSS News Feeds"] --> GA["GeminiAdapter"]
     end
 
     %% 2. Processing & Conductor Phase
@@ -99,22 +99,18 @@ graph TD
         ConsensusCheck -->|"1.5x Kelly consensus boost / 0.5x penalty"| Schema3
     end
 
-    %% 4. Parallel LLM Experts (MoE) & Active-Active Resilient Failovers
-    subgraph MoE["4. Parallel LLM Experts & Active-Active Resilient Failovers"]
+    %% 4. Single LLM Expert
+    subgraph LLM["4. Single LLM Expert"]
         ThreadPool["ThreadPoolExecutor"]
-        MacroEx["Macro Policy Expert (Groq primary, Gemini Failback)"]
-        PsychEx["Market Psychology Expert (Gemini primary, Groq Failback)"]
+        MacroEx["Gemini Macro Expert"]
         
         Schema3 -->|"Parallel ThreadPool execution"| ThreadPool
         ThreadPool -->|"Quant Context Ingestion"| MacroEx
-        ThreadPool -->|"Quant Context Ingestion"| PsychEx
     end
 
     %% 5. Sizing Overrides & Multi-Asset Allocation
     subgraph Consensus["5. Consensus Sizing Overrides & Multi-Asset Allocation"]
-        MoECon["ConsensusEngine (engines/consensus_engine.py)"]
-        EchoCheck{"Parallel LLM Echo Chamber?<br>(Both on same provider)"}
-        EchoPenalty["Apply 0.70x News Conviction Penalty"]
+        ConsensusEng["ConsensusEngine (engines/consensus_engine.py)"]
         DivergeCheck{"VIX z-score > 1.5<br>& Bullish Headlines?"}
         DivergeSlash["Apply 0.5x Divergence Slash"]
         
@@ -123,12 +119,8 @@ graph TD
         AssetAlloc["compute_multi_asset_kelly (Capital Rotation Engine:<br>Rotates to alternative assets Gold/BTC/WTI on SPX weakness)"]
         Balancer["Global Portfolio Balancer (Normalize to 1.2 leverage ceiling)"]
         
-        MacroEx -->|"CoT reasoning contract"| MoECon
-        PsychEx -->|"CoT reasoning contract"| MoECon
-        MoECon --> EchoCheck
-        EchoCheck -->|Yes| EchoPenalty
-        EchoCheck -->|No| DivergeCheck
-        EchoPenalty --> DivergeCheck
+        MacroEx -->|"CoT reasoning contract"| ConsensusEng
+        ConsensusEng --> DivergeCheck
         DivergeCheck -->|Yes| DivergeSlash
         DivergeCheck -->|No| Overrides
         DivergeSlash --> Overrides
@@ -167,8 +159,8 @@ graph TD
     class YF,FRED,YA,Fallback,FF,FA,News,GA IngestStyle;
     class Cond,Bus,Lake,DailyPart,EventLog ConductorStyle;
     class FE,Schema1,HMM,Schema2,RE,EnsembleInference,CalibCheck,AutoInversion,ConsensusCheck,Schema3 EngineStyle;
-    class ThreadPool,MacroEx,PsychEx MoEStyle;
-    class MoECon,EchoCheck,EchoPenalty,DivergeCheck,DivergeSlash,Overrides,AssetAlloc,Balancer MoEStyle;
+    class ThreadPool,MacroEx MoEStyle;
+    class ConsensusEng,DivergeCheck,DivergeSlash,Overrides,AssetAlloc,Balancer MoEStyle;
     class Snap,Telem,PB,Ledger,VPT,ExcelDash,VM,VisMap,BR,PD,Discord OutputStyle;
 ```
 
@@ -195,7 +187,7 @@ The Python architecture is structured as a modular quantitative pipeline. Below 
    - **Resilient Log Fetching:** Scans the data lake partitions, finds the latest `events.jsonl` log file, extracts the `PipelineComplete` event payload, and validates it against the `MarketSnapshot` Pydantic model.
    - **Deterministic Voting:** Aggregates quantitative indicators and computes conviction-weighted votes.
    - **Epistemic Kelly Sizing:** Solves target portfolio exposure sizing calibrated by Brier scores and regime decays. Applies a **1.2x aggressive multiplier** (up to 120% exposure) during liquidity-driven rallies, a **0.5x slasher** during rate shocks, and a **0.5x capital slasher** during quantitative narrative-reality divergences.
-   - **Presentation:** Formats the mathematical state matrices, `Quant Divergence` status, and step-by-step `[ MoE REASONING ]` CoT logical synthesis blocks into the minimalist Brutalist Markdown template, and triggers the Discord webhook pusher.
+   - **Presentation:** Formats the mathematical state matrices, `Quant Divergence` status, and step-by-step `[ LLM REASONING ]` CoT logical synthesis blocks into the minimalist Brutalist Markdown template, and triggers the Discord webhook pusher.
 
 3. **`build_weekly_synthesis.py` (Weekly Macro Research Synthesizer)**
    - **Narrative Assembly:** Executed weekly to build a comprehensive summary.
@@ -231,7 +223,7 @@ The Python architecture is structured as a modular quantitative pipeline. Below 
    - **Fragility & Backwardation Heatmap:** Visualizes structural fragility states, including Volatility Term Structure backwards curves (VIX9D vs VIX).
    - **Gemini Geopolitical Shock Visualizer:** Plots semantic shock decodes against a horizontal red line representing the critical **0.70 Geopolitical Shock Trigger** boundary.
    - **Kelly Sizing Curves:** Plots real-time allocation transitions and duration half-life decay patterns natively within VS Code.
-   - **MoE CoT Reasoning cell (Section 5):** Automatically extracts and displays the `Quant Divergence` status and `[ MoE REASONING ]` Chain-of-Thought logical synthesis natively inside VS Code below the mathematical charts.
+   - **LLM CoT Reasoning cell (Section 5):** Automatically extracts and displays the `Quant Divergence` status and `[ LLM REASONING ]` Chain-of-Thought logical synthesis natively inside VS Code below the mathematical charts.
 
 ## Data Privacy & Security Architecture
 
@@ -302,10 +294,10 @@ To configure operational parameters, API keys, and configurations:
 
 ## 2. System Architecture & Technical Manual
 
-The agent is now structured under the **v5.2.0 Multi-Asset Ensemble OS with Paper Trading & 14-Feature Space**, featuring dual-provider active-active LLM failover, type-safe validations, in-memory `EventBus` pub-sub, paper broker engines, and Docker container support.
+The agent is now structured under the **v5.3.0 Single LLM & Multi-Asset Ensemble OS**, featuring centralized LLM synthesis, type-safe validations, in-memory `EventBus` pub-sub, paper broker engines, and Docker container support.
 
 For a full breakdown of the mathematical engines, data ingestion layers, GARCH penalty filters, consensus logic, and paper trading ledgers, please refer to the **Technical Developer Manual** located at:
-`docs/macro_agent_setup_v5.2.0.md`
+`docs/macro_agent_setup_v5.3.0.md`
 
 ---
 
@@ -439,7 +431,9 @@ Whenever changes are made to the system architecture, automatically update the v
 - **Small change** (e.g., prompt tweak, new section): Increment patch version (x.x.1 to 9). Example: v1.3.1 -> v1.3.2
 - **Tiny change** (e.g., typo fix, formatting): Increment sub-patch version (x.x.x.1 to 9). Example: v1.3.1 -> v1.3.1.1
 
-### Patch Notes:
+- **v5.3.0** (Single LLM Architecture Consolidation):
+  - **[REMOVED] Groq Adapter & Mixture of Experts (MoE):** Simplified the cognitive architecture by deprecating the dual-provider MoE setup. Removed the `GroqAdapter` and consolidated logical synthesis entirely within the `GeminiAdapter`.
+  - **[REMOVED] Echo Chamber Detector:** Removed the parallel LLM echo chamber penalty (0.70x conviction slash) as the pipeline now relies on a centralized Google Gemini Flash reasoning engine.
 - **v5.2.0** (Paper Trading & 14-Feature Space):
   - **[ADDED] Paper Trading Simulation Engine:** Deployed a simulated `PaperBroker` (`src/adapters/paper_broker.py`) executing rebalancing operations for Kelly allocation targets (SPX and Gold), applying 5 bps (0.05%) execution slippage, enforcing trade size thresholds, and logging chronological trades in `data/paper_trading/paper_ledger.csv`.
   - **[ADDED] 14-Feature Input Space:** Expanded model input vectors from 10 to 14 dimensions, introducing daily/hourly returns of index futures (`ES=F`, `NQ=F`, `YM=F`, `RTY=F`) and Bitcoin returns, while replacing z-score normalizations with raw returns where appropriate.

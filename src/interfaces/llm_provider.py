@@ -7,15 +7,8 @@ class LLMProvider(ABC):
     """
     
     @abstractmethod
-    def run_macro_policy_expert(self, headlines: List[str], calendar_events: List[Any], spread_2s10s: float) -> Dict[str, Any]:
+    def run_llm_macro(self, headlines: List[str], calendar_events: List[Any], spread_2s10s: float, vix_zscore: float, volume_heat: float) -> Dict[str, Any]:
         """
-        Runs the Macro Policy Expert LLM pipeline.
-        """
-        pass
-
-    @abstractmethod
-    def run_market_psychology_expert(self, headlines: List[str], vix_zscore: float, volume_heat: float) -> Dict[str, Any]:
-        """
-        Runs the Market Psychology Expert LLM pipeline.
+        Runs the combined LLM Macro pipeline for policy and psychology.
         """
         pass

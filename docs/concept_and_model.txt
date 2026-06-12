@@ -5,13 +5,12 @@ MACRO ANALYST AGENT - CONCEPT AND MODEL
 This is a 24/7 autonomous quantitative agent that monitors global markets, processes data through deep learning classifiers, and generates institutional-grade macro reports. It runs completely automatically in the background using your computer's scheduler or inside isolated Docker microservices. The presentation layer uses an ultra-minimal "Brutalist Terminal" text-block layout to ensure a data-dense, cross-platform reading experience designed for instant mobile parsing.
 
 2. THE MULTI-ASSET ENSEMBLE OS WITH PAPER TRADING & 14-FEATURE SPACE (v5.2.0 Evolution)
-Following the v5.2.0 upgrades, the agent operates as a containerized, event-driven Mixture of Experts (MoE) & Multi-Asset Ensemble OS. The architecture incorporates several critical structural and mathematical upgrades:
+Following the v5.2.0 upgrades, the agent operates as a containerized, event-driven Single LLM & Multi-Asset Ensemble OS. The architecture incorporates several critical structural and mathematical upgrades:
 
 - Event-Driven Pub-Sub Architecture: Standardizes pipeline execution via an in-memory `EventBus` (`src/observability/event_bus.py`). Triggers sequential, decoupled callbacks across five lifecycle phases.
 - Pydantic Validation Schemas: Enforces strict type-safety and structural data contracts utilizing Pydantic models (`src/schemas/models.py`) such as `MarketSnapshot` to eliminate data schema breaks.
 - High-Impact Economic Calendaring: The calendar adapter (`ForexFactoryAdapter` under `src/adapters/forexfactory_adapter.py`) fetches weekly high-impact events for USD, EUR, and JPY currencies, parsing them into `EconomicCalendar` structures.
-- Active-Resilient MoE Cognitive Layer: Integrates a dual-provider active-active LLM framework utilizing Google Gemini (`gemini-2.5-flash`) and Groq (`Llama 3`) models running in parallel.
-- Parallel LLM Echo Chamber Detector: Detects if both parallel MoE experts (Policy and Psychology) run on the same LLM provider due to rate-limit failovers. Applies a 0.70x penalty to the News Conviction Score to mitigate correlated narrative bias.
+- Centralized Cognitive Layer: Integrates a single LLM framework utilizing Google Gemini (`gemini-2.5-flash`) to evaluate macro policy and market psychology.
 - Dynamic Rolling Statistical Windows by Interval: Statistical z-score calculations in `feature_engine.py` adapt dynamically to the operational interval. It calculates bars dynamically to keep the lookback baseline at exactly **3 macro months (60 trading days equivalent)** across daily (`60` daily bars), hourly (e.g. `97` hourly bars for 4h), and weekly (`12` weekly bars) timeframes.
 - Return-Based percentage changes: Statistical feature tracking is computed as raw percentage change returns in place of z-score anomaly standardizations where applicable to optimize scale-invariant correlation matching.
 - Treasury Yield & Spread levels: Ingests 10-year US Treasury yield change deltas (`us10y_delta`) and raw 2s10s yield spreads (`spread_level` spread_2s10s) in place of yield return z-scores.
@@ -43,19 +42,18 @@ Following the v5.2.0 upgrades, the agent operates as a containerized, event-driv
 - Stage 2: `DataFetched` Event: Ingests global index prices, commodities, and yields. If the FRED key is missing, dynamically fetches yfinance bond proxies. Conductor invokes `LakeManager` to save raw Parquet dataframes.
 - Stage 3: `FeaturesEngineered` Event: FeatureEngine processes stats, GARCH conditional volatility, volume heat, Gold-to-Silver ratio, and composite Credit Stress z-scores.
 - Stage 4: `EnginesCompleted` Event: HMMEngine runs inference to map regime probabilities. RiskEngine computes updated Kalman states (validated as `KalmanState`) and Shannon Entropy indices. 
-- Stage 5: `PipelineComplete` Event: Executes the dual LLM experts (Macro Policy and Market Psychology) in parallel using a ThreadPoolExecutor. The ConsensusEngine synthesizes their outputs, validates the merged CoT reasoning, checks quantitative divergence, and compiles the final `NewsSignal`.
+- Stage 5: `PipelineComplete` Event: Executes the unified LLM expert using a ThreadPoolExecutor. The ConsensusEngine synthesizes the output, validates the CoT reasoning, checks quantitative divergence, and compiles the final `NewsSignal`.
 - Sizing Multiplier & Lake Logging: Applies aggressive Kelly multipliers (up to 1.2x exposure during expansion, and 0.5x slashes during rate shocks or quantitative divergences). The final snapshot is validated as a Pydantic `MarketSnapshot` and written to a daily partitioned event log: `data/raw/YYYY/MM/DD/events.jsonl` via the interceptor.
-- Presentation & Delivery: Report compilers (`src/build_report.py`, etc.) pull the snapshot directly from the daily partitioned event log and push brutalist briefings with MoE reasoning to Discord.
+- Presentation & Delivery: Report compilers (`src/build_report.py`, etc.) pull the snapshot directly from the daily partitioned event log and push brutalist briefings with LLM reasoning to Discord.
 
 4. THE MATH & MODELS BEHIND THE SCENES
 - Macro Condition Score (MCS): A composite number measuring overall market stress based on stock momentum, interest rates, energy prices, and cross-asset behavior (FeatureEngine).
 - Hidden Markov Models (HMM) & Kalman Filters: These algorithms smooth out daily noise to figure out the "true" underlying regime (HMMEngine & RiskEngine).
 - Deep Classifier (MLP): A trained neural network that double-checks the HMM. 
 - Institutional Footprinting: Natively supports advanced institutional footprinting, including a 20-day continuous Institutional Heat Index (IHI).
-- Multimodal MoE LLM Synthesis (Groq Llama 3 & Google Gemini Flash Engines): 
-  Synthesizes live unstructured news feeds with hard quantitative indicators utilizing a dual-provider active-active structure:
-  * Parameter Decoding: Macro and Psychology experts parse text and quant data to output strict JSON starting with exactly 3 sentences of step-by-step Chain-of-Thought (CoT) reasoning.
-  * Resilient Failover & Failback: The Macro Policy Expert runs Groq as primary, failing over automatically to Gemini on error. The Market Psychology Expert runs Gemini as primary, failing over automatically to Groq on error.
+- Multimodal LLM Synthesis (Google Gemini Flash Engine): 
+  Synthesizes live unstructured news feeds with hard quantitative indicators utilizing a single centralized LLM structure:
+  * Parameter Decoding: The LLM parses text and quant data to output strict JSON starting with exactly 3 sentences of step-by-step Chain-of-Thought (CoT) reasoning.
   * API Call Resilience: Protects inference processes with a 10-attempt dynamic backoff loop that intercepts HTTP 429 and 503 errors and steps up sleep times by 10s per iteration to secure robust execution.
 - Hyperparameter Tuning Meta-Agent (tune_hyperparameters.py):
   * Dynamic Parameter Tuning: A standalone meta-agent scheduled to run weekly. It feeds massive macroeconomic text blocks (such as FOMC meeting minutes or Beige Books) to the Gemini LLM.

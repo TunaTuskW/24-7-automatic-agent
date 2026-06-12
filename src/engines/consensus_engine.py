@@ -5,15 +5,13 @@ from src.observability.logger import get_logger
 logger = get_logger("consensus-engine")
 
 class ConsensusEngine:
-    def synthesize(self, macro_res: Dict[str, Any], psych_res: Dict[str, Any], current_regime: str, echo_chamber: bool = False) -> NewsSignal:
+    def synthesize(self, llm_res: Dict[str, Any], current_regime: str) -> NewsSignal:
         try:
-            hawkish_prob = macro_res.get("fed_policy_hawkishness_prob", 0.5)
-            fear_greed = psych_res.get("fear_greed_sentiment_score", 0.5)
-            divergence = psych_res.get("quantitative_divergence_flag", False)
+            hawkish_prob = llm_res.get("fed_policy_hawkishness_prob", 0.5)
+            fear_greed = llm_res.get("fear_greed_sentiment_score", 0.5)
+            divergence = llm_res.get("quantitative_divergence_flag", False)
             
-            macro_reasoning = macro_res.get("reasoning", "")
-            psych_reasoning = psych_res.get("reasoning", "")
-            combined_reasoning = f"Macro Expert (Llama 3 / Groq): {macro_reasoning}\n\nPsychology Expert (Gemini): {psych_reasoning}"
+            combined_reasoning = f"LLM macro: {llm_res.get('reasoning', '')}"
             
             # Base conviction calculation
             conviction = (hawkish_prob + fear_greed) / 2.0
@@ -39,9 +37,6 @@ class ConsensusEngine:
                 conviction = (hawkish_prob + fear_greed) / 2.0
                 
             final_conviction = conviction
-            if echo_chamber:
-                logger.info("LLM Echo Chamber detected: Applying 0.70x multiplier to News Conviction score.")
-                final_conviction *= 0.70
                 
             return NewsSignal(
                 signal=signal_type,

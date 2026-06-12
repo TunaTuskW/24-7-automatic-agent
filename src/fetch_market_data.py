@@ -12,7 +12,7 @@ from src.observability.event_bus import EventBus
 from src.data_lake.lake_manager import LakeManager
 from src.adapters.yahoo_adapter import YahooAdapter
 from src.adapters.gemini_adapter import GeminiAdapter
-from src.adapters.groq_adapter import GroqAdapter
+from src.adapters.gemini_adapter import GeminiAdapter
 from src.adapters.forexfactory_adapter import ForexFactoryAdapter
 from src.adapters.paper_broker import PaperBroker
 from src.engines.hmm_engine import HMMEngine
@@ -60,7 +60,7 @@ class Conductor:
         self.data_broker = YahooAdapter(fred_key=fred_key)
         self.ff_adapter = ForexFactoryAdapter()
         self.gemini_adapter = GeminiAdapter()
-        self.groq_adapter = GroqAdapter()
+        self.gemini_adapter = GeminiAdapter()
         
         hmm_model_path = os.path.join(os.path.dirname(__file__), '..', 'models', f'hmm_model_{self.interval}.pkl')
         if not os.path.exists(hmm_model_path) and self.interval == "1d":
@@ -397,41 +397,15 @@ class Conductor:
         vix_zscore = self.snapshot.market_extremes_insight.temperature_zscore
         volume_heat = self.snapshot.data_science_layer.get("advanced_metrics", {}).get("volume_activity_heat", 0.0)
         
-        import concurrent.futures
-        
-        def run_macro():
-            res = self.groq_adapter.run_macro_policy_expert(headlines, calendar_events, spread_2s10s)
-            if "Error:" in res.get("reasoning", "") or "Default fallback" in res.get("reasoning", ""):
-                res = self.gemini_adapter.run_macro_policy_expert(headlines, calendar_events, spread_2s10s)
-                res["reasoning"] = "(Failover to Gemini) " + res.get("reasoning", "")
-            return res
-            
-        def run_psych():
-            res = self.gemini_adapter.run_market_psychology_expert(headlines, vix_zscore, volume_heat)
-            if "Error:" in res.get("reasoning", "") or "Default fallback" in res.get("reasoning", ""):
-                res = self.groq_adapter.run_market_psychology_expert(headlines, vix_zscore, volume_heat)
-                res["reasoning"] = "(Failover to Groq) " + res.get("reasoning", "")
-            return res
+        def run_llm():
+            return self.gemini_adapter.run_llm_macro(headlines, calendar_events, spread_2s10s, vix_zscore, volume_heat)
 
+        import concurrent.futures
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            macro_future = executor.submit(run_macro)
-            psych_future = executor.submit(run_psych)
+            llm_future = executor.submit(run_llm)
+            llm_res = llm_future.result()
             
-            macro_res = macro_future.result()
-            psych_res = psych_future.result()
-            
-        # Track providers to detect parallel LLM Echo Chamber
-        macro_provider = "Groq"
-        if "(Failover to Gemini)" in macro_res.get("reasoning", "") or "Default fallback" in macro_res.get("reasoning", ""):
-            macro_provider = "Gemini"
-            
-        psych_provider = "Gemini"
-        if "(Failover to Groq)" in psych_res.get("reasoning", "") or "Default fallback" in psych_res.get("reasoning", ""):
-            psych_provider = "Groq"
-            
-        echo_chamber = (macro_provider == psych_provider)
-        
-        news_res = self.consensus_engine.synthesize(macro_res, psych_res, self.snapshot.regime.current, echo_chamber=echo_chamber)
+        news_res = self.consensus_engine.synthesize(llm_res, self.snapshot.regime.current)
         self.snapshot.news_signal = news_res
         
         # Override kelly if global macro sentiment is extreme or there's divergence

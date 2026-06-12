@@ -40,24 +40,33 @@ class GeminiAdapter(LLMProvider):
         else:
             self.client = None
             
-    def run_macro_policy_expert(self, headlines: List[str], calendar_events: List[Any], spread_2s10s: float) -> Dict[str, Any]:
+    def run_llm_macro(self, headlines: List[str], calendar_events: List[Any], spread_2s10s: float, vix_zscore: float, volume_heat: float) -> Dict[str, Any]:
         if not self.client:
-            logger.warning("No Gemini client. Returning default Macro response.")
-            return {"fed_policy_hawkishness_prob": 0.5, "reasoning": "Default fallback due to missing client."}
+            logger.warning("No Gemini client. Returning default LLM Macro response.")
+            return {
+                "fed_policy_hawkishness_prob": 0.5, 
+                "fear_greed_sentiment_score": 0.5, 
+                "quantitative_divergence_flag": False, 
+                "reasoning": "Default fallback due to missing client."
+            }
             
         headlines_text = "\n".join(headlines[:20])
         calendar_text = json.dumps([e.model_dump() for e in calendar_events], indent=2) if calendar_events else "No upcoming high-impact events."
         
-        prompt = f"""You are the Macro Policy Expert. Analyze the current global macroeconomic state by synthesizing the latest financial news headlines WITH the upcoming Forex Factory high-impact economic calendar events and the current 2s10s bond spread.
-Output strictly valid JSON with no markdown. The JSON MUST begin with a "reasoning" key.
-You must write exactly 3 sentences of step-by-step reasoning explaining how the quantitative data justifies your conclusion BEFORE you output the final probability score.
+        prompt = f"""You are the master LLM Macro Expert for a quantitative trading system. Your task is to analyze the current macroeconomic state and market psychology by synthesizing the latest financial news headlines WITH quantitative indicators (bond spreads, VIX z-score, volume heat, and economic calendar).
+
+Output strictly valid JSON with no markdown. The JSON MUST contain exactly the following keys:
+- "reasoning": A 3 to 4 sentence step-by-step synthesis explaining how the quantitative data and news justify your conclusions.
+- "fed_policy_hawkishness_prob": A float between 0.0 and 1.0 (1.0 = extreme rate hike pressure).
+- "fear_greed_sentiment_score": A float between 0.0 and 1.0 (1.0 = extreme greed/bullishness).
+- "quantitative_divergence_flag": A boolean. Set to true ONLY if news headlines are extremely bullish but the VIX z-score is spiking > 1.5 (indicating hidden institutional panic).
 
 {{
-  "reasoning": "string (exactly 3 sentences)",
-  "fed_policy_hawkishness_prob": 0.5
+  "reasoning": "string",
+  "fed_policy_hawkishness_prob": 0.5,
+  "fear_greed_sentiment_score": 0.5,
+  "quantitative_divergence_flag": false
 }}
-
-Ensure fed_policy_hawkishness_prob is a float between 0.0 and 1.0, where 1.0 means extreme rate hike pressure.
 
 Recent Headlines:
 {headlines_text}
@@ -65,61 +74,26 @@ Recent Headlines:
 Upcoming High-Impact Calendar Events (USD, EUR, JPY):
 {calendar_text}
 
-Current 2s10s Spread: {spread_2s10s}"""
-
-        import time
-        for attempt in range(10):
-            try:
-                response = self.client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
-                raw_text = response.text.replace("```json", "").replace("```", "").strip()
-                return json.loads(raw_text)
-            except Exception as e:
-                if ("503" in str(e) or "429" in str(e)) and attempt < 9:
-                    sleep_time = (attempt + 1) * 10
-                    logger.warning(f"API UNAVAILABLE/RATE_LIMIT. Retrying Macro Expert in {sleep_time} seconds (Attempt {attempt+1}/10)...")
-                    time.sleep(sleep_time)
-                else:
-                    logger.error(f"Macro Policy Expert failed: {e}")
-                    return {"fed_policy_hawkishness_prob": 0.5, "reasoning": f"Error: {e}"}
-
-    def run_market_psychology_expert(self, headlines: List[str], vix_zscore: float, volume_heat: float) -> Dict[str, Any]:
-        if not self.client:
-            logger.warning("No Gemini client. Returning default Psychology response.")
-            return {"fear_greed_sentiment_score": 0.5, "reasoning": "Default fallback.", "quantitative_divergence_flag": False}
-            
-        headlines_text = "\n".join(headlines[:20])
-        
-        prompt = f"""You are the Market Psychology Expert. Analyze the current global market sentiment by synthesizing the latest financial news headlines WITH the hard quantitative psychology indicators (VIX z-score and volume activity heat).
-Output strictly valid JSON with no markdown. The JSON MUST begin with a "reasoning" key.
-You must write exactly 3 sentences of step-by-step reasoning explaining how the quantitative data justifies your conclusion BEFORE you output the final probability score.
-
-CRITICAL DIVERGENCE RULE: If the news headlines are extremely bullish, but the VIX z-score is spiking > 1.5 (indicating hidden institutional panic), you MUST set quantitative_divergence_flag to true.
-
-{{
-  "reasoning": "string (exactly 3 sentences)",
-  "fear_greed_sentiment_score": 0.5,
-  "quantitative_divergence_flag": false
-}}
-
-Ensure fear_greed_sentiment_score is a float between 0.0 and 1.0, where 1.0 is extreme greed/bullishness.
-
-Recent Headlines:
-{headlines_text}
-
+Current 2s10s Spread: {spread_2s10s}
 VIX z-score: {vix_zscore}
 Volume Activity Heat: {volume_heat}"""
 
         import time
-        for attempt in range(10):
+        for attempt in range(5):
             try:
                 response = self.client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
                 raw_text = response.text.replace("```json", "").replace("```", "").strip()
                 return json.loads(raw_text)
             except Exception as e:
-                if ("503" in str(e) or "429" in str(e)) and attempt < 9:
+                if ("503" in str(e) or "429" in str(e)) and attempt < 4:
                     sleep_time = (attempt + 1) * 10
-                    logger.warning(f"API UNAVAILABLE/RATE_LIMIT. Retrying Psych Expert in {sleep_time} seconds (Attempt {attempt+1}/10)...")
+                    logger.warning(f"API UNAVAILABLE/RATE_LIMIT. Retrying LLM Macro in {sleep_time} seconds (Attempt {attempt+1}/5)...")
                     time.sleep(sleep_time)
                 else:
-                    logger.error(f"Market Psychology Expert failed: {e}")
-                    return {"fear_greed_sentiment_score": 0.5, "reasoning": f"Error: {e}", "quantitative_divergence_flag": False}
+                    logger.error(f"LLM Macro failed: {e}")
+                    return {
+                        "fed_policy_hawkishness_prob": 0.5, 
+                        "fear_greed_sentiment_score": 0.5, 
+                        "quantitative_divergence_flag": False, 
+                        "reasoning": f"Error: {e}"
+                    }
