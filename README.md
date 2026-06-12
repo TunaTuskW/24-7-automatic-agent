@@ -153,7 +153,7 @@ graph TD
         Balancer -->|"SPX Long & Short / BTC / GLD / WTI / Cash"| Snap
         Balancer -->|"Live Telemetry Output"| Telem
         Balancer -->|"Kelly Target Allocations"| PB
-        PB -->|"Log execution with 5 bps slippage"| Ledger
+        PB -->|"Log execution (5 bps slippage, 2.5% drift gate)"| Ledger
         Ledger --> VPT
         VPT -->|"Performance plots & spreadsheets"| ExcelDash
         Snap -->|"Retrieve from events.jsonl"| BR
