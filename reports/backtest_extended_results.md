@@ -19,9 +19,9 @@
 
 
 ## Paper Trading Ledger Analysis
-- **Mock Execution PnL:** -0.38% (Total Equity: $9,961.53)
-- **Total Mock Trades:** 19 (10 Buys, 9 Sells)
-- **Total Slippage/Fees Paid:** $12.67
+- **Mock Execution PnL:** -0.40% (Total Equity: $9,960.31)
+- **Total Mock Trades:** 20 (11 Buys, 9 Sells)
+- **Total Slippage/Fees Paid:** $12.94
 
 
 ## Detailed Daily Log

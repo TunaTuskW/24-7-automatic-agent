@@ -189,7 +189,7 @@ The Python architecture is structured as a modular quantitative pipeline. Below 
      - Synthesizes their CoT step-by-step reasoning blocks and scores into a unified `NewsSignal`.
      - **Critical Divergence Slasher:** If news is extremely bullish, but VIX z-score spikes > 1.5, triggers `quantitative_divergence_flag: true` to dynamically slash Kelly exposure by half (0.5x multiplier) to defend capital.
      - Employs `gemini-2.5-flash` to gracefully bypass quota 429 errors.
-   - **Paper Broker Execution (`src/adapters/paper_broker.py`):** Simulates real-time rebalancing based on Kelly target fractions with 5 bps slippage, logging to `data/paper_trading/paper_ledger.csv`.
+   - **Paper Broker Execution (`src/adapters/paper_broker.py`):** Simulates real-time rebalancing based on Kelly target fractions with 5 bps slippage, logging to `data/paper_trading/paper_ledger.csv`, and publishing embedded trade execution alerts directly to Discord.
 
 2. **`build_report.py` (Consensus Engine & Presentation Compiler)**
    - **Resilient Log Fetching:** Scans the data lake partitions, finds the latest `events.jsonl` log file, extracts the `PipelineComplete` event payload, and validates it against the `MarketSnapshot` Pydantic model.
@@ -327,7 +327,7 @@ The agent can push generated reports to a Discord channel using a webhook.
    ```
 2. Open `config/webhook_config.txt` in the agent folder.
 3. Paste your copied Webhook URL into this file and save it.
-4. (Optional) If you want to ping a specific role for Elevated/Critical alerts, open `config/role_config.txt` and paste the Discord Role ID (e.g., `<@&1234567890>`). If left empty, it defaults to `@here`.
+4. (Optional) If you want to ping a specific role for Elevated/Critical alerts, open `config/role_config.txt` and paste the Discord Role ID (e.g., `<@&1234567890>`). If left empty, it defaults to no ping (silent notifications).
 
 ---
 

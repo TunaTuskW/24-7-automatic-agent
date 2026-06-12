@@ -13,7 +13,7 @@ logging.basicConfig(
 )
 
 ALLOWED_PATTERNS = [
-    r'^4 hours update \(\d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC\)\.md$',
+    r'^1 hour update \(\d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC\)\.md$',
     r'^72 hours roll \(\d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC\)\.md$',
     r'^macro weekly synthesis \(\d{4}-\d{2}-\d{2} UTC\)\.md$',
 ]
@@ -55,7 +55,7 @@ def get_notification_ping():
             ping = f.read().strip()
             if ping and not ping.startswith("PASTE_YOUR_ROLE"):
                 return ping
-    return "@here" # Default fallback
+    return "" # Default fallback
 
 def post_with_retry(url, retries=3, delay=10, **kwargs):
     for attempt in range(retries):

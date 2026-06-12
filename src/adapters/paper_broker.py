@@ -2,8 +2,10 @@ import os
 import csv
 import json
 import logging
+import requests
 from datetime import datetime
 from src.observability.logger import get_logger
+from src.push_to_discord import get_webhook_url, post_with_retry
 
 logger = get_logger(__name__)
 
@@ -68,6 +70,40 @@ class PaperBroker:
                 'fee': round(fee, 2)
             })
 
+    def _send_discord_alert(self, action, ticker, shares, price, total_equity):
+        webhook_url = get_webhook_url()
+        if not webhook_url:
+            return
+            
+        color = 0x2ECC71 if action == "BUY" else 0xE74C3C
+        
+        embed = {
+            "title": "🚨 AI Trade Execution",
+            "color": color,
+            "fields": [
+                {
+                    "name": "Action",
+                    "value": f"{action} {shares:.4f} {ticker} @ ${price:.2f}",
+                    "inline": False
+                },
+                {
+                    "name": "Reasoning",
+                    "value": "Rebalancing to match new 1-hour HMM targets.",
+                    "inline": False
+                },
+                {
+                    "name": "Total Equity",
+                    "value": f"${total_equity:,.2f}",
+                    "inline": False
+                }
+            ]
+        }
+        
+        try:
+            post_with_retry(webhook_url, json={"embeds": [embed]})
+        except Exception as e:
+            logger.error(f"Failed to push trade alert to Discord: {e}")
+
     def execute_rebalance(self, target_allocations: dict, current_prices: dict):
         """
         target_allocations: dict mapped by ticker to target fraction (e.g. {"SPX": 0.5, "Gold": 0.2})
@@ -128,6 +164,7 @@ class PaperBroker:
                     
                 self._log_trade(ticker, "SELL", shares_to_sell, exec_price, val_to_sell, fee)
                 logger.info(f"PAPER SELL: {shares_to_sell:.4f} {ticker} @ ${exec_price:.2f}")
+                self._send_discord_alert("SELL", ticker, shares_to_sell, exec_price, total_equity)
 
         # 4. Process BUYS next (using freed up cash)
         for ticker, target_val in target_values.items():
@@ -159,6 +196,7 @@ class PaperBroker:
                     
                     self._log_trade(ticker, "BUY", shares_to_buy, exec_price, val_to_buy, fee)
                     logger.info(f"PAPER BUY: {shares_to_buy:.4f} {ticker} @ ${exec_price:.2f}")
+                    self._send_discord_alert("BUY", ticker, shares_to_buy, exec_price, total_equity)
 
         # 5. Final update
         self._save_portfolio()

@@ -48,6 +48,7 @@ The orchestrator integrates a simulated **Paper Broker** (`src/adapters/paper_br
 * **Order Sequencing:** Executes all SELL orders first to free up cash, followed by BUY orders.
 * **Automated Rebalancing:** At the end of every conductor run, target Kelly allocations for SPX (`SPX_Kelly`) and Gold (`Safe_Haven_Kelly`) are queried against current spot prices and rebalanced automatically.
 * **Ledger Auditing:** Appends every execution transaction to `data/paper_trading/paper_ledger.csv`.
+* **Discord Execution Alerts:** Automatically posts embedded transaction alerts (BUY/SELL action details, execution price, shares, and final total portfolio equity value) directly to Discord webhooks upon trade execution.
 
 ---
 
@@ -58,7 +59,7 @@ An automated bash script integrates a high-frequency **1-hour briefing update**:
 2. Compiles model consensus and voting matrices.
 3. Rebalances the paper portfolio and writes transaction records.
 4. Plots performance dashboards and generates XLSX spreadsheets.
-5. Pushes minimalist Brutalist Markdown briefings to Discord webhook channels.
+5. Pushes minimalist Brutalist Markdown briefings to Discord webhook channels. Filename patterns (`1 hour update (*).md`) are explicitly supported by pattern matching in `src/push_to_discord.py` to allow hourly report dispatch.
 
 ---
 

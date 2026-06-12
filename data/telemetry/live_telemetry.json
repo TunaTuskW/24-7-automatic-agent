@@ -1,8 +1,8 @@
 {
-    "timestamp_utc": "2026-06-12T17:00:30.841003+00:00",
-    "dominant_regime": "DEFLATION_FEAR",
-    "spx_kelly_fraction": 0.215,
+    "timestamp_utc": "2026-06-12T21:06:00.669392+00:00",
+    "dominant_regime": "NEUTRAL_TRANSITIONAL_4",
+    "spx_kelly_fraction": 0.317,
     "safe_haven_kelly_fraction": 0.0,
     "is_capitulation_override_active": false,
-    "institutional_heat_index": 0.855
+    "institutional_heat_index": 0.191
 }
