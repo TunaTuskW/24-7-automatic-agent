@@ -1,0 +1,151 @@
+[
+    {
+        "predicted_risk_on": 0.627,
+        "spx_val_at_prediction": 7433.5,
+        "target_graded": true,
+        "actual_outcome": 0,
+        "squared_error": 0.393129
+    },
+    {
+        "predicted_risk_on": 0.431,
+        "spx_val_at_prediction": 7430.23,
+        "target_graded": true,
+        "actual_outcome": 0,
+        "squared_error": 0.18576099999999998
+    },
+    {
+        "predicted_risk_on": 0.533,
+        "spx_val_at_prediction": 7405.8101,
+        "target_graded": true,
+        "actual_outcome": 0,
+        "squared_error": 0.28408900000000004
+    },
+    {
+        "predicted_risk_on": 0.545,
+        "spx_val_at_prediction": 7405.8101,
+        "target_graded": true,
+        "actual_outcome": 0,
+        "squared_error": 0.29702500000000004
+    },
+    {
+        "predicted_risk_on": 0.555,
+        "spx_val_at_prediction": 7405.8101,
+        "target_graded": true,
+        "actual_outcome": 0,
+        "squared_error": 0.30802500000000005
+    },
+    {
+        "predicted_risk_on": 0.646,
+        "spx_val_at_prediction": 7405.8101,
+        "target_graded": true,
+        "actual_outcome": 0,
+        "squared_error": 0.417316
+    },
+    {
+        "predicted_risk_on": 0.636,
+        "spx_val_at_prediction": 7405.8101,
+        "target_graded": true,
+        "actual_outcome": 0,
+        "squared_error": 0.404496
+    },
+    {
+        "predicted_risk_on": 0.625,
+        "spx_val_at_prediction": 7405.8101,
+        "target_graded": true,
+        "actual_outcome": 0,
+        "squared_error": 0.390625
+    },
+    {
+        "predicted_risk_on": 0.554,
+        "spx_val_at_prediction": 7405.8101,
+        "target_graded": true,
+        "actual_outcome": 0,
+        "squared_error": 0.3069160000000001
+    },
+    {
+        "predicted_risk_on": 0.487,
+        "spx_val_at_prediction": 7278.7002,
+        "target_graded": true,
+        "actual_outcome": 0,
+        "squared_error": 0.237169
+    },
+    {
+        "predicted_risk_on": 0.536,
+        "spx_val_at_prediction": 7386.3101,
+        "target_graded": true,
+        "actual_outcome": 0,
+        "squared_error": 0.28729600000000005
+    },
+    {
+        "predicted_risk_on": 0.579,
+        "spx_val_at_prediction": 7386.3101,
+        "target_graded": true,
+        "actual_outcome": 0,
+        "squared_error": 0.33524099999999996
+    },
+    {
+        "predicted_risk_on": 0.538,
+        "spx_val_at_prediction": 7386.3101,
+        "target_graded": true,
+        "actual_outcome": 0,
+        "squared_error": 0.28944400000000003
+    },
+    {
+        "predicted_risk_on": 0.521,
+        "spx_val_at_prediction": 7315.4102,
+        "target_graded": true,
+        "actual_outcome": 1,
+        "squared_error": 0.22944099999999998
+    },
+    {
+        "predicted_risk_on": 0.52,
+        "spx_val_at_prediction": 7267.6499,
+        "target_graded": true,
+        "actual_outcome": 1,
+        "squared_error": 0.2304
+    },
+    {
+        "predicted_risk_on": 0.357,
+        "spx_val_at_prediction": 7267.6499,
+        "target_graded": true,
+        "actual_outcome": 1,
+        "squared_error": 0.413449
+    },
+    {
+        "predicted_risk_on": 0.531,
+        "spx_val_at_prediction": 7267.6499,
+        "target_graded": true,
+        "actual_outcome": 1,
+        "squared_error": 0.21996099999999996
+    },
+    {
+        "predicted_risk_on": 0.496,
+        "spx_val_at_prediction": 7276.79,
+        "target_graded": false
+    },
+    {
+        "predicted_risk_on": 0.567,
+        "spx_val_at_prediction": 7393.0601,
+        "target_graded": false
+    },
+    {
+        "predicted_risk_on": 0.57,
+        "spx_val_at_prediction": 7393.0601,
+        "target_graded": false
+    },
+    {
+        "predicted_risk_on": 0.563,
+        "spx_val_at_prediction": 7393.0601,
+        "target_graded": false
+    },
+    {
+        "predicted_risk_on": 0.522,
+        "spx_val_at_prediction": 7393.0601,
+        "target_graded": false
+    },
+    {
+        "predicted_risk_on": 0.51,
+        "spx_val_at_prediction": 7429.6001,
+        "target_graded": false
+    }
+]

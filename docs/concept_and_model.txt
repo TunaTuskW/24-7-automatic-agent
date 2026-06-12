@@ -4,8 +4,8 @@ MACRO ANALYST AGENT - CONCEPT AND MODEL
 1. WHAT IT IS
 This is a 24/7 autonomous quantitative agent that monitors global markets, processes data through deep learning classifiers, and generates institutional-grade macro reports. It runs completely automatically in the background using your computer's scheduler or inside isolated Docker microservices. The presentation layer uses an ultra-minimal "Brutalist Terminal" text-block layout to ensure a data-dense, cross-platform reading experience designed for instant mobile parsing.
 
-2. THE MULTI-ASSET ENSEMBLE OS & CAPITAL ROTATION ENGINE (v5.1.0 Evolution)
-Following the v5.1.0 upgrades, the agent operates as a containerized, event-driven Mixture of Experts (MoE) & Multi-Asset Ensemble OS. The architecture incorporates several critical structural and mathematical upgrades:
+2. THE MULTI-ASSET ENSEMBLE OS WITH PAPER TRADING & 14-FEATURE SPACE (v5.2.0 Evolution)
+Following the v5.2.0 upgrades, the agent operates as a containerized, event-driven Mixture of Experts (MoE) & Multi-Asset Ensemble OS. The architecture incorporates several critical structural and mathematical upgrades:
 
 - Event-Driven Pub-Sub Architecture: Standardizes pipeline execution via an in-memory `EventBus` (`src/observability/event_bus.py`). Triggers sequential, decoupled callbacks across five lifecycle phases.
 - Pydantic Validation Schemas: Enforces strict type-safety and structural data contracts utilizing Pydantic models (`src/schemas/models.py`) such as `MarketSnapshot` to eliminate data schema breaks.
@@ -13,8 +13,9 @@ Following the v5.1.0 upgrades, the agent operates as a containerized, event-driv
 - Active-Resilient MoE Cognitive Layer: Integrates a dual-provider active-active LLM framework utilizing Google Gemini (`gemini-2.5-flash`) and Groq (`Llama 3`) models running in parallel.
 - Parallel LLM Echo Chamber Detector: Detects if both parallel MoE experts (Policy and Psychology) run on the same LLM provider due to rate-limit failovers. Applies a 0.70x penalty to the News Conviction Score to mitigate correlated narrative bias.
 - Dynamic Rolling Statistical Windows by Interval: Statistical z-score calculations in `feature_engine.py` adapt dynamically to the operational interval. It calculates bars dynamically to keep the lookback baseline at exactly **3 macro months (60 trading days equivalent)** across daily (`60` daily bars), hourly (e.g. `97` hourly bars for 4h), and weekly (`12` weekly bars) timeframes.
-- Return-Based z-Scores: Statistical anomaly tracking is computed as **Return-Based z-Scores** ($z = (\Delta\% - \text{mean}) / \text{std}$ of percentage changes) to prevent price level drift.
-- Treasury Yield & Spread z-Scores: Ingests 60-day yield return deltas (`delta_zscore` of US10Y) and 2s10s spread deltas (`spread_zscore`) in place of raw yield indices inside features engineered.
+- Return-Based percentage changes: Statistical feature tracking is computed as raw percentage change returns in place of z-score anomaly standardizations where applicable to optimize scale-invariant correlation matching.
+- Treasury Yield & Spread levels: Ingests 10-year US Treasury yield change deltas (`us10y_delta`) and raw 2s10s yield spreads (`spread_level` spread_2s10s) in place of yield return z-scores.
+- 14-Feature Input Space: Standardizes feature vectors onto a 14-dimensional schema incorporating raw returns for S&P 500, Dollar Index, Crude Oil, Gold-to-Silver ratio, USDCAD forex, Bitcoin, S&P 500 futures (ES), Nasdaq 100 futures (NQ), Dow Jones futures (YM), and Russell 2000 futures (RTY).
 - GARCH Bayesian Updates & HMM Regularization: 
   * If the computed SPX GARCH regime is `ELEVATED` (proxy: vix_zscore > 1.0), the system executes a Bayesian contraction, automatically slashing HMM Risk-On probabilities by 50% and redistributing the penalized mass directly back to `NEUTRAL_TRANSITIONAL` to suppress bullish bias.
   * Enforces **Uniform HMM Start Probabilities** ($\text{startprob\_} = 1/N$) before scoring samples to prevent degenerate single-bar inference traps in low-sample environments.
@@ -30,8 +31,10 @@ Following the v5.1.0 upgrades, the agent operates as a containerized, event-driv
   * Retail Noise Filter: Slashes S&P 500 Kelly exposure by 50% if the market is not risk-off but institutional heat is negative (`ihi < 0.0`).
 - Capital Rotation Engine: Dynamically rotates capital (scales alternative allocations by 1.5x) to Gold (`gld`), Bitcoin (`btc`), and Oil (`wti`) if S&P 500 displays weakness ($\text{spx\_prob} < 0.40$). Normalizes total exposure to a hard limit of `1.2` (120% exposure) via the Global Portfolio Balancer.
 - Regime-Specific Alternative Asset Filters: Forces crypto (`btc`) and energy (`wti`) Kelly exposure to 0.0 in panic regimes (`DEFLATION_FEAR` or `CRISIS_DISLOCATION`), while boosting Gold as a safe haven.
+- Paper Trading Simulation Engine (`paper_broker.py`): Automatically rebalances target Kelly portfolio allocations (SPX and Gold) using live price feeds, applying a 5 bps execution slippage fee and logging trades in `paper_ledger.csv`.
+- Sub-directory Data Layout: Isolates active pipeline states, forecasts history, telemetry logs, and paper trading ledgers into distinct subdirectories: `data/state/`, `data/predictions/`, `data/telemetry/`, and `data/paper_trading/`.
 - Decoupled Consensus Engine Signal Mapping (`consensus_engine.py`): Voting conviction outputs are mapped directly into strict boundaries: `QUANT_DIVERGENCE_PANIC` (SHORT, 0.5x Kelly slash), `CONSENSUS_BEARISH` (SHORT), `CONSENSUS_BULLISH` (LONG, 1.2x sizing on expansion), and `MIXED_SIGNALS` (MIXED).
-- Phase 2 Live Telemetry Engine: Writes a structured real-time operational payload to `/Users/mac/agent/data/live_telemetry.json` (tracking timestamp, dominant regime, SPX/Safe Haven Kelly fractions, override status, and volume heat) on pipeline completion.
+- Phase 2 Live Telemetry Engine: Writes a structured real-time operational payload to `/Users/mac/agent/data/telemetry/live_telemetry.json` (tracking timestamp, dominant regime, SPX/Safe Haven Kelly fractions, override status, and volume heat) on pipeline completion.
 - Yield Curve Proxy Fallbacks: Dynamically pulls proxy yields (`^TNX` for the 10Y and `^FVX` for the 5Y) directly from Yahoo Finance if FRED API keys are missing.
 - Containerized OS: Standardizes execution in isolated containerized environments using Docker and Docker-Compose.
 
@@ -81,8 +84,8 @@ The agent manages two distinct workflows natively via bash scripts (run_4h.sh, r
 The machine learning models (HMM and Ensemble Classifiers) are not static. The agent includes a robust training pipeline (`train_models.py`), backtest engine (`quantitative_backtester.py`), and a visualizer script (`generate_visual_map.py`) to periodically adapt to evolving market regimes:
 
 - The HMM Regime Training Pipeline:
-  * Ingests 5 years of daily historical data across Equities (SPX), Volatility (GARCH volatility proxy), FX/Treasuries (DXY, USDCAD, 10Y yields, 10Y-2Y yield spread), Commodities (WTI Crude, Gold, Silver), and a Bitcoin volume volatility proxy.
-  * Standardizes the aligned 10-dimensional feature vector using a StandardScaler.
+  * Ingests 5 years of daily historical data across Equities (SPX), Volatility (actual VIX index z-score), FX/Treasuries (DXY, USDCAD, 10Y yield deltas, 2s10s yield spread), Commodities (WTI Crude, Gold, Silver), and four index futures returns (ES, NQ, YM, RTY).
+  * Standardizes the aligned 14-dimensional feature vector using a StandardScaler.
   * Fits a Gaussian Hidden Markov Model (GaussianHMM) configured with N_HIDDEN_STATES = 6, a full covariance matrix structure, and 500 maximum EM iterations. Enforces uniform start probabilities (startprob_ = 1/N) to regularize posteriors.
   * Dynamically maps states by checking their emission means across daily SPX returns, yield shifts, and WTI moves:
     - RISK_ON_EXPANSION: Pos. SPX return & rising yields.
@@ -100,7 +103,8 @@ The machine learning models (HMM and Ensemble Classifiers) are not static. The a
 
 - The Historical Backtest Engine (quantitative_backtester.py):
   * Decodes historical features into regime labels, runs the Multi-Asset Kelly solver, and generates portfolio forward returns.
-  * Compiles a detailed performance log (backtest_extended_results.md) detailing daily allocations (SPX Long/Short, BTC, GLD, WTI, Cash) and portfolio PnL, as well as a Deep Learning Probability Calibration table showing win rates and returns per probability bucket.
+  * Compiles a detailed performance log (backtest_extended_results.md) detailing daily allocations (SPX Long/Short, BTC, GLD, WTI, Cash) and portfolio PnL, as well as a Deep Learning Probability Calibration table.
+  * Extracts paper trading execution states (`paper_ledger.csv` and `paper_portfolio.json`) to print realized returns and cumulative slippage metrics.
 
 - The Stacked Portfolio Visualizer (generate_visual_map.py):
   * Replaces legacy Jupyter notebooks with a centralized Python script.

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-train_models.py - v5.1.0
+train_models.py - v5.2.0
 Offline training script for HMM regime classifier and MLP Deep Classifier.
 Run quarterly. Saves trained models to data/
 """
@@ -59,7 +59,7 @@ def fetch_training_data(years=TRAINING_YEARS, interval="1d"):
         ultra_short = int(10 * bars)
         
     fred_key = get_fred_key()
-    tickers = ["^GSPC", "CL=F", "DX-Y.NYB", "SI=F", "USDCAD=X", "GC=F", "BTC-USD", "^VIX"]
+    tickers = ["^GSPC", "CL=F", "DX-Y.NYB", "SI=F", "USDCAD=X", "GC=F", "BTC-USD", "^VIX", "ES=F", "NQ=F", "YM=F", "RTY=F"]
     data = yf.download(tickers, period=period, interval=interval, progress=False)
     
     spx = data["Close"]["^GSPC"].dropna()
@@ -101,9 +101,30 @@ def fetch_training_data(years=TRAINING_YEARS, interval="1d"):
         btc.index = btc.index.normalize()
     btc = btc[~btc.index.duplicated(keep='last')]
     btc_ret = btc.pct_change() * 100
-    btc_vol = btc_ret.rolling(short_window).std()
     
-    # We remove GARCH calculation to avoid missing/drift, use raw VIX
+    es = data["Close"]["ES=F"].dropna()
+    es.index = pd.to_datetime(es.index).tz_localize(None)
+    nq = data["Close"]["NQ=F"].dropna()
+    nq.index = pd.to_datetime(nq.index).tz_localize(None)
+    ym = data["Close"]["YM=F"].dropna()
+    ym.index = pd.to_datetime(ym.index).tz_localize(None)
+    rty = data["Close"]["RTY=F"].dropna()
+    rty.index = pd.to_datetime(rty.index).tz_localize(None)
+    
+    if interval == "1d":
+        es.index = es.index.normalize()
+        nq.index = nq.index.normalize()
+        ym.index = ym.index.normalize()
+        rty.index = rty.index.normalize()
+        
+    es = es[~es.index.duplicated(keep='last')]
+    es_ret = es.pct_change() * 100
+    nq = nq[~nq.index.duplicated(keep='last')]
+    nq_ret = nq.pct_change() * 100
+    ym = ym[~ym.index.duplicated(keep='last')]
+    ym_ret = ym.pct_change() * 100
+    rty = rty[~rty.index.duplicated(keep='last')]
+    rty_ret = rty.pct_change() * 100
     
     us2y_series = None
     us10y_series = None
@@ -130,6 +151,7 @@ def fetch_training_data(years=TRAINING_YEARS, interval="1d"):
                     us10y_series = s
             except Exception as e:
                 logging.warning(f"FRED {series_id} fetch failed: {e}")
+                
     df = pd.DataFrame({
         "spx_ret":       spx_ret,
         "btc_ret":       btc_ret.reindex(spx_ret.index, method="ffill"),
@@ -139,17 +161,16 @@ def fetch_training_data(years=TRAINING_YEARS, interval="1d"):
         "vix":           vix.reindex(spx_ret.index, method="ffill"),
         "gsr_ret":       gsr_ret.reindex(spx_ret.index, method="ffill"),
         "usdcad_ret":    usdcad_ret.reindex(spx_ret.index, method="ffill"),
+        "es_ret":        es_ret.reindex(spx_ret.index, method="ffill"),
+        "nq_ret":        nq_ret.reindex(spx_ret.index, method="ffill"),
+        "ym_ret":        ym_ret.reindex(spx_ret.index, method="ffill"),
+        "rty_ret":       rty_ret.reindex(spx_ret.index, method="ffill"),
         "Volume":        spx_vol,
         "High":          spx_high,
         "Low":           spx_low,
         "Close":         spx
     })
     df.index = pd.to_datetime(df.index).tz_localize(None)
-    # Bitcoin Volatility Z-Score (replaces crypto_mfi_z)
-    df["btc_vol_z"] = df["btc_ret"].rolling(short_window).std().apply(lambda x: (x - x) if pd.isna(x) else x) # We will z-score it next
-    btc_vol_mean = df["btc_vol_z"].rolling(macro_window).mean()
-    btc_vol_std = df["btc_vol_z"].rolling(macro_window).std()
-    df["btc_vol_z"] = ((df["btc_vol_z"] - btc_vol_mean) / btc_vol_std.replace(0, np.nan)).fillna(0)
     if us10y_series is not None:
         us10y_delta = us10y_series.diff()
         df["us10y_delta"] = us10y_delta.reindex(df.index, method="ffill")
@@ -244,7 +265,7 @@ def train_ensemble_classifier(df, feature_names, output_path, interval="1d", tar
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
     
-    # Neural architecture: 9 inputs -> 16 hidden -> 8 hidden -> 3 outputs
+    # Neural architecture: 16 hidden -> 8 hidden -> 3 outputs
     mlp = MLPClassifier(
         hidden_layer_sizes=(16, 8),
         activation="relu",
@@ -286,10 +307,10 @@ def train_ensemble_classifier(df, feature_names, output_path, interval="1d", tar
 def train_hmm(interval="1d"):
     df = fetch_training_data(interval=interval)
     
-    # Aligned 10 features schema
+    # Aligned 14 features schema
     feature_names = [
         "spx_ret", "dxy_ret", "vix_zscore", "Inst_Heat_Index", "wti_ret", 
-        "gsr_ret", "us10y_delta", "spread_level", "btc_vol_z", "usdcad_ret"
+        "gsr_ret", "us10y_delta", "spread_level", "btc_ret", "usdcad_ret", "es_ret", "nq_ret", "ym_ret", "rty_ret"
     ]
     
     X = df[feature_names].values

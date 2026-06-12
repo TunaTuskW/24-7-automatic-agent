@@ -1,34 +1,40 @@
-# Macro Briefing Agent Setup Guide (v5.1.0)
+# Macro Briefing Agent Setup Guide (v5.2.0)
 
-Welcome to the **Macro Briefing Agent (v5.1.0)**—a 24/7 autonomous containerized **Multi-Asset Ensemble OS & Capital Rotation** and execution pipeline. This project decouples data ingestion, economic calendars, parallel LLM experts, consensus synthesis, and pub-sub event dispatching into an enterprise-grade framework.
+Welcome to the **Macro Briefing Agent (v5.2.0)**—a 24/7 autonomous containerized **Multi-Asset Ensemble OS with Paper Trading & 14-Feature Space** and execution pipeline. This project decouples data ingestion, economic calendars, parallel LLM experts, consensus synthesis, and pub-sub event dispatching into an enterprise-grade framework.
 
 
 ## Project Structure Overview
-Following the v5.1.0 Multi-Asset Ensemble OS & Capital Rotation upgrade, the project is organized into a highly decoupled, professional modular pipeline:
+Following the v5.2.0 Multi-Asset Ensemble OS with Paper Trading & 14-Feature Space upgrade, the project is organized into a highly decoupled, professional modular pipeline:
 - **`config/`**: Contains your API keys and webhook configurations (`fred_api_key.txt`, `webhook_config.txt`, `api_keys.json`, `tuning_configs.json`, etc.).
 - **`src/`**: Houses the core Python code organized as modular packages:
   - **`interfaces/`**: Standardized OOP interfaces (`data_broker.py`, `llm_provider.py`) defining loose-coupling contracts.
-  - **`adapters/`**: Physical retrieval clients (`yahoo_adapter.py` for dynamic interval and yield history, `gemini_adapter.py` / `groq_adapter.py` for active-active failover MoE parallel Experts, `forexfactory_adapter.py` for economic calendars) implementing interface layers.
+  - **`adapters/`**: Physical retrieval clients (`yahoo_adapter.py` for dynamic interval and yield history, `gemini_adapter.py` / `groq_adapter.py` for active-active failover MoE parallel Experts, `forexfactory_adapter.py` for economic calendars, `paper_broker.py` for simulated execution rebalancing) implementing interface layers.
   - **`data_lake/`**: Database partition manager (`lake_manager.py`) handling daily-partitioned Parquet/JSONL.
-  - **`engines/`**: Specialized engines (`feature_engine.py` for dynamic stats & returns z-scores, `hmm_engine.py` for regime and GARCH penalty filters, `risk_engine.py` for covariance noise, Kelly overrides & multi-asset allocations, `consensus_engine.py` for signal mapping).
+  - **`engines/`**: Specialized engines (`feature_engine.py` for dynamic stats, return percentages and yield shifts, `hmm_engine.py` for regime and GARCH penalty filters, `risk_engine.py` for covariance noise, Kelly overrides & multi-asset allocations, `consensus_engine.py` for signal mapping).
   - **`observability/`**: Standardized context logging (`logger.py`) and pub-sub event dispatching (`event_bus.py`).
   - **`schemas/`**: Strict type-validation layer (`models.py`) housing Pydantic models for the entire pipeline state.
-  - **`fetch_market_data.py`**: Central Conductor orchestrating the ingestion and inference sequence using dependency injection.
+  - **`fetch_market_data.py`**: Central Conductor orchestrating the ingestion, inference, and paper execution sequence using dependency injection.
   - **`build_report.py`, `build_weekly_synthesis.py`**: Presentation and formatting compilation scripts.
   - **`push_to_discord.py`**: Secured push delivery agent.
   - **`train_models.py`, `backtest.py`, `tune_hyperparameters.py`**: Model training, auditing, and tuning meta-agents.
   - **`generate_visual_map.py`**: Centralized stacked portfolio visualization generator script.
-- **`docs/`**: Documentation and System Architecture Manuals (`macro_agent_setup_v5.1.0.md`).
-- **`data/`**: Local data snapshots, caches, and live telemetry outputs (`live_telemetry.json`).
-- **`data/raw/`**: The local partitioned Data Lake structured as `YYYY/MM/DD/` directories housing Parquet price tables and partitioned event logs (`events.jsonl`).
+  - **`visualize_paper_trading.py`**: Paper trading dashboard plotter and Excel ledger exporter.
+- **`docs/`**: Documentation and System Architecture Manuals (`macro_agent_setup_v5.2.0.md`).
+- **`data/`**: Structured subdirectories isolating state and logs:
+  - **`data/state/`**: Active validations snapshot matrices (`market_snapshot.json`, `market_snapshot_prior.json`).
+  - **`data/predictions/`**: Calibration forecast history logs (`mlp_predictions_history_{interval}.json`).
+  - **`data/telemetry/`**: Phase 2 telemetry metrics payload (`live_telemetry.json`).
+  - **`data/paper_trading/`**: Live simulated paper portfolios and transaction ledgers (`paper_portfolio.json`, `paper_ledger.csv`).
+  - **`data/raw/`**: The local partitioned Data Lake structured as `YYYY/MM/DD/` directories housing Parquet price tables and partitioned event logs (`events.jsonl`).
 - **`models/`**: Saved machine learning models and scaler binaries.
-- **`reports/`**: Mapped output briefings and backtest records.
+- **`reports/`**: Mapped output briefings, backtest records, paper trading PNG dashboards, and XLSX spreadsheets.
 - **`logs/`**: Execution, error, and immutable audit logs.
+- **`run_1h.sh`, `run_4h.sh`, `run_weekly.sh`**: Automatic pipeline runner scripts.
 - **`Dockerfile`, `docker-compose.yml`, `requirements.txt`**: Complete containerization and deployment configurations.
 
 ---
 
-## v5.1.0 Multi-Asset Ensemble OS & Capital Rotation
+## v5.2.0 Multi-Asset Ensemble OS with Paper Trading & 14-Feature Space
 
 The data pipeline operates as an enterprise-grade containerized event-driven OS featuring parallel LLM experts, step-by-step Chain-of-Thought (CoT) verification, and quantitative divergence protection filters:
 ```mermaid
@@ -69,8 +75,8 @@ graph TD
 
     %% 3. Quantitative Mathematical Engines & Validation Checkpoints
     subgraph Engines["3. Quantitative Mathematical Engines & Type-Safety"]
-        FE["FeatureEngine (Dynamic Rolling Window return z-scores)"]
-        Schema1["Pydantic Schema: Feature Vector"]
+        FE["FeatureEngine (Dynamic Rolling Window returns & spreads)"]
+        Schema1["Pydantic Schema: 14-Feature Vector<br>(spx_ret, dxy_ret, vix_zscore, Inst_Heat_Index, wti_ret,<br>gsr_ret, us10y_delta, spread_level, btc_ret, usdcad_ret,<br>es_ret, nq_ret, ym_ret, rty_ret)"]
         HMM["HMMEngine (Uniform Start & VIX GARCH Penalty Filter)"]
         Schema2["Pydantic Schema: RegimeState"]
         RE["RiskEngine (Dynamic Measurement Noise & Ensembles)"]
@@ -81,8 +87,8 @@ graph TD
         Schema3["Pydantic Schema: RiskState"]
         
         DailyPart --> FE
-        FE -->|"Process stats, GARCH, Credit composite z"| Schema1
-        Schema1 -->|"60D equivalent Return z-scores"| HMM
+        FE -->|"Process 14 metrics & daily/hourly yield changes"| Schema1
+        Schema1 -->|"Aligned feature vectors"| HMM
         HMM -->|"VIX z-score GARCH Bayesian Penalty Filter"| Schema2
         Schema2 -->|"KalmanFilter & Dynamic Measurement Noise R"| RE
         RE --> EnsembleInference
@@ -131,17 +137,25 @@ graph TD
     end
 
     %% 6. Snapshot, Reporting & Telemetry
-    subgraph Output["6. Persistent Event Logging, Presentation & Telemetry"]
-        Snap["Validated Market Snapshot (market_snapshot.json)"]
-        Telem["Live Telemetry File (live_telemetry.json)"]
+    subgraph Output["6. Persistent Event Logging, Presentation & Paper Trading"]
+        Snap["Validated Market Snapshot (data/state/market_snapshot.json)"]
+        Telem["Live Telemetry File (data/telemetry/live_telemetry.json)"]
+        PB["PaperBroker (data/paper_trading/paper_portfolio.json)"]
+        Ledger["Paper Ledger (data/paper_trading/paper_ledger.csv)"]
+        VPT["visualize_paper_trading.py"]
+        ExcelDash["Reports (paper_trading_performance.png & .xlsx)"]
         VM["generate_visual_map.py"]
         VisMap["visualize_map.png (Stacked allocation charts)"]
-        BR["build_report.py (v5.1.0 Multi-Asset Presenter)"]
+        BR["build_report.py (v5.2.0 presenter)"]
         PD["push_to_discord.py"]
         Discord["Discord Channels"]
         
         Balancer -->|"SPX Long & Short / BTC / GLD / WTI / Cash"| Snap
         Balancer -->|"Live Telemetry Output"| Telem
+        Balancer -->|"Kelly Target Allocations"| PB
+        PB -->|"Log execution with 5 bps slippage"| Ledger
+        Ledger --> VPT
+        VPT -->|"Performance plots & spreadsheets"| ExcelDash
         Snap -->|"Retrieve from events.jsonl"| BR
         Snap -->|"Parse backtest daily log"| VM
         VM --> VisMap
@@ -155,7 +169,7 @@ graph TD
     class FE,Schema1,HMM,Schema2,RE,EnsembleInference,CalibCheck,AutoInversion,ConsensusCheck,Schema3 EngineStyle;
     class ThreadPool,MacroEx,PsychEx MoEStyle;
     class MoECon,EchoCheck,EchoPenalty,DivergeCheck,DivergeSlash,Overrides,AssetAlloc,Balancer MoEStyle;
-    class Snap,Telem,VM,VisMap,BR,PD,Discord OutputStyle;
+    class Snap,Telem,PB,Ledger,VPT,ExcelDash,VM,VisMap,BR,PD,Discord OutputStyle;
 ```
 
 ## Core Script Ecosystem & Ingestion Flow
@@ -163,20 +177,21 @@ graph TD
 The Python architecture is structured as a modular quantitative pipeline. Below is the operational workflow and structural breakdown of the scripts housed in `src/`:
 
 1. **`fetch_market_data.py` (The Enterprise Conductor Orchestrator)**
-   - **Dependency Injection:** Instantiates and injects concrete providers (`YahooAdapter`, `ForexFactoryAdapter`, `GeminiAdapter`, `LakeManager`, `HMMEngine`, `RiskEngine`, `ConsensusEngine`) dynamically.
+   - **Dependency Injection:** Instantiates and injects concrete providers (`YahooAdapter`, `ForexFactoryAdapter`, `GeminiAdapter`, `LakeManager`, `HMMEngine`, `RiskEngine`, `ConsensusEngine`, `PaperBroker`) dynamically.
    - **EventBus Pub-Sub Sequence (`src/observability/event_bus.py`):** Runs the pipeline as a series of decoupled events (`SystemStart` -> `DataFetched` -> `FeaturesEngineered` -> `EnginesCompleted` -> `PipelineComplete`).
    - **Structured Logging & Global Interception (`src/data_lake/lake_manager.py`):** Captures every event fired in the system and logs it directly to `events.jsonl` under daily partitioned folders: `data/raw/YYYY/MM/DD/events.jsonl`.
    - **Type-Safe Validation (`src/schemas/models.py`):** Enforces strict data structure contracts using Pydantic, incorporating `EconomicCalendar` and `EconomicEvent` schemas.
    - **Asset Ingestion & Parquet Partitioning:** Ingests price series and economic calendar feeds, saving them to daily partitioned Parquet tables.
-   - **Feature Construction (`src/engines/feature_engine.py`):** Computes GARCH volatility, Gold-to-Silver ratio, volume heat, credit stress composite z-scores, and TruChain blocks.
-   - **regime Inference & Sizing (`src/engines/hmm_engine.py` & `src/engines/risk_engine.py`):** Computes multi-fractal regimes, runs Kalman filter state tracking, and solves Kelly portfolio sizing.
+   - **Feature Construction (`src/engines/feature_engine.py`):** Computes returns, Gold-to-Silver ratio, volume heat, credit stress, indices, and 14-feature space matrices.
+   - **Regime Inference & Sizing (`src/engines/hmm_engine.py` & `src/engines/risk_engine.py`):** Computes multi-fractal regimes, runs Kalman filter state tracking, and solves Kelly portfolio sizing.
    - **Mixture of Experts & CoT Synthesis (`src/adapters/gemini_adapter.py` & `src/engines/consensus_engine.py`):** 
      - Runs the Macro Policy and Market Psychology experts in parallel using `ThreadPoolExecutor`.
      - Synthesizes their CoT step-by-step reasoning blocks and scores into a unified `NewsSignal`.
      - **Critical Divergence Slasher:** If news is extremely bullish, but VIX z-score spikes > 1.5, triggers `quantitative_divergence_flag: true` to dynamically slash Kelly exposure by half (0.5x multiplier) to defend capital.
      - Employs `gemini-2.5-flash` to gracefully bypass quota 429 errors.
+   - **Paper Broker Execution (`src/adapters/paper_broker.py`):** Simulates real-time rebalancing based on Kelly target fractions with 5 bps slippage, logging to `data/paper_trading/paper_ledger.csv`.
 
-2. **`build_report.py` (Consensus Engine & 4-Hour Compiler)**
+2. **`build_report.py` (Consensus Engine & Presentation Compiler)**
    - **Resilient Log Fetching:** Scans the data lake partitions, finds the latest `events.jsonl` log file, extracts the `PipelineComplete` event payload, and validates it against the `MarketSnapshot` Pydantic model.
    - **Deterministic Voting:** Aggregates quantitative indicators and computes conviction-weighted votes.
    - **Epistemic Kelly Sizing:** Solves target portfolio exposure sizing calibrated by Brier scores and regime decays. Applies a **1.2x aggressive multiplier** (up to 120% exposure) during liquidity-driven rallies, a **0.5x slasher** during rate shocks, and a **0.5x capital slasher** during quantitative narrative-reality divergences.
@@ -195,19 +210,23 @@ The Python architecture is structured as a modular quantitative pipeline. Below 
    - **Notifications:** Coordinates automated role pings for higher-priority critical situations and securely uploads full markdown files under a 7MB size ceiling.
 
 5. **`train_models.py` (Offline Machine Learning Training Pipeline)**
-   - **Data Compiling:** Pulls 5 years of historical multi-asset data and fits GARCH volatility layers.
-   - **HMM Calibration:** Standardizes the 10 aligned feature dimensions and fits a 6-state `GaussianHMM` with full covariance matrices over 500 EM iterations. Assigns state labels deterministically based on empirical SPX, yields, and oil emission means.
-   - **MLP Calibration:** Trains a multi-layer perceptron neural network using a `(16, 8)` hidden layer topology with ReLU activation and Adam solver, mapping features to a 5-day forward cumulative return target (0=Risk-Off, 1=Risk-On, 2=Transitional). Saves both model binaries to `models/`.
+   - **Data Compiling:** Pulls 5 years of historical multi-asset data including equities, index futures, dollar index, commodities, and volatility.
+   - **HMM Calibration:** Standardizes the 14 aligned feature dimensions (S&P 500, DXY, VIX, WTI, GSR, USDCAD, BTC, US10Y daily change, 2s10s spread, and returns of ES, NQ, YM, RTY futures) and fits a 6-state `GaussianHMM` with full covariance matrices over 500 EM iterations.
+   - **MLP Calibration:** Trains a multi-layer perceptron neural network using a `(16, 8)` hidden layer topology with ReLU activation and Adam solver, mapping features to a 5-day forward cumulative return target (0=Risk-Off, 1=Risk-On, 2=Transitional). Saves model binaries to `models/`.
 
 6. **`backtest.py` (Empirical Backtest Audit Engine)**
    - **Viterbi Decoding:** Loads the active models and decodes 2 years of daily market features into chronological state labels sequence.
-   - **Statistical Auditing:** Measures mean daily returns, annualizes SPX/WTI metrics, and compiles daily yield changes (in basis points) across all 6 regimes, outputting a clear performance audit (`reports/backtest_results.md`) to verify quantitative edge before live deployment.
+   - **Statistical Auditing:** Measures mean daily returns, annualizes SPX/WTI metrics, and compiles daily yield changes (in basis points) across all 6 regimes, outputting a clear performance audit (`reports/backtest_extended_results.md`) to verify quantitative edge before live deployment.
 
 7. **`tune_hyperparameters.py` (Hyperparameter Tuning Meta-Agent)**
    - **Macro Calibration:** A standalone scheduled python script that analyzes central bank summaries, FOMC minutes, or Beige Books via the Gemini LLM.
    - **JSON Configuration Injection:** Outputs structural macroeconomic velocity metrics into a local configuration schema (`tuning_configs.json`), allowing `fetch_market_data.py` to adapt dynamic half-life variables automatically.
 
-8. **`visualize_math_4h.ipynb` & `visualize_math_1w.ipynb` (Dual Interactive Math Visualizers)**
+8. **`visualize_paper_trading.py` (Paper Trading Performance Dashboard)**
+   - **Performance curves:** Computes and plots curves tracking realized returns, unrealized equity fluctuations, net PnL, and cumulative transaction friction fees paid.
+   - **Chronological Ledgers:** Exports execution logs to a dual-sheet spreadsheet `/Users/mac/agent/reports/paper_trading_performance.xlsx` containing the comprehensive trade ledger and performance metrics summary.
+
+9. **`visualize_math_4h.ipynb` & `visualize_math_1w.ipynb` (Dual Interactive Math Visualizers)**
    - **Visual Overlay:** Plots HMM state boundaries directly overlaid on the S&P 500 price chart.
    - **Fragility & Backwardation Heatmap:** Visualizes structural fragility states, including Volatility Term Structure backwards curves (VIX9D vs VIX).
    - **Gemini Geopolitical Shock Visualizer:** Plots semantic shock decodes against a horizontal red line representing the critical **0.70 Geopolitical Shock Trigger** boundary.
@@ -283,10 +302,10 @@ To configure operational parameters, API keys, and configurations:
 
 ## 2. System Architecture & Technical Manual
 
-The agent is now structured under the **v5.1.0 Multi-Asset Ensemble OS & Capital Rotation**, featuring dual-provider active-active LLM failover, type-safe validations, in-memory `EventBus` pub-sub, and Docker container support.
+The agent is now structured under the **v5.2.0 Multi-Asset Ensemble OS with Paper Trading & 14-Feature Space**, featuring dual-provider active-active LLM failover, type-safe validations, in-memory `EventBus` pub-sub, paper broker engines, and Docker container support.
 
-For a full breakdown of the mathematical engines, data ingestion layers, GARCH penalty filters, and consensus logic, please refer to the **Technical Developer Manual** located at:
-`docs/macro_agent_setup_v5.1.0.md`
+For a full breakdown of the mathematical engines, data ingestion layers, GARCH penalty filters, consensus logic, and paper trading ledgers, please refer to the **Technical Developer Manual** located at:
+`docs/macro_agent_setup_v5.2.0.md`
 
 ---
 
@@ -326,6 +345,9 @@ Cron requires your Mac to be awake. If your Mac goes to sleep, the cron job will
    ```
 2. Add the following entries to schedule the briefings. Make sure to use the absolute paths to the scripts:
    ```cron
+   # Run the hourly automated pipeline (every hour)
+   0 * * * * /Users/mac/agent/run_1h.sh >> /Users/mac/agent/logs/cron.log 2>&1
+
    # Run the 4-hour automated pipeline (every 4 hours)
    0 */4 * * * /Users/mac/agent/run_4h.sh >> /Users/mac/agent/logs/cron.log 2>&1
 
@@ -336,6 +358,7 @@ Cron requires your Mac to be awake. If your Mac goes to sleep, the cron job will
 
 ### How to "Catch Up"
 If your Mac was asleep and missed a run, you can always catch up manually! Just open your terminal and run the exact absolute path for whichever script you missed:
+- Missed an hourly update? Run: `/Users/mac/agent/run_1h.sh`
 - Missed a 4-hour update? Run: `/Users/mac/agent/run_4h.sh`
 - Missed the Sunday weekly report? Run: `/Users/mac/agent/run_weekly.sh`
 
@@ -368,24 +391,33 @@ The agent's deep learning components (HMM and MLP Classifier) are not static. Yo
 
 ---
 
-## 6. Stacked Portfolio Visualization (generate_visual_map.py)
+## 6. Stacked Portfolio & Paper Trading Visualization
 
-The agent includes a centralized plotting and verification script to generate publication-grade stacked allocation charts:
+The agent includes centralized visual audit scripts to generate publication-grade charts and performance trackers:
 
-1. Ensure the graphing packages are installed:
-   ```bash
-   pip3 install matplotlib pandas
-   ```
-2. Execute the visual map generator script:
+### A. Stacked Portfolio Map (`src/generate_visual_map.py`)
+Parses the historical backtest metrics to analyze the model's allocations:
+1. Execute the visual map generator script:
    ```bash
    python3 /Users/mac/agent/src/generate_visual_map.py
    ```
-3. The script will automatically parse your latest extended backtest report (`reports/backtest_extended_results.md`) and output a high-resolution PNG chart to:
-   - **`reports/visualize_map.png`** (or interval-specific outputs like `visualize_map_4h.png`, etc.)
-4. The generated visual map renders a three-panel plot:
+2. The script parses the extended backtest report (`reports/backtest_extended_results.md`) and outputs a high-resolution PNG chart to **`reports/visualize_map.png`** (or interval-specific outputs like `visualize_map_4h.png`, etc.).
+3. The generated visual map renders a three-panel plot:
    - **Macro Regime & S&P 500 Trajectory:** Plots the S&P 500 closing price overlaid with historical regime transitions.
    - **Deep Learning Probability Calibration:** Displays the ensemble bull probabilities along the 50% threshold line.
    - **Capital Rotation Engine (Active Allocation):** Plots a stacked area chart depicting the real-time capital rotation across S&P 500 (Long & Short), Gold (GLD), Bitcoin (BTC), Oil (WTI), and remaining Cash balances.
+
+### B. Paper Trading Performance Dashboard (`src/visualize_paper_trading.py`)
+Parses the live transaction execution logs generated by the `PaperBroker` to build visual analytics:
+1. Execute the paper trading visualization script:
+   ```bash
+   python3 /Users/mac/agent/src/visualize_paper_trading.py
+   ```
+2. The script parses the transaction ledger (`data/paper_trading/paper_ledger.csv`) and outputs a three-panel dashboard to **`reports/paper_trading_performance.png`** plotting:
+   - **BUY/SELL Execution Markers:** Trade actions overlaying the SPX and Gold price curves.
+   - **Friction Analysis:** Dynamic tracking of cumulative transaction slippage fees paid over time.
+   - **PnL Analytics:** Curves tracking Gross Realized, Unrealized, and Net portfolio PnL.
+3. It also exports a dual-sheet spreadsheet to **`reports/paper_trading_performance.xlsx`** detailing the chronological trade ledger and execution summaries.
 
 ---
 
@@ -408,6 +440,12 @@ Whenever changes are made to the system architecture, automatically update the v
 - **Tiny change** (e.g., typo fix, formatting): Increment sub-patch version (x.x.x.1 to 9). Example: v1.3.1 -> v1.3.1.1
 
 ### Patch Notes:
+- **v5.2.0** (Paper Trading & 14-Feature Space):
+  - **[ADDED] Paper Trading Simulation Engine:** Deployed a simulated `PaperBroker` (`src/adapters/paper_broker.py`) executing rebalancing operations for Kelly allocation targets (SPX and Gold), applying 5 bps (0.05%) execution slippage, enforcing trade size thresholds, and logging chronological trades in `data/paper_trading/paper_ledger.csv`.
+  - **[ADDED] 14-Feature Input Space:** Expanded model input vectors from 10 to 14 dimensions, introducing daily/hourly returns of index futures (`ES=F`, `NQ=F`, `YM=F`, `RTY=F`) and Bitcoin returns, while replacing z-score normalizations with raw returns where appropriate.
+  - **[ADDED] Hourly automated pipeline (`run_1h.sh`):** Added high-frequency runner script executing conductor fetches, model voting consensus calibrators, simulated paper rebalances, and pushing minimalist Brutalist Markdown reports to Discord.
+  - **[ADDED] Excel & Chart Performance Analytics:** Deployed `src/visualize_paper_trading.py` to parse execution ledgers and export visual dashboards (`reports/paper_trading_performance.png` tracking realized/unrealized equity curves and transaction friction) and dual-sheet Excel spreadsheets (`reports/paper_trading_performance.xlsx`).
+  - **[MODIFIED] Subdirectory Organization:** Restructured the `data/` folder into isolated directories: `data/state/` (active snapshot matrices), `data/predictions/` (forecast logs), `data/telemetry/` (telemetry payloads), and `data/paper_trading/` (portfolio ledgers).
 - **v5.1.0** (Multi-Asset Ensemble OS & Capital Rotation Engine):
   - **[ADDED] Multi-Asset Ensemble ML Pipeline:** Trains distinct ensembles of three models (Multi-Layer Perceptron, Random Forest, Gradient Boosting) for S&P 500 (`spx`), Bitcoin (`btc`), Gold (`gld`), and Crude Oil (`wti`).
   - **[ADDED] Model Consensus Scoring:** Calculates prediction agreement standard deviation across ensemble models; high consensus ($\sigma < 0.15$) dynamically scales up the target Kelly exposure by 1.5x, while low consensus scales it down by 0.5x.

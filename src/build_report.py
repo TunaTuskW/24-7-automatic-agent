@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-build_report.py - v5.1.0
+build_report.py - v5.2.0
 Generates institutional macro updates displaying dual-engine (HMM + Deep MLP)
 statistics alongside the decision-oriented AI Strategic Assumptions Layer.
 """
@@ -313,7 +313,7 @@ Positioning : {synth['positioning']}
 Invalidation: {synth['invalidation']}
 ```
 """
-    report_filename = f"4 hours update ({timestamp_str}).md"
+    report_filename = f"1 hour update ({timestamp_str}).md"
     reports_dir = os.path.join(os.path.dirname(__file__), '..', 'reports', 'updates')
     os.makedirs(reports_dir, exist_ok=True)
     report_path = os.path.join(reports_dir, report_filename)

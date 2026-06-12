@@ -209,11 +209,15 @@ def run_backtest(interval="1d"):
             "gsr_ret": gsr_delta_pct,
             "us10y_delta": us10y_delta,
             "spread_level": us_2s10s_spread,
-            "btc_vol_z": btc_vol_z,
-            "usdcad_ret": get_ret("USDCAD")
+            "btc_ret": get_ret("BTC"),
+            "usdcad_ret": get_ret("USDCAD"),
+            "es_ret": get_ret("ES"),
+            "nq_ret": get_ret("NQ"),
+            "ym_ret": get_ret("YM"),
+            "rty_ret": get_ret("RTY")
         }
         
-        ordered_keys = ["spx_ret", "dxy_ret", "vix_zscore", "Inst_Heat_Index", "wti_ret", "gsr_ret", "us10y_delta", "spread_level", "btc_vol_z", "usdcad_ret"]
+        ordered_keys = ["spx_ret", "dxy_ret", "vix_zscore", "Inst_Heat_Index", "wti_ret", "gsr_ret", "us10y_delta", "spread_level", "btc_ret", "usdcad_ret", "es_ret", "nq_ret", "ym_ret", "rty_ret"]
         features_vector = [float(features_dict[k]) for k in ordered_keys]
         
         if i < 3:
@@ -405,6 +409,30 @@ def run_backtest(interval="1d"):
         else:
             prob_table += f"| {label} | 0 | 0.0% | 0.000% |\n"
 
+    paper_ledger_path = os.path.join(os.path.dirname(__file__), "..", "data", "paper_trading", "paper_ledger.csv")
+    paper_section = "## Paper Trading Ledger Analysis\n_No paper ledger found._\n"
+    if os.path.exists(paper_ledger_path):
+        try:
+            pdf = pd.read_csv(paper_ledger_path)
+            total_fees = pdf['fee'].sum()
+            total_buys = len(pdf[pdf['action'] == 'BUY'])
+            total_sells = len(pdf[pdf['action'] == 'SELL'])
+            portfolio_path = os.path.join(os.path.dirname(__file__), "..", "data", "paper_trading", "paper_portfolio.json")
+            total_equity = 10000.0
+            if os.path.exists(portfolio_path):
+                with open(portfolio_path, 'r') as f:
+                    pdata = json.load(f)
+                    total_equity = pdata.get("total_equity", 10000.0)
+            
+            pnl_pct = ((total_equity - 10000.0) / 10000.0) * 100
+            
+            paper_section = "## Paper Trading Ledger Analysis\n"
+            paper_section += f"- **Mock Execution PnL:** {pnl_pct:.2f}% (Total Equity: ${total_equity:,.2f})\n"
+            paper_section += f"- **Total Mock Trades:** {total_buys + total_sells} ({total_buys} Buys, {total_sells} Sells)\n"
+            paper_section += f"- **Total Slippage/Fees Paid:** ${total_fees:,.2f}\n"
+        except Exception as e:
+            paper_section = f"## Paper Trading Ledger Analysis\n_Failed to parse paper ledger: {e}_\n"
+            
     report = f"""# Quantitative Engine Backtest: Detailed (Jan 1 - May 30)
 
 **Test Period:** Jan 1, 2026 to May 30, 2026
@@ -416,6 +444,8 @@ def run_backtest(interval="1d"):
 - **Average Kelly Allocation:** {np.mean([r['kelly_exposure'] for r in results]):.3f}
 
 {prob_table}
+
+{paper_section}
 
 ## Detailed Daily Log
 | Date | SPX Close | HMM Regime | Kalman State | Ensemble Prob | Consensus | SPX Kelly | Short Kelly | BTC Kelly | GLD Kelly | WTI Kelly | Cash | Portfolio 5D PnL |

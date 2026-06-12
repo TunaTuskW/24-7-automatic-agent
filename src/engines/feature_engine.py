@@ -17,7 +17,7 @@ logger = get_logger("feature-engine")
 ALL_YF_TICKERS = {
     # Equities
     "SPX": "^GSPC", "NDX": "^NDX", "DAX": "^GDAXI", "FTSE": "^FTSE", "N225": "^N225",
-    "HSI": "^HSI", "SHANGHAI": "000001.SS", "KOSPI": "^KS11", "TASI": "^TASI.SR", "DFM": "DFMGI.AE",
+    "HSI": "^HSI", "SHANGHAI": "000001.SS", "KOSPI": "^KS11", "TASI": "^TASI.SR", "DFM": "DFMGI.AE", "ES": "ES=F", "NQ": "NQ=F", "YM": "YM=F", "RTY": "RTY=F",
     # Commodities & Safe Havens
     "WTI": "CL=F", "Brent": "BZ=F", "TTF": "TTF=F",
     "Gold": "GC=F", "Silver": "SI=F", "Copper": "HG=F",

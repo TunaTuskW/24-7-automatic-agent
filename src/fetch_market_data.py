@@ -14,6 +14,7 @@ from src.adapters.yahoo_adapter import YahooAdapter
 from src.adapters.gemini_adapter import GeminiAdapter
 from src.adapters.groq_adapter import GroqAdapter
 from src.adapters.forexfactory_adapter import ForexFactoryAdapter
+from src.adapters.paper_broker import PaperBroker
 from src.engines.hmm_engine import HMMEngine
 from src.engines.risk_engine import RiskEngine
 from src.engines.consensus_engine import ConsensusEngine
@@ -48,12 +49,12 @@ def fetch_rss_headlines():
 class Conductor:
     def __init__(self, interval="1d"):
         self.interval = interval
-        logger.info(f"Initializing v5.1.0 Event-Driven Conductor (Interval: {interval})")
+        logger.info(f"Initializing v5.2.0 Event-Driven Conductor (Interval: {interval})")
         
-        self.data_broker = DataBroker()
         self.lake_manager = LakeManager()
         self.event_bus = EventBus()
         self.event_bus.set_interceptor(self.lake_manager.log_event)
+        self.paper_broker = PaperBroker(os.path.join(os.path.dirname(__file__), "..", "data"))
         
         fred_key = get_fred_key()
         self.data_broker = YahooAdapter(fred_key=fred_key)
@@ -75,16 +76,20 @@ class Conductor:
         self.features_vector = []
         self.feature_metadata = {}
         self.ordered_feature_keys = [
-            ("spx_ret", "SPX", "z_score"),
-            ("dxy_ret", "DXY", "z_score"),
+            ("spx_ret", "SPX", "delta_pct"),
+            ("dxy_ret", "DXY", "delta_pct"),
             ("vix_zscore", "VIX", "z_score"),
             ("Inst_Heat_Index", "volume_activity_heat", "institutional_heat_index"),
-            ("wti_ret", "WTI", "z_score"),
-            ("gsr_ret", "gold_to_silver_ratio", "z_score"),
-            ("us10y_delta", "bonds", "delta_zscore"),
-            ("spread_level", "bonds", "spread_zscore"),
-            ("crypto_mfi_z", "institutional_crypto_mfi", "composite_z"),
-            ("usdcad_ret", "USDCAD", "z_score")
+            ("wti_ret", "WTI", "delta_pct"),
+            ("gsr_ret", "gold_to_silver_ratio", "delta_pct"),
+            ("us10y_delta", "bonds", "delta"),
+            ("spread_level", "bonds", "spread_2s10s"),
+            ("btc_ret", "BTC", "delta_pct"),
+            ("usdcad_ret", "USDCAD", "delta_pct"),
+            ("es_ret", "ES", "delta_pct"),
+            ("nq_ret", "NQ", "delta_pct"),
+            ("ym_ret", "YM", "delta_pct"),
+            ("rty_ret", "RTY", "delta_pct")
         ]
         
         # Register Event Callbacks
@@ -252,7 +257,7 @@ class Conductor:
         mcs, sub_comps = compute_mcs(self.clean_daily, self.bonds, self.clean_daily)
         self.snapshot.mcs = {"score": mcs, "label": "NEUTRAL", "components": sub_comps}
         
-        prior_path = os.path.join(os.path.dirname(__file__), "..", "data", "market_snapshot_prior.json")
+        prior_path = os.path.join(os.path.dirname(__file__), "..", "data", "state", "market_snapshot_prior.json")
         prior = {}
         if os.path.exists(prior_path):
             try:
@@ -315,7 +320,7 @@ class Conductor:
         current_spx_val = self.clean_daily.get("SPX", {}).get("current", 0.0) if self.clean_daily.get("SPX") else 0.0
         current_ihi = self.clean_daily.get("volume_activity_heat", {}).get("institutional_heat_index", 0.0)
         
-        predictions_history_path = os.path.join(os.path.dirname(__file__), "..", "data", f"mlp_predictions_history_{self.interval}.json")
+        predictions_history_path = os.path.join(os.path.dirname(__file__), "..", "data", "predictions", f"mlp_predictions_history_{self.interval}.json")
         brier_score = 0.1500
         history = []
         try:
@@ -468,9 +473,9 @@ class Conductor:
         self.event_bus.publish("PipelineComplete", self.snapshot)
 
     def handle_pipeline_complete(self, snapshot_payload):
-        out_path = os.path.join(os.path.dirname(__file__), "..", "data", "market_snapshot.json")
-        prior_path = os.path.join(os.path.dirname(__file__), "..", "data", "market_snapshot_prior.json")
-        telemetry_path = os.path.join(os.path.dirname(__file__), "..", "data", "live_telemetry.json")
+        out_path = os.path.join(os.path.dirname(__file__), "..", "data", "state", "market_snapshot.json")
+        prior_path = os.path.join(os.path.dirname(__file__), "..", "data", "state", "market_snapshot_prior.json")
+        telemetry_path = os.path.join(os.path.dirname(__file__), "..", "data", "telemetry", "live_telemetry.json")
         
         snapshot_dict = self.snapshot.model_dump()
         
@@ -496,10 +501,24 @@ class Conductor:
             
         self.lake_manager.save_unstructured(snapshot_dict, "market_snapshot.jsonl")
         
+        # Execute paper trading simulation
+        try:
+            target_allocs = {
+                "SPX": kelly_obj.get("SPX_Kelly", 0.0),
+                "Gold": kelly_obj.get("Safe_Haven_Kelly", 0.0)
+            }
+            current_prices = {
+                "SPX": self.clean_daily.get("SPX", {}).get("current", 0.0),
+                "Gold": self.clean_daily.get("Gold", {}).get("current", 0.0)
+            }
+            self.paper_broker.execute_rebalance(target_allocs, current_prices)
+        except Exception as e:
+            logger.error(f"Paper broker execution failed: {e}")
+            
         with open(prior_path, 'w') as f:
             json.dump(snapshot_dict, f, indent=4)
             
-        logger.info("v5.1.0 Event-Driven Pipeline Complete")
+        logger.info("v5.2.0 Event-Driven Pipeline Complete")
 
 if __name__ == "__main__":
     import argparse
