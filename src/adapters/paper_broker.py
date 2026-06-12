@@ -31,6 +31,7 @@ class PaperBroker:
         self.starting_cash = 10000.0
         self.slippage_pct = 0.0005 # 5 bps slippage
         self.min_trade_size = 10.0 # Minimum $10 trade
+        self.rebalance_drift_threshold = 0.025 # 2.5% drift threshold
         
         self.portfolio = self._load_portfolio()
         
@@ -141,9 +142,10 @@ class PaperBroker:
             current_val = current_shares * current_prices[ticker]
             
             diff_val = target_val - current_val
+            drift_pct = abs(diff_val) / total_equity if total_equity > 0 else 0.0
             
-            # If we need to sell (diff_val is negative) and the trade size is > min_trade_size
-            if diff_val < -self.min_trade_size:
+            # If we need to sell (diff_val is negative) and the drift exceeds threshold
+            if diff_val < -self.min_trade_size and drift_pct >= self.rebalance_drift_threshold:
                 val_to_sell = abs(diff_val)
                 # Apply slippage (sell at a slightly worse/lower price)
                 exec_price = current_prices[ticker] * (1.0 - self.slippage_pct)
@@ -175,9 +177,10 @@ class PaperBroker:
             current_val = current_shares * current_prices[ticker]
             
             diff_val = target_val - current_val
+            drift_pct = abs(diff_val) / total_equity if total_equity > 0 else 0.0
             
-            # If we need to buy (diff_val is positive) and trade size is > min_trade_size
-            if diff_val > self.min_trade_size:
+            # If we need to buy (diff_val is positive) and drift exceeds threshold
+            if diff_val > self.min_trade_size and drift_pct >= self.rebalance_drift_threshold:
                 val_to_buy = diff_val
                 
                 # Cap at available cash

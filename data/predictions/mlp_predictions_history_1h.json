@@ -13,5 +13,20 @@
         "predicted_risk_on": 0.49,
         "spx_val_at_prediction": 7430.8599,
         "target_graded": false
+    },
+    {
+        "predicted_risk_on": 0.492,
+        "spx_val_at_prediction": 7430.8599,
+        "target_graded": false
+    },
+    {
+        "predicted_risk_on": 0.494,
+        "spx_val_at_prediction": 7430.8599,
+        "target_graded": false
+    },
+    {
+        "predicted_risk_on": 0.494,
+        "spx_val_at_prediction": 7430.8599,
+        "target_graded": false
     }
 ]

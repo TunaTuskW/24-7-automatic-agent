@@ -90,7 +90,7 @@ def compute_deterministic_synthesis(kalman, volume_heat, extremes, epistemic, di
     kelly_obj = epistemic.get("kelly_exposure_fraction", {})
     if isinstance(kelly_obj, dict):
         kelly_frac = kelly_obj.get("SPX_Kelly", 0.0)
-        safe_haven_frac = kelly_obj.get("Safe_Haven_Kelly", 0.0)
+        safe_haven_frac = kelly_obj.get("GLD_Kelly", 0.0)
     else:
         kelly_frac = kelly_obj
         safe_haven_frac = 0.0

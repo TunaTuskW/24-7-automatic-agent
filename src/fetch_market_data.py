@@ -485,13 +485,13 @@ class Conductor:
         # Write Phase 2 Live Telemetry File
         kelly_obj = self.snapshot.data_science_layer.get("epistemic_metrics", {}).get("kelly_exposure_fraction", {})
         if not isinstance(kelly_obj, dict):
-            kelly_obj = {"SPX_Kelly": kelly_obj, "Safe_Haven_Kelly": 0.0}
+            kelly_obj = {"SPX_Kelly": kelly_obj, "GLD_Kelly": 0.0}
             
         telemetry_payload = {
             "timestamp_utc": self.snapshot.generated_utc,
             "dominant_regime": self.snapshot.regime.dominant_regime,
             "spx_kelly_fraction": kelly_obj.get("SPX_Kelly", 0.0),
-            "safe_haven_kelly_fraction": kelly_obj.get("Safe_Haven_Kelly", 0.0),
+            "safe_haven_kelly_fraction": kelly_obj.get("GLD_Kelly", 0.0),
             "is_capitulation_override_active": self.snapshot.data_science_layer.get("epistemic_metrics", {}).get("is_capitulation_override_active", False),
             "institutional_heat_index": self.snapshot.raw_indicators.get("volume_activity_heat", {}).get("institutional_heat_index", 0.0)
         }
@@ -505,7 +505,7 @@ class Conductor:
         try:
             target_allocs = {
                 "SPX": kelly_obj.get("SPX_Kelly", 0.0),
-                "Gold": kelly_obj.get("Safe_Haven_Kelly", 0.0)
+                "Gold": kelly_obj.get("GLD_Kelly", 0.0)
             }
             current_prices = {
                 "SPX": self.clean_daily.get("SPX", {}).get("current", 0.0),

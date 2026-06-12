@@ -1,5 +1,5 @@
 {
-    "generated_utc": "2026-06-12T21:06:00.669392+00:00",
+    "generated_utc": "2026-06-12T21:46:27.711229+00:00",
     "raw_indicators": {
         "SPX": {
             "current": 7430.8599,
@@ -112,53 +112,53 @@
             "momentum": "up"
         },
         "NQ": {
-            "current": 29668.25,
+            "current": 29677.75,
             "prev": 29650.5,
-            "delta": 17.75,
-            "delta_pct": 0.06,
-            "mean_60d": 29093.8083,
-            "std_60d": 411.5782,
-            "z_score": 0.044,
+            "delta": 27.25,
+            "delta_pct": 0.092,
+            "mean_60d": 29093.9667,
+            "std_60d": 411.8047,
+            "z_score": 0.116,
             "momentum": "up"
         },
         "YM": {
-            "current": 51597.0,
+            "current": 51608.0,
             "prev": 51603.0,
-            "delta": -6.0,
-            "delta_pct": -0.012,
-            "mean_60d": 50705.95,
-            "std_60d": 562.3032,
-            "z_score": -0.135,
+            "delta": 5.0,
+            "delta_pct": 0.01,
+            "mean_60d": 50706.1333,
+            "std_60d": 562.6004,
+            "z_score": -0.061,
             "momentum": "up"
         },
         "RTY": {
-            "current": 2948.8,
+            "current": 2949.2,
             "prev": 2946.1001,
-            "delta": 2.7,
-            "delta_pct": 0.092,
-            "mean_60d": 2891.96,
-            "std_60d": 41.3957,
-            "z_score": 0.087,
+            "delta": 3.0999,
+            "delta_pct": 0.105,
+            "mean_60d": 2891.9667,
+            "std_60d": 41.4051,
+            "z_score": 0.117,
             "momentum": "up"
         },
         "WTI": {
-            "current": 84.21,
+            "current": 84.29,
             "prev": 84.3,
-            "delta": -0.09,
-            "delta_pct": -0.107,
-            "mean_60d": 88.2388,
-            "std_60d": 2.6822,
-            "z_score": -0.039,
+            "delta": -0.01,
+            "delta_pct": -0.012,
+            "mean_60d": 88.2402,
+            "std_60d": 2.6802,
+            "z_score": 0.058,
             "momentum": "down"
         },
         "Brent": {
-            "current": 86.78,
+            "current": 86.71,
             "prev": 86.81,
-            "delta": -0.03,
-            "delta_pct": -0.035,
-            "mean_60d": 90.9718,
-            "std_60d": 2.7558,
-            "z_score": 0.057,
+            "delta": -0.1,
+            "delta_pct": -0.115,
+            "mean_60d": 90.9707,
+            "std_60d": 2.7577,
+            "z_score": -0.033,
             "momentum": "down"
         },
         "TTF": {
@@ -172,43 +172,43 @@
             "momentum": "up"
         },
         "Gold": {
-            "current": 4237.5,
+            "current": 4239.8999,
             "prev": 4231.8999,
-            "delta": 5.6001,
-            "delta_pct": 0.132,
-            "mean_60d": 4170.1767,
-            "std_60d": 57.716,
-            "z_score": 0.27,
+            "delta": 8.0,
+            "delta_pct": 0.189,
+            "mean_60d": 4170.2167,
+            "std_60d": 57.7643,
+            "z_score": 0.388,
             "momentum": "up"
         },
         "Silver": {
-            "current": 68.1,
+            "current": 68.12,
             "prev": 67.875,
-            "delta": 0.225,
-            "delta_pct": 0.331,
-            "mean_60d": 65.5208,
-            "std_60d": 1.6591,
-            "z_score": 0.294,
+            "delta": 0.245,
+            "delta_pct": 0.361,
+            "mean_60d": 65.5211,
+            "std_60d": 1.6597,
+            "z_score": 0.328,
             "momentum": "up"
         },
         "Copper": {
-            "current": 6.4715,
+            "current": 6.474,
             "prev": 6.4905,
-            "delta": -0.019,
-            "delta_pct": -0.293,
+            "delta": -0.0165,
+            "delta_pct": -0.254,
             "mean_60d": 6.3182,
             "std_60d": 0.0892,
-            "z_score": -0.86,
+            "z_score": -0.763,
             "momentum": "up"
         },
         "DXY": {
-            "current": 99.799,
+            "current": 99.807,
             "prev": 99.766,
-            "delta": 0.033,
-            "delta_pct": 0.033,
-            "mean_60d": 99.8961,
+            "delta": 0.041,
+            "delta_pct": 0.041,
+            "mean_60d": 99.8962,
             "std_60d": 0.1488,
-            "z_score": 0.466,
+            "z_score": 0.571,
             "momentum": "down"
         },
         "EURUSD": {
@@ -252,13 +252,13 @@
             "momentum": "up"
         },
         "USDCAD": {
-            "current": 1.3989,
+            "current": 1.3987,
             "prev": 1.3985,
-            "delta": 0.0005,
-            "delta_pct": 0.032,
+            "delta": 0.0002,
+            "delta_pct": 0.018,
             "mean_60d": 1.3965,
             "std_60d": 0.0023,
-            "z_score": 0.426,
+            "z_score": 0.183,
             "momentum": "up"
         },
         "VIX9D": {
@@ -302,13 +302,13 @@
             "momentum": "up"
         },
         "BTC": {
-            "current": 63407.6289,
+            "current": 63518.9492,
             "prev": 63407.75,
-            "delta": -0.1211,
-            "delta_pct": -0.0,
-            "mean_60d": 62834.7512,
-            "std_60d": 784.4346,
-            "z_score": -0.121,
+            "delta": 111.1992,
+            "delta_pct": 0.175,
+            "mean_60d": 62836.6065,
+            "std_60d": 785.9427,
+            "z_score": 0.239,
             "momentum": "up"
         },
         "IBIT": {
@@ -366,9 +366,9 @@
             "institutional_heat_index": 0.191
         },
         "gold_to_silver_ratio": {
-            "current": 62.225,
+            "current": 62.242,
             "prev": 62.348,
-            "delta_pct": -0.199
+            "delta_pct": -0.171
         },
         "institutional_crypto_mfi": {
             "composite_z": -0.019,
@@ -420,66 +420,66 @@
         },
         "transition_risk": 0.154,
         "start_utc": "2026-06-12T20:55:09.842900+00:00",
-        "duration_days": 0.006683957997685185
+        "duration_days": 0.030280269872685187
     },
     "kalman_state": {
-        "dominant_prob": 0.812,
+        "dominant_prob": 0.863,
         "dominant_state": "transitional",
         "tvd": 0.6408,
         "brier_score_calibration": 0.15,
         "structural_ambiguity_index": 0.0,
         "probabilities": [
-            0.05712253642082107,
-            0.13057689286759033,
-            0.8123005707115887
+            0.05593708285580624,
+            0.08112685601188756,
+            0.8629360611323063
         ],
         "covariance_matrix": [
             [
-                0.0217936778263102,
-                0.0007252685197159263,
-                0.0007252685197159263
+                0.021742995369921123,
+                0.0007148566820034648,
+                0.0007148566820034649
             ],
             [
-                0.0007252685197159264,
-                0.021793677826310198,
-                0.000725268519715926
+                0.000714856682003465,
+                0.021742995369921123,
+                0.0007148566820034648
             ],
             [
-                0.0007252685197159263,
-                0.0007252685197159262,
-                0.021793677826310198
+                0.0007148566820034647,
+                0.0007148566820034646,
+                0.02174299536992112
             ]
         ],
         "is_ambiguous": false,
-        "risk_on": 0.057,
-        "risk_off": 0.131,
-        "transitional": 0.812
+        "risk_on": 0.056,
+        "risk_off": 0.081,
+        "transitional": 0.863
     },
     "mlp_deep_state": {
         "spx": {
-            "bull_probability": 0.49,
-            "bear_probability": 0.51,
+            "bull_probability": 0.494,
+            "bear_probability": 0.506,
             "neutral_probability": 0.0,
             "predicted_class": 0,
             "consensus_score": 1.0
         },
         "btc": {
-            "bull_probability": 0.37,
-            "bear_probability": 0.63,
+            "bull_probability": 0.375,
+            "bear_probability": 0.625,
             "neutral_probability": 0.0,
             "predicted_class": 0,
             "consensus_score": 1.0
         },
         "gld": {
-            "bull_probability": 0.388,
-            "bear_probability": 0.612,
+            "bull_probability": 0.386,
+            "bear_probability": 0.614,
             "neutral_probability": 0.0,
             "predicted_class": 0,
             "consensus_score": 1.0
         },
         "wti": {
-            "bull_probability": 0.362,
-            "bear_probability": 0.638,
+            "bull_probability": 0.368,
+            "bear_probability": 0.632,
             "neutral_probability": 0.0,
             "predicted_class": 0,
             "consensus_score": 1.0
@@ -504,66 +504,66 @@
         ],
         "features_vector": [
             0.055,
-            0.033,
+            0.041,
             -0.098,
             0.191,
-            -0.107,
-            -0.199,
+            -0.012,
+            -0.171,
             0.024,
             0.274,
-            -0.0,
-            0.032,
+            0.175,
+            0.018,
             0.034,
-            0.06,
-            -0.012,
-            0.092
+            0.092,
+            0.01,
+            0.105
         ],
         "features_dict": {
             "spx_ret": 0.055,
-            "dxy_ret": 0.033,
+            "dxy_ret": 0.041,
             "vix_zscore": -0.098,
             "Inst_Heat_Index": 0.191,
-            "wti_ret": -0.107,
-            "gsr_ret": -0.199,
+            "wti_ret": -0.012,
+            "gsr_ret": -0.171,
             "us10y_delta": 0.024,
             "spread_level": 0.274,
-            "btc_ret": -0.0,
-            "usdcad_ret": 0.032,
+            "btc_ret": 0.175,
+            "usdcad_ret": 0.018,
             "es_ret": 0.034,
-            "nq_ret": 0.06,
-            "ym_ret": -0.012,
-            "rty_ret": 0.092
+            "nq_ret": 0.092,
+            "ym_ret": 0.01,
+            "rty_ret": 0.105
         },
         "epistemic_metrics": {
             "shannon_entropy": 0.38,
             "kelly_exposure_fraction": {
-                "SPX_Kelly": 0.317,
+                "SPX_Kelly": 0.325,
                 "Short_Kelly": 0.0,
-                "BTC_Kelly": 0.074,
-                "GLD_Kelly": 0.111,
-                "WTI_Kelly": 0.058,
-                "Cash": 0.44
+                "BTC_Kelly": 0.084,
+                "GLD_Kelly": 0.107,
+                "WTI_Kelly": 0.07,
+                "Cash": 0.414
             },
             "is_high_risk_edge": true,
             "is_capitulation_override_active": false
         }
     },
     "mcs": {
-        "score": 22.37,
+        "score": 22.35,
         "label": "NEUTRAL",
         "components": {
             "equity_momentum": 1.048,
             "rate_pressure": -3.825,
-            "energy_stress": -0.075,
+            "energy_stress": -0.104,
             "cross_asset_coherence": 25.0
         }
     },
     "data_driven_escalation": "ELEVATED",
     "news_signal": {
         "signal": "MIXED",
-        "conviction": 0.595,
+        "conviction": 0.5,
         "impact": "MIXED_SIGNALS",
-        "reasoning": "Macro Expert (Llama 3 / Groq): (Failover to Gemini) The upcoming high-impact U.S. CPI data forecasts, particularly the year-over-year figures for both headline and core inflation, show anticipated increases, directly challenging the Fed's inflation targets. While producer price inflation (PPI) is forecast to decline, the persistence of consumer price pressure, combined with commodity inflation indicated by record coffee prices, underscores ongoing inflationary risks. Despite mixed equity market signals and a flat 2s10s bond spread suggesting economic uncertainty, the primary focus on elevated and potentially rising consumer inflation metrics strongly supports a hawkish bias for future Fed policy decisions.\n\nPsychology Expert (Gemini): The VIX z-score of -0.886 indicates significantly lower-than-average implied volatility, reflecting a prevalent lack of fear in the market. This low fear sentiment is further reinforced by the 0.0 volume activity heat, suggesting a lack of unusual panic-buying or selling behavior among institutions. Consequently, the quantitative data supports a market characterized by complacency and growing bullishness, aligning with the highly optimistic news surrounding the SpaceX IPO.",
+        "reasoning": "Macro Expert (Llama 3 / Groq): (Failover to Gemini) Error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash\\nPlease retry in 32.493638219s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-2.5-flash'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '32s'}]}}\n\nPsychology Expert (Gemini): (Failover to Groq) Default fallback.",
         "quantitative_divergence_flag": false
     },
     "economic_calendar": {

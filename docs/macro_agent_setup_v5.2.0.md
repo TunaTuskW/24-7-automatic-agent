@@ -46,7 +46,7 @@ The orchestrator integrates a simulated **Paper Broker** (`src/adapters/paper_br
 * **Slippage and Fees:** Applies a default **5 bps (0.05%) slippage penalty** per execution to simulate transaction costs.
 * **Minimum Trade Size:** Enforces a **$10 minimum trade threshold** to block tiny, high-frequency rebalance orders.
 * **Order Sequencing:** Executes all SELL orders first to free up cash, followed by BUY orders.
-* **Automated Rebalancing:** At the end of every conductor run, target Kelly allocations for SPX (`SPX_Kelly`) and Gold (`Safe_Haven_Kelly`) are queried against current spot prices and rebalanced automatically.
+* **Automated Rebalancing:** At the end of every conductor run, target Kelly allocations for SPX (`SPX_Kelly`) and Gold (`GLD_Kelly`) are queried against current spot prices and rebalanced automatically using a 2.5% drift threshold to minimize over-trading and slippage.
 * **Ledger Auditing:** Appends every execution transaction to `data/paper_trading/paper_ledger.csv`.
 * **Discord Execution Alerts:** Automatically posts embedded transaction alerts (BUY/SELL action details, execution price, shares, and final total portfolio equity value) directly to Discord webhooks upon trade execution.
 
