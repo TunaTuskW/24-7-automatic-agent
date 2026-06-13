@@ -307,10 +307,10 @@ def train_ensemble_classifier(df, feature_names, output_path, interval="1d", tar
 def train_hmm(interval="1d"):
     df = fetch_training_data(interval=interval)
     
-    # Aligned 14 features schema
+    # Aligned 10 features schema
     feature_names = [
         "spx_ret", "dxy_ret", "vix_zscore", "Inst_Heat_Index", "wti_ret", 
-        "gsr_ret", "us10y_delta", "spread_level", "btc_ret", "usdcad_ret", "es_ret", "nq_ret", "ym_ret", "rty_ret"
+        "gsr_ret", "us10y_delta", "spread_level", "btc_ret", "usdcad_ret"
     ]
     
     X = df[feature_names].values

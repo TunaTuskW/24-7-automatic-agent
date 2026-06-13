@@ -1,6 +1,6 @@
-# Macro Briefing Agent Setup Guide (v5.3.1)
+# Macro Briefing Agent Setup Guide (v5.3.2)
 
-Welcome to the **Macro Briefing Agent (v5.3.1)**—a 24/7 autonomous containerized **Single LLM & Multi-Asset Ensemble OS with Paper Trading & 14-Feature Space** and execution pipeline. This project decouples data ingestion, economic calendars, LLM synthesis, consensus scaling, and pub-sub event dispatching into an enterprise-grade framework.
+Welcome to the **Macro Briefing Agent (v5.3.2)**—a 24/7 autonomous containerized **Single LLM & Multi-Asset Ensemble OS with Paper Trading & 14-Feature Space** and execution pipeline. This project decouples data ingestion, economic calendars, LLM synthesis, consensus scaling, and pub-sub event dispatching into an enterprise-grade framework.
 
 
 ## Project Structure Overview
@@ -428,6 +428,11 @@ Whenever changes are made to the system architecture, automatically update the v
 - **Big change** (e.g., major feature additions): Increment minor version (x.1 to 9). Example: v1.3.x -> v1.4.0
 - **Small change** (e.g., prompt tweak, new section): Increment patch version (x.x.1 to 9). Example: v1.3.1 -> v1.3.2
 - **Tiny change** (e.g., typo fix, formatting): Increment sub-patch version (x.x.x.1 to 9). Example: v1.3.1 -> v1.3.1.1
+
+- **v5.3.2** (Continuous Compounding Backtester Upgrade):
+  - **[ADDED]** Integrated a **TRUE EQUITY SIMULATOR STATE** into `quantitative_backtester.py`, simulating continuous compounding over 1-bar multi-asset forward returns.
+  - **[ADDED]** Modeled 10 basis points (0.10%) transaction friction slippage penalty calculated dynamically on portfolio rotation turnover.
+  - **[MODIFIED]** Backtest reports are now generated dynamically per interval (e.g., `reports/backtest_extended_results_{interval}.md`).
 
 - **v5.3.1** (Audit Remediation & Structural Polish):
   - **[FIXED]** `GeminiAdapter` initialization duplication removed from Conductor, enforcing single-instance Singleton access.

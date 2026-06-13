@@ -18,12 +18,12 @@ def run_backtest(interval="1d"):
     from datetime import datetime, timedelta
     
     end_date = datetime.today()
-    start_fetch_date = (end_date - timedelta(days=240)).strftime("%Y-%m-%d")
+    start_fetch_date = "2025-11-01"
     end_fetch_date = end_date.strftime("%Y-%m-%d")
     
     # Target backtest range
-    q1_start = pd.to_datetime((end_date - timedelta(days=180)).strftime("%Y-%m-%d"))
-    q1_end = pd.to_datetime((end_date - timedelta(days=5)).strftime("%Y-%m-%d"))
+    q1_start = pd.to_datetime("2026-01-01")
+    q1_end = pd.to_datetime(end_date.strftime("%Y-%m-%d"))
     
     tickers_to_fetch = list(ALL_YF_TICKERS.values()) + ["^TNX", "^FVX"]
     
@@ -96,6 +96,13 @@ def run_backtest(interval="1d"):
         bars = 6.5 / hours
         macro_window = int(60 * bars)
         short_window = int(21 * bars)
+        
+    # --- TRUE EQUITY SIMULATOR STATE ---
+    simulated_equity = 10000.0
+    current_allocations = {"spx": 0.0, "short": 0.0, "btc": 0.0, "gld": 0.0, "wti": 0.0, "cash": 1.0}
+    total_mock_trades = 0
+    total_fees_paid = 0.0
+    simulated_slippage_rate = 0.001 # 10 basis points slippage on turnover
         
     for i, current_date in enumerate(q1_trading_days):
         # 1. Slice data up to current_date
@@ -301,12 +308,25 @@ def run_backtest(interval="1d"):
             "target_graded": False
         })
         
-        # Multi-Asset Forward Return tracking
+        # Multi-Asset 1-Bar Forward Return tracking (Continuous Compounding Simulator)
         future_slice_spx = raw_data["^GSPC"][raw_data["^GSPC"].index > current_date]
         future_slice_btc = raw_data["BTC-USD"][raw_data["BTC-USD"].index > current_date]
         future_slice_gld = raw_data["GC=F"][raw_data["GC=F"].index > current_date]
         future_slice_wti = raw_data["CL=F"][raw_data["CL=F"].index > current_date]
 
+        def get_1bar_ret(fs, current_val):
+            if len(fs) >= 1:
+                future = fs["Close"].iloc[0]
+                if current_val > 0 and not pd.isna(current_val) and not pd.isna(future):
+                    return float((future - current_val) / current_val)
+            return 0.0
+
+        spx_1bar = get_1bar_ret(future_slice_spx, current_spx_val)
+        btc_1bar = get_1bar_ret(future_slice_btc, float(parsed_daily.get("BTC", {}).get("current", 0)))
+        gld_1bar = get_1bar_ret(future_slice_gld, float(parsed_daily.get("Gold", {}).get("current", 0)))
+        wti_1bar = get_1bar_ret(future_slice_wti, float(parsed_daily.get("WTI", {}).get("current", 0)))
+        
+        # Calculate Forward 5d return strictly for edge-accuracy scoring (legacy reporting)
         def get_fwd_5d(fs):
             if len(fs) >= 5:
                 curr = fs["Close"].iloc[0]
@@ -314,23 +334,45 @@ def run_backtest(interval="1d"):
                 if curr > 0 and not pd.isna(curr) and not pd.isna(future):
                     return float(((future - curr) / curr) * 100)
             return 0.0
-
-        spx_fwd = get_fwd_5d(future_slice_spx)
-        btc_fwd = get_fwd_5d(future_slice_btc)
-        gld_fwd = get_fwd_5d(future_slice_gld)
-        wti_fwd = get_fwd_5d(future_slice_wti)
+            
+        spx_fwd_5d = get_fwd_5d(future_slice_spx)
         
         short_kelly = kelly_dict.get("Short_Kelly", 0.0)
         btc_kelly = kelly_dict.get("BTC_Kelly", 0.0)
         gld_kelly = kelly_dict.get("GLD_Kelly", 0.0)
         wti_kelly = kelly_dict.get("WTI_Kelly", 0.0)
+        cash_kelly = kelly_dict.get("Cash", 0.0)
         
+        # 1. Apply Mark-to-Market Growth based on current (previous bar's) allocations
+        portfolio_1bar_return = (
+            (current_allocations["spx"] * spx_1bar) +
+            (current_allocations["short"] * -spx_1bar) +
+            (current_allocations["btc"] * btc_1bar) +
+            (current_allocations["gld"] * gld_1bar) +
+            (current_allocations["wti"] * wti_1bar)
+        )
+        simulated_equity *= (1.0 + portfolio_1bar_return)
+        
+        # 2. Rebalance to Target Kellys (Calculate Turnover)
+        target_allocations = {"spx": spx_kelly, "short": short_kelly, "btc": btc_kelly, "gld": gld_kelly, "wti": wti_kelly, "cash": cash_kelly}
+        
+        turnover_fraction = sum(abs(target_allocations[k] - current_allocations[k]) for k in ["spx", "short", "btc", "gld", "wti"])
+        if turnover_fraction > 0.01:
+            slippage_cost = turnover_fraction * simulated_equity * simulated_slippage_rate
+            simulated_equity -= slippage_cost
+            total_fees_paid += slippage_cost
+            total_mock_trades += 1
+            
+        # 3. Update Allocations
+        current_allocations = target_allocations
+        
+        # Backwards compatible fwd_5d_ret calculation for the report logging
         fwd_5d_ret = (
-            (spx_kelly * spx_fwd) +
-            (short_kelly * -spx_fwd) +
-            (btc_kelly * btc_fwd) +
-            (gld_kelly * gld_fwd) +
-            (wti_kelly * wti_fwd)
+            (spx_kelly * spx_fwd_5d) +
+            (short_kelly * -spx_fwd_5d) +
+            (btc_kelly * get_fwd_5d(future_slice_btc)) +
+            (gld_kelly * get_fwd_5d(future_slice_gld)) +
+            (wti_kelly * get_fwd_5d(future_slice_wti))
         )
         # Final forward return validation
         results.append({
@@ -340,7 +382,7 @@ def run_backtest(interval="1d"):
             "kalman_state": kalman_state.dominant_state,
             "mlp_prob": mlp_prob,
             "consensus": consensus,
-            "spx_fwd_5d": spx_fwd,
+            "spx_fwd_5d": spx_fwd_5d,
             "kelly_exposure": spx_kelly,
             "short_exposure": short_kelly,
             "btc_exposure": btc_kelly,
@@ -411,29 +453,12 @@ def run_backtest(interval="1d"):
         else:
             prob_table += f"| {label} | 0 | 0.0% | 0.000% |\n"
 
-    paper_ledger_path = os.path.join(os.path.dirname(__file__), "..", "data", "paper_trading", "paper_ledger.csv")
-    paper_section = "## Paper Trading Ledger Analysis\n_No paper ledger found._\n"
-    if os.path.exists(paper_ledger_path):
-        try:
-            pdf = pd.read_csv(paper_ledger_path)
-            total_fees = pdf['fee'].sum()
-            total_buys = len(pdf[pdf['action'] == 'BUY'])
-            total_sells = len(pdf[pdf['action'] == 'SELL'])
-            portfolio_path = os.path.join(os.path.dirname(__file__), "..", "data", "paper_trading", "paper_portfolio.json")
-            total_equity = 10000.0
-            if os.path.exists(portfolio_path):
-                with open(portfolio_path, 'r') as f:
-                    pdata = json.load(f)
-                    total_equity = pdata.get("total_equity", 10000.0)
-            
-            pnl_pct = ((total_equity - 10000.0) / 10000.0) * 100
-            
-            paper_section = "## Paper Trading Ledger Analysis\n"
-            paper_section += f"- **Mock Execution PnL:** {pnl_pct:.2f}% (Total Equity: ${total_equity:,.2f})\n"
-            paper_section += f"- **Total Mock Trades:** {total_buys + total_sells} ({total_buys} Buys, {total_sells} Sells)\n"
-            paper_section += f"- **Total Slippage/Fees Paid:** ${total_fees:,.2f}\n"
-        except Exception as e:
-            paper_section = f"## Paper Trading Ledger Analysis\n_Failed to parse paper ledger: {e}_\n"
+    # Build Simulated Trading Ledger Analysis
+    pnl_pct = ((simulated_equity - 10000.0) / 10000.0) * 100
+    paper_section = "## Simulated Trading Ledger Analysis (Continuous Compounding)\n"
+    paper_section += f"- **Mock Execution PnL:** {pnl_pct:.2f}% (Total Equity: ${simulated_equity:,.2f})\n"
+    paper_section += f"- **Total Executed Rotations:** {total_mock_trades}\n"
+    paper_section += f"- **Total Slippage/Fees Paid:** ${total_fees_paid:,.2f}\n"
             
     report = f"""# Quantitative Engine Backtest: Detailed (Rolling 6-Month)
 
@@ -456,7 +481,7 @@ def run_backtest(interval="1d"):
     for r in results:
         report += f"| {r['date']} | {r['spx_close']} | {r['dom_regime']} | {r['kalman_state']} | {r['mlp_prob']:.3f} | {r['consensus']:.1f} | {r['kelly_exposure']} | {r['short_exposure']} | {r['btc_exposure']} | {r['gld_exposure']} | {r['wti_exposure']} | {r['safe_haven_exposure']} | {r['fwd_5d_ret']:.3f}% |\n"
         
-    with open("/Users/mac/agent/reports/backtest_extended_results.md", "w") as f:
+    with open(f"/Users/mac/agent/reports/backtest_extended_results_{interval}.md", "w") as f:
         f.write(report)
         
     print("Backtest complete! Report generated.")

@@ -1,5 +1,5 @@
 {
-    "generated_utc": "2026-06-13T05:01:29.344983+00:00",
+    "generated_utc": "2026-06-13T07:04:07.964403+00:00",
     "raw_indicators": {
         "SPX": {
             "current": 7430.8599,
@@ -9,7 +9,8 @@
             "mean_60d": 7443.2857,
             "std_60d": 106.2101,
             "z_score": 0.253,
-            "momentum": "down"
+            "momentum": "down",
+            "ema_20": 7389.933816284025
         },
         "NDX": {
             "current": 29637.5488,
@@ -301,16 +302,6 @@
             "z_score": -0.765,
             "momentum": "up"
         },
-        "BTC": {
-            "current": 63487.3711,
-            "prev": 63472.4297,
-            "delta": 14.9414,
-            "delta_pct": 0.024,
-            "mean_60d": 63063.8492,
-            "std_60d": 682.9884,
-            "z_score": -0.045,
-            "momentum": "up"
-        },
         "IBIT": {
             "current": 36.025,
             "prev": 36.095,
@@ -399,87 +390,87 @@
         "vvix_vix_ratio": 5.36
     },
     "regime": {
-        "current": "NEUTRAL_TRANSITIONAL_4",
-        "dominant_regime": "NEUTRAL_TRANSITIONAL_4",
-        "tactical_alpha_regime": "NEUTRAL_TRANSITIONAL_4",
+        "current": "DEFLATION_FEAR_2",
+        "dominant_regime": "DEFLATION_FEAR_2",
+        "tactical_alpha_regime": "DEFLATION_FEAR_2",
         "probabilities": {
             "NEUTRAL_TRANSITIONAL": 0.0096,
             "DEFLATION_FEAR": 0.0096,
-            "STAGFLATION_STRESS": 0.0096,
-            "LIQUIDITY_DRIVEN_RALLY": 0.0096,
-            "NEUTRAL_TRANSITIONAL_4": 0.9519,
-            "RISK_ON_EXPANSION": 0.0096
+            "DEFLATION_FEAR_2": 0.9519,
+            "DEFLATION_FEAR_3": 0.0096,
+            "NEUTRAL_TRANSITIONAL_4": 0.0096,
+            "NEUTRAL_TRANSITIONAL_5": 0.0096
         },
         "tactical_alpha_probabilities": {
             "NEUTRAL_TRANSITIONAL": 0.0096,
             "DEFLATION_FEAR": 0.0096,
-            "STAGFLATION_STRESS": 0.0096,
-            "LIQUIDITY_DRIVEN_RALLY": 0.0096,
-            "NEUTRAL_TRANSITIONAL_4": 0.9519,
-            "RISK_ON_EXPANSION": 0.0096
+            "DEFLATION_FEAR_2": 0.9519,
+            "DEFLATION_FEAR_3": 0.0096,
+            "NEUTRAL_TRANSITIONAL_4": 0.0096,
+            "NEUTRAL_TRANSITIONAL_5": 0.0096
         },
-        "transition_risk": 0.154,
-        "start_utc": "2026-06-12T20:55:09.842900+00:00",
-        "duration_days": 0.33685593186342594
+        "transition_risk": 0.5764,
+        "start_utc": "2026-06-13T07:01:20.590974+00:00",
+        "duration_days": 0.0
     },
     "kalman_state": {
-        "dominant_prob": 0.881,
+        "dominant_prob": 0.715,
         "dominant_state": "transitional",
-        "tvd": 0.6408,
-        "brier_score_calibration": 0.2388,
+        "tvd": 0.6502,
+        "brier_score_calibration": 0.2396,
         "structural_ambiguity_index": 0.0,
         "probabilities": [
-            0.05554277177886193,
-            0.06393252159708267,
-            0.8805247066240554
+            0.0776137348081295,
+            0.2071333560406395,
+            0.7152529091512311
         ],
         "covariance_matrix": [
             [
-                0.021738895960414263,
-                0.0007136765026690499,
-                0.0007136765026690499
+                0.03339262196661944,
+                0.0017088810869049537,
+                0.0017088810869049537
             ],
             [
-                0.0007136765026690498,
-                0.02173889596041427,
-                0.0007136765026690499
+                0.0017088810869049535,
+                0.03339262196661944,
+                0.0017088810869049537
             ],
             [
-                0.0007136765026690498,
-                0.0007136765026690499,
-                0.021738895960414274
+                0.0017088810869049535,
+                0.0017088810869049537,
+                0.03339262196661945
             ]
         ],
         "is_ambiguous": false,
-        "risk_on": 0.056,
-        "risk_off": 0.064,
-        "transitional": 0.881
+        "risk_on": 0.078,
+        "risk_off": 0.207,
+        "transitional": 0.715
     },
     "mlp_deep_state": {
         "spx": {
-            "bull_probability": 0.485,
-            "bear_probability": 0.515,
+            "bull_probability": 0.47,
+            "bear_probability": 0.53,
             "neutral_probability": 0.0,
             "predicted_class": 0,
             "consensus_score": 1.0
         },
         "btc": {
-            "bull_probability": 0.369,
-            "bear_probability": 0.631,
+            "bull_probability": 0.344,
+            "bear_probability": 0.656,
             "neutral_probability": 0.0,
             "predicted_class": 0,
             "consensus_score": 1.0
         },
         "gld": {
-            "bull_probability": 0.385,
-            "bear_probability": 0.615,
+            "bull_probability": 0.388,
+            "bear_probability": 0.612,
             "neutral_probability": 0.0,
             "predicted_class": 0,
             "consensus_score": 1.0
         },
         "wti": {
-            "bull_probability": 0.353,
-            "bear_probability": 0.647,
+            "bull_probability": 0.309,
+            "bear_probability": 0.691,
             "neutral_probability": 0.0,
             "predicted_class": 0,
             "consensus_score": 1.0
@@ -496,11 +487,7 @@
             "us10y_delta",
             "spread_level",
             "btc_ret",
-            "usdcad_ret",
-            "es_ret",
-            "nq_ret",
-            "ym_ret",
-            "rty_ret"
+            "usdcad_ret"
         ],
         "features_vector": [
             0.055,
@@ -509,14 +496,10 @@
             0.223,
             -0.012,
             -0.171,
-            0.024,
+            0.0,
             0.274,
-            0.024,
-            0.018,
-            0.034,
-            0.092,
-            0.01,
-            0.105
+            0.0,
+            0.018
         ],
         "features_dict": {
             "spx_ret": 0.055,
@@ -525,24 +508,20 @@
             "Inst_Heat_Index": 0.223,
             "wti_ret": -0.012,
             "gsr_ret": -0.171,
-            "us10y_delta": 0.024,
+            "us10y_delta": 0.0,
             "spread_level": 0.274,
-            "btc_ret": 0.024,
-            "usdcad_ret": 0.018,
-            "es_ret": 0.034,
-            "nq_ret": 0.092,
-            "ym_ret": 0.01,
-            "rty_ret": 0.105
+            "btc_ret": 0.0,
+            "usdcad_ret": 0.018
         },
         "epistemic_metrics": {
-            "shannon_entropy": 0.38,
+            "shannon_entropy": 0.389,
             "kelly_exposure_fraction": {
-                "SPX_Kelly": 0.246,
+                "SPX_Kelly": 0.177,
                 "Short_Kelly": 0.0,
-                "BTC_Kelly": 0.058,
-                "GLD_Kelly": 0.084,
-                "WTI_Kelly": 0.032,
-                "Cash": 0.58
+                "BTC_Kelly": 0.014,
+                "GLD_Kelly": 0.071,
+                "WTI_Kelly": 0.0,
+                "Cash": 0.738
             },
             "is_high_risk_edge": true,
             "is_capitulation_override_active": false
@@ -561,9 +540,9 @@
     "data_driven_escalation": "ELEVATED",
     "news_signal": {
         "signal": "MIXED",
-        "conviction": 0.85,
+        "conviction": 0.75,
         "impact": "MIXED_SIGNALS",
-        "reasoning": "LLM macro: Market sentiment leans strongly towards greed, fueled by record-setting SpaceX IPO excitement and a low VIX z-score (-0.886) indicating complacency despite a minor AI-related stock dip quickly dismissed. However, upcoming high-impact USD CPI and PPI events forecasting higher inflation values (e.g., CPI y/y from 3.8% to 4.2%) point to significant hawkish pressure on the Fed. The 2s10s bond spread at 0.0 and neutral volume heat offer no clear counter-signal, making inflation data the key driver for future monetary policy. No quantitative divergence is flagged as low volatility aligns with the prevailing bullish news.",
+        "reasoning": "LLM macro: Headlines present a mixed market picture, with an initial AI-related stock rout quickly moderated by reassurances, while safe-haven assets like gold and silver declined. Despite some equity-specific jitters, quantitative indicators, particularly the VIX z-score at -0.886, strongly suggest market complacency and low volatility. However, upcoming high-impact USD CPI forecasts showing increases in yearly inflation, alongside an expected hawkish move by the ECB, point towards continued central bank tightening pressures. This creates a scenario of underlying inflation concerns and global monetary policy hawkishness against a backdrop of relative market calm.",
         "quantitative_divergence_flag": false
     },
     "economic_calendar": {
@@ -642,5 +621,5 @@
             }
         ]
     },
-    "timestamp": "2026-06-13T05:01:29.355243+00:00"
+    "timestamp": "2026-06-13T07:04:07.973940+00:00"
 }

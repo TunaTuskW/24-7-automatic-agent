@@ -83,11 +83,7 @@ class Conductor:
             ("us10y_delta", "bonds", "delta"),
             ("spread_level", "bonds", "spread_2s10s"),
             ("btc_ret", "BTC", "delta_pct"),
-            ("usdcad_ret", "USDCAD", "delta_pct"),
-            ("es_ret", "ES", "delta_pct"),
-            ("nq_ret", "NQ", "delta_pct"),
-            ("ym_ret", "YM", "delta_pct"),
-            ("rty_ret", "RTY", "delta_pct")
+            ("usdcad_ret", "USDCAD", "delta_pct")
         ]
         
         # Register Event Callbacks
