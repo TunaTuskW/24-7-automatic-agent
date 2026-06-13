@@ -13,15 +13,17 @@ from src.engines.risk_engine import RiskEngine
 from src.engines.feature_engine import ALL_YF_TICKERS, compute_stats, compute_volume_heat, load_mlp_models, run_multi_mlp_inference, run_self_calibration
 
 def run_backtest(interval="1d"):
-    print(f"=== Starting Q1 2026 Quantitative Backtest ({interval}) ===")
+    print(f"=== Starting Dynamic 6-Month Quantitative Backtest ({interval}) ===")
     
-    # We need rolling metrics, so we start fetching from late 2025
-    start_fetch_date = "2025-11-01"
-    end_fetch_date = "2026-06-05" # To get forward returns at end of May
+    from datetime import datetime, timedelta
+    
+    end_date = datetime.today()
+    start_fetch_date = (end_date - timedelta(days=240)).strftime("%Y-%m-%d")
+    end_fetch_date = end_date.strftime("%Y-%m-%d")
     
     # Target backtest range
-    q1_start = pd.to_datetime("2026-01-01")
-    q1_end = pd.to_datetime("2026-06-03")
+    q1_start = pd.to_datetime((end_date - timedelta(days=180)).strftime("%Y-%m-%d"))
+    q1_end = pd.to_datetime((end_date - timedelta(days=5)).strftime("%Y-%m-%d"))
     
     tickers_to_fetch = list(ALL_YF_TICKERS.values()) + ["^TNX", "^FVX"]
     
@@ -64,7 +66,7 @@ def run_backtest(interval="1d"):
     
     results = []
     
-    print(f"Found {len(q1_trading_days)} trading days in Q1 2026. Running simulation...")
+    print(f"Found {len(q1_trading_days)} trading periods. Running simulation...")
     
     # Parse interval to compute dynamic rolling window for ~3 macro months (60 trading days)
     # Assume 6.5 trading hours per day = 390 minutes
@@ -217,7 +219,7 @@ def run_backtest(interval="1d"):
             "rty_ret": get_ret("RTY")
         }
         
-        ordered_keys = ["spx_ret", "dxy_ret", "vix_zscore", "Inst_Heat_Index", "wti_ret", "gsr_ret", "us10y_delta", "spread_level", "btc_ret", "usdcad_ret", "es_ret", "nq_ret", "ym_ret", "rty_ret"]
+        ordered_keys = ["spx_ret", "dxy_ret", "vix_zscore", "Inst_Heat_Index", "wti_ret", "gsr_ret", "us10y_delta", "spread_level", "btc_ret", "usdcad_ret"]
         features_vector = [float(features_dict[k]) for k in ordered_keys]
         
         if i < 3:
@@ -433,10 +435,10 @@ def run_backtest(interval="1d"):
         except Exception as e:
             paper_section = f"## Paper Trading Ledger Analysis\n_Failed to parse paper ledger: {e}_\n"
             
-    report = f"""# Quantitative Engine Backtest: Detailed (Jan 1 - May 30)
+    report = f"""# Quantitative Engine Backtest: Detailed (Rolling 6-Month)
 
-**Test Period:** Jan 1, 2026 to May 30, 2026
-**Samples:** {len(results)} Trading Days
+**Test Period:** {q1_start.strftime("%Y-%m-%d")} to {q1_end.strftime("%Y-%m-%d")}
+**Samples:** {len(results)} Trading Periods
 
 ## Performance Summary
 - **Portfolio Win Rate (Edge Accuracy):** {accuracy:.1f}%

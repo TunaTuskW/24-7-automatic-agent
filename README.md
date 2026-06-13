@@ -431,6 +431,18 @@ Whenever changes are made to the system architecture, automatically update the v
 - **Small change** (e.g., prompt tweak, new section): Increment patch version (x.x.1 to 9). Example: v1.3.1 -> v1.3.2
 - **Tiny change** (e.g., typo fix, formatting): Increment sub-patch version (x.x.x.1 to 9). Example: v1.3.1 -> v1.3.1.1
 
+- **v5.3.1** (Audit Remediation & Structural Polish):
+  - **[FIXED]** `GeminiAdapter` initialization duplication removed from Conductor, enforcing single-instance Singleton access.
+  - **[FIXED]** Implemented 5-attempt exponential backoff directly in `GeminiAdapter` with neutral dictionary fallbacks to ensure single-provider resilience.
+  - **[ADDED]** Wired `is_downtrend` (SPX 20-EMA macro filter) into the Conductor and passed dynamically to `RiskEngine`.
+  - **[ADDED]** Wired multi-asset Kelly allocations into `PaperBroker` execution logs for dynamic portfolio tracking.
+  - **[MODIFIED]** Replaced the binary 0.5x/1.5x Consensus Modifier cliff with a smooth linear multiplier scaling from 0.7x to 1.2x.
+  - **[FIXED]** Standardized Conductor feature extraction (`us10y_delta` to match `delta` key) and truncated feature vectors strictly to 10 dimensions for MLP input compliance.
+  - **[REMOVED]** Deprecated dead regime-routing model selection code from `feature_engine.py`.
+  - **[FIXED]** `RiskEngine` now enforces an early `0.0` return if absolute statistical edge (`prob - 0.333`) falls below zero, preventing negative expectancy exposure.
+  - **[FIXED]** Overhauled `run_self_calibration` to correctly track 5-period rolling cumulative returns for grading targets, matching the neural network's original training objective.
+  - **[FIXED]** Repaired `predict_proba` matrix indexing in `feature_engine.py` to properly map 3-class target vectors (bull, bear, transitional).
+  - **[MODIFIED]** Updated `quantitative_backtester.py` from hard-coded dates to dynamic 6-month trailing windows.
 - **v5.3.0** (Single LLM Architecture Consolidation):
   - **[REMOVED] Groq Adapter & Mixture of Experts (MoE):** Simplified the cognitive architecture by deprecating the dual-provider MoE setup. Removed the `GroqAdapter` and consolidated logical synthesis entirely within the `GeminiAdapter`.
   - **[REMOVED] Echo Chamber Detector:** Removed the parallel LLM echo chamber penalty (0.70x conviction slash) as the pipeline now relies on a centralized Google Gemini Flash reasoning engine.

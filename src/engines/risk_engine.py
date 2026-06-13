@@ -96,6 +96,9 @@ class RiskEngine:
             max_prob = 1.0 - max_prob
             
         edge = max_prob - 0.333
+        if edge <= 0:
+            logger.info("No positive expectancy (edge <= 0). Returning 0.0 Kelly allocation.")
+            return 0.0
         
         win_rate = max_prob
         loss_rate = 1.0 - win_rate
@@ -130,11 +133,10 @@ class RiskEngine:
             elif dominant_state == "transitional":
                 final_fraction *= 0.9  # Discounted Kelly for uncertain regimes
                 
-        # Consensus Risk Modifier
-        if consensus_score >= 1.0:
-            final_fraction *= 1.5
-        else:
-            final_fraction *= 0.5
+        # Consensus Risk Modifier (Smooth Linear Scale: 0.7x to 1.2x)
+        consensus_multiplier = 0.7 + (consensus_score * 0.5)
+        final_fraction *= consensus_multiplier
+        logger.info(f"Consensus modifier applied: {consensus_multiplier:.2f}x (score: {consensus_score})")
             
         if duration_days > half_life:
             decay_factor = math.exp(-0.2 * (duration_days - half_life))

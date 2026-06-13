@@ -12,7 +12,6 @@ from src.observability.event_bus import EventBus
 from src.data_lake.lake_manager import LakeManager
 from src.adapters.yahoo_adapter import YahooAdapter
 from src.adapters.gemini_adapter import GeminiAdapter
-from src.adapters.gemini_adapter import GeminiAdapter
 from src.adapters.forexfactory_adapter import ForexFactoryAdapter
 from src.adapters.paper_broker import PaperBroker
 from src.engines.hmm_engine import HMMEngine
@@ -59,7 +58,6 @@ class Conductor:
         fred_key = get_fred_key()
         self.data_broker = YahooAdapter(fred_key=fred_key)
         self.ff_adapter = ForexFactoryAdapter()
-        self.gemini_adapter = GeminiAdapter()
         self.gemini_adapter = GeminiAdapter()
         
         hmm_model_path = os.path.join(os.path.dirname(__file__), '..', 'models', f'hmm_model_{self.interval}.pkl')
@@ -171,6 +169,10 @@ class Conductor:
             bonds["spread_2s10s"] = round(bonds["US10Y"]["current"] - bonds["US2Y"]["current"], 4)
         else: bonds["spread_2s10s"] = 0.0
         
+        if abs(bonds.get("spread_2s10s", 0.0)) > 5.0:
+            logger.warning(f"Yield spread anomaly detected: {bonds['spread_2s10s']}. Possible unit mismatch.")
+            bonds["spread_2s10s"] = 0.0
+        
         self.clean_daily = clean_daily
         self.bonds = bonds
         
@@ -183,6 +185,9 @@ class Conductor:
         self.garch_layer = garch_layer
             
         spx_s = parsed_daily.get("SPX", {}).get("raw_series")
+        if spx_s is not None and len(spx_s) >= 20:
+            clean_daily["SPX"]["ema_20"] = float(spx_s.ewm(span=20, adjust=False).mean().iloc[-1])
+            
         vix_s = parsed_daily.get("VIX", {}).get("raw_series")
         vvix_s = parsed_daily.get("VVIX", {}).get("raw_series")
         dxy_s = parsed_daily.get("DXY", {}).get("raw_series")
@@ -228,7 +233,7 @@ class Conductor:
             try:
                 if category == "bonds":
                     if key == "delta_zscore" and bonds.get("US10Y"): val = bonds["US10Y"].get("delta_zscore", 0.0)
-                    elif key == "delta" and bonds.get("US10Y"): val = bonds["US10Y"].get("delta", 0.0)
+                    elif key == "us10y_delta" and bonds.get("US10Y"): val = bonds["US10Y"].get("delta", 0.0)
                     elif key == "spread_zscore": val = bonds.get("spread_zscore", 0.0)
                     elif key == "spread_2s10s": val = bonds.get("spread_2s10s", 0.0)
                 else: val = self.clean_daily.get(category, {}).get(key, 0.0)
@@ -241,7 +246,8 @@ class Conductor:
 
     def handle_features_engineered(self, payload):
         hmm_beta_probs, hmm_beta_dom, tr_risk, _ = self.hmm_engine.run_inference(self.features_vector)
-        hmm_alpha_probs, hmm_alpha_dom, _, _ = self.hmm_engine.run_inference(self.features_vector)
+        hmm_alpha_probs = hmm_beta_probs
+        hmm_alpha_dom = hmm_beta_dom
         
         current_regime = hmm_beta_dom if hmm_beta_dom else "NEUTRAL_TRANSITIONAL"
         
@@ -318,6 +324,10 @@ class Conductor:
                 half_life = t_conf.get("regime_half_lives", {}).get(current_regime, 99.0)
                 
         current_spx_val = self.clean_daily.get("SPX", {}).get("current", 0.0) if self.clean_daily.get("SPX") else 0.0
+        
+        spx_ema = self.clean_daily.get("SPX", {}).get("ema_20")
+        is_downtrend = (current_spx_val < spx_ema) if spx_ema is not None else False
+        
         current_ihi = self.clean_daily.get("volume_activity_heat", {}).get("institutional_heat_index", 0.0)
         
         predictions_history_path = os.path.join(os.path.dirname(__file__), "..", "data", "predictions", f"mlp_predictions_history_{self.interval}.json")
@@ -368,7 +378,8 @@ class Conductor:
             is_black_swan=is_black_swan,
             is_bull_trap=is_bull_trap,
             hmm_regime=self.snapshot.regime.current,
-            current_ihi=current_ihi
+            current_ihi=current_ihi,
+            is_downtrend=is_downtrend
         )
 
         
@@ -477,13 +488,18 @@ class Conductor:
         
         # Execute paper trading simulation
         try:
+            # Short_Kelly is handled separately from the long-only paper broker currently
             target_allocs = {
-                "SPX": kelly_obj.get("SPX_Kelly", 0.0),
-                "Gold": kelly_obj.get("GLD_Kelly", 0.0)
+                "SPX":  kelly_obj.get("SPX_Kelly", 0.0),
+                "Gold": kelly_obj.get("GLD_Kelly", 0.0),
+                "BTC":  kelly_obj.get("BTC_Kelly", 0.0),
+                "WTI":  kelly_obj.get("WTI_Kelly", 0.0)
             }
             current_prices = {
-                "SPX": self.clean_daily.get("SPX", {}).get("current", 0.0),
-                "Gold": self.clean_daily.get("Gold", {}).get("current", 0.0)
+                "SPX":  self.clean_daily.get("SPX",  {}).get("current", 0.0),
+                "Gold": self.clean_daily.get("Gold", {}).get("current", 0.0),
+                "BTC":  self.clean_daily.get("BTC",  {}).get("current", 0.0),
+                "WTI":  self.clean_daily.get("WTI",  {}).get("current", 0.0)
             }
             self.paper_broker.execute_rebalance(target_allocs, current_prices)
         except Exception as e:

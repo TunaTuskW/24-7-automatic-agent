@@ -255,12 +255,7 @@ def run_mlp_inference(features_vector, mlp_package, current_regime: str, asset="
     if mlp_package is None or current_regime is None:
         return None
     try:
-        if "RISK" in current_regime or "RALLY" in current_regime:
-            model = mlp_package.get("model_bull", mlp_package.get("model_base", mlp_package.get("model")))
-        elif "STRESS" in current_regime or "SHOCK" in current_regime or "FEAR" in current_regime:
-            model = mlp_package.get("model_bear", mlp_package.get("model_base", mlp_package.get("model")))
-        else:
-            model = mlp_package.get("model_neutral", mlp_package.get("model_base", mlp_package.get("model")))
+        # Dead regime-routing model code removed in v5.3.1
             
         scaler = mlp_package["scaler"]
         obs = np.array([features_vector])
@@ -280,7 +275,10 @@ def run_mlp_inference(features_vector, mlp_package, current_regime: str, asset="
         prob_up_list = []
         for m in valid_models:
             p = m.predict_proba(obs_scaled)[0]
-            if len(p) >= 2:
+            if len(p) >= 3:
+                # Class 0 = bear, 1 = bull, 2 = transitional
+                prob_up_list.append(float(p[1]))
+            elif len(p) >= 2:
                 prob_up_list.append(float(p[1]))
                 
         if not prob_up_list:
@@ -360,6 +358,14 @@ def calculate_model_tvd(p_dist, q_dist):
     except Exception as e:
         return 0.0
 def calculate_bayesian_conditional_probability(setup_name, current_regime):
+    """
+    Returns a prior probability estimate for a given market setup conditional
+    on the current HMM regime.
+
+    WARNING: These values are manually calibrated priors, not empirically 
+    derived. TODO: Replace with values computed from the quantitative backtester
+    on the next quarterly retrain cycle.
+    """
     historical_matrices = {
         "PWL_Sweep": {
             "RISK_ON_EXPANSION": 0.84,
@@ -402,12 +408,29 @@ def run_self_calibration(history, current_spx_val, current_ihi, grading_delay=5,
         elif interval == "1h":
             threshold *= 0.2
             
+        # Update the rolling window for the most recent un-graded forecasts
+        for forecast in history:
+            if not forecast.get("target_graded"):
+                if "spx_vals_window" not in forecast:
+                    forecast["spx_vals_window"] = []
+                forecast["spx_vals_window"].append(current_spx_val)
+
         # Grade the prediction made `grading_delay` bars ago
         if len(history) > grading_delay:
             forecast_to_grade = history[-(grading_delay + 1)]
             if not forecast_to_grade.get("target_graded"):
-                # Compute return from the time prediction was made to now
-                ret = ((current_spx_val - forecast_to_grade["spx_val_at_prediction"]) / forecast_to_grade["spx_val_at_prediction"]) * 100
+                window = forecast_to_grade.get("spx_vals_window", [])
+                if len(window) >= grading_delay:
+                    # Compute rolling sum of returns
+                    pct_returns = []
+                    prev_val = forecast_to_grade["spx_val_at_prediction"]
+                    for val in window[:grading_delay]:
+                        if prev_val > 0:
+                            pct_returns.append(((val - prev_val) / prev_val) * 100)
+                        prev_val = val
+                    ret = sum(pct_returns)
+                else:
+                    ret = ((current_spx_val - forecast_to_grade["spx_val_at_prediction"]) / forecast_to_grade["spx_val_at_prediction"]) * 100
                 
                 # Baseline outcome uses interval-specific threshold to match training
                 actual_outcome = 1 if ret > threshold else 0

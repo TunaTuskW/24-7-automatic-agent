@@ -40,7 +40,7 @@ class GeminiAdapter(LLMProvider):
         else:
             self.client = None
             
-    def run_llm_macro(self, headlines: List[str], calendar_events: List[Any], spread_2s10s: float, vix_zscore: float, volume_heat: float) -> Dict[str, Any]:
+    def run_llm_macro(self, headlines: List[str], calendar_events: List[Any], spread_2s10s: float, vix_zscore: float, volume_heat: float, max_retries: int = 5) -> Dict[str, Any]:
         if not self.client:
             logger.warning("No Gemini client. Returning default LLM Macro response.")
             return {
@@ -79,21 +79,21 @@ VIX z-score: {vix_zscore}
 Volume Activity Heat: {volume_heat}"""
 
         import time
-        for attempt in range(5):
+        for attempt in range(max_retries):
             try:
                 response = self.client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
                 raw_text = response.text.replace("```json", "").replace("```", "").strip()
                 return json.loads(raw_text)
             except Exception as e:
-                if ("503" in str(e) or "429" in str(e)) and attempt < 4:
+                if ("503" in str(e) or "429" in str(e)) and attempt < (max_retries - 1):
                     sleep_time = (attempt + 1) * 10
-                    logger.warning(f"API UNAVAILABLE/RATE_LIMIT. Retrying LLM Macro in {sleep_time} seconds (Attempt {attempt+1}/5)...")
+                    logger.warning(f"Provider: Gemini | API UNAVAILABLE/RATE_LIMIT. Retrying LLM Macro in {sleep_time} seconds (Attempt {attempt+1}/{max_retries})...")
                     time.sleep(sleep_time)
                 else:
-                    logger.error(f"LLM Macro failed: {e}")
+                    logger.error(f"Provider: Gemini | LLM Macro failed after {attempt+1} attempts: {e}")
                     return {
                         "fed_policy_hawkishness_prob": 0.5, 
                         "fear_greed_sentiment_score": 0.5, 
                         "quantitative_divergence_flag": False, 
-                        "reasoning": f"Error: {e}"
+                        "reasoning": f"Provider: Gemini | Error: {e}"
                     }

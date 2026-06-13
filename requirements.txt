@@ -1,10 +1,15 @@
 pydantic>=2.0.0
 pandas
+numpy
 yfinance
+feedparser
 scikit-learn
 hmmlearn
 arch
 requests
 google-generativeai
-jupyter
+google-genai
+joblib
 matplotlib
+seaborn
+jupyter
