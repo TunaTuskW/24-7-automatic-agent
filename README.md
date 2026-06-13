@@ -101,11 +101,9 @@ graph TD
 
     %% 4. Single LLM Expert
     subgraph LLM["4. Single LLM Expert"]
-        ThreadPool["ThreadPoolExecutor"]
         MacroEx["Gemini Macro Expert"]
         
-        Schema3 -->|"Parallel ThreadPool execution"| ThreadPool
-        ThreadPool -->|"Quant Context Ingestion"| MacroEx
+        Schema3 -->|"Quant Context Ingestion"| MacroEx
     end
 
     %% 5. Sizing Overrides & Multi-Asset Allocation
@@ -159,7 +157,7 @@ graph TD
     class YF,FRED,YA,Fallback,FF,FA,News,GA IngestStyle;
     class Cond,Bus,Lake,DailyPart,EventLog ConductorStyle;
     class FE,Schema1,HMM,Schema2,RE,EnsembleInference,CalibCheck,AutoInversion,ConsensusCheck,Schema3 EngineStyle;
-    class ThreadPool,MacroEx MoEStyle;
+    class MacroEx MoEStyle;
     class ConsensusEng,DivergeCheck,DivergeSlash,Overrides,AssetAlloc,Balancer MoEStyle;
     class Snap,Telem,PB,Ledger,VPT,ExcelDash,VM,VisMap,BR,PD,Discord OutputStyle;
 ```
