@@ -1,6 +1,6 @@
-# Macro Briefing Agent Setup Guide (v5.3.0)
+# Macro Briefing Agent Setup Guide (v5.3.1)
 
-Welcome to the **Macro Briefing Agent (v5.3.0)**—a 24/7 autonomous containerized **Single LLM & Multi-Asset Ensemble OS with Paper Trading & 14-Feature Space** and execution pipeline. This project decouples data ingestion, economic calendars, LLM synthesis, consensus scaling, and pub-sub event dispatching into an enterprise-grade framework.
+Welcome to the **Macro Briefing Agent (v5.3.1)**—a 24/7 autonomous containerized **Single LLM & Multi-Asset Ensemble OS with Paper Trading & 14-Feature Space** and execution pipeline. This project decouples data ingestion, economic calendars, LLM synthesis, consensus scaling, and pub-sub event dispatching into an enterprise-grade framework.
 
 
 ## Project Structure Overview
