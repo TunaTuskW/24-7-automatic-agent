@@ -7,6 +7,7 @@ statistics alongside the decision-oriented AI Strategic Assumptions Layer.
 import os
 import json
 from datetime import datetime, timezone
+import src.config_loader
 from dataclasses import dataclass
 
 @dataclass
@@ -132,6 +133,11 @@ def compute_deterministic_synthesis(kalman, volume_heat, extremes, epistemic, di
     }
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--title", type=str, default="1 hour update", help="Title for the report")
+    args = parser.parse_args()
+
     events_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'raw')
     
     # Find latest partition
@@ -313,7 +319,7 @@ Positioning : {synth['positioning']}
 Invalidation: {synth['invalidation']}
 ```
 """
-    report_filename = f"1 hour update ({timestamp_str}).md"
+    report_filename = f"{args.title} ({timestamp_str}).md"
     reports_dir = os.path.join(os.path.dirname(__file__), '..', 'reports', 'updates')
     os.makedirs(reports_dir, exist_ok=True)
     report_path = os.path.join(reports_dir, report_filename)

@@ -1,15 +1,25 @@
 version: '3.8'
 
 services:
-  quant_os:
+  backend:
     build: .
-    container_name: quant_os
+    container_name: quant_backend
     environment:
       - FRED_API_KEY=${FRED_API_KEY:-}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL:-}
     volumes:
       - ./data:/app/data
       - ./config:/app/config
       - ./logs:/app/logs
       - ./reports:/app/reports
-    command: python3 src/fetch_market_data.py
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build: ./frontend
+    container_name: quant_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend

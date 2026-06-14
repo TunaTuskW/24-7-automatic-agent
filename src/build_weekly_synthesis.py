@@ -4,6 +4,7 @@ import json
 from datetime import datetime, timezone, timedelta
 import sys
 import glob
+import src.config_loader
 
 sys.path.append(os.path.dirname(__file__))
 from build_report import run_consensus_engine, compute_deterministic_synthesis

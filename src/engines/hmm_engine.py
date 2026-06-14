@@ -20,7 +20,17 @@ class HMMEngine:
         else:
             logger.warning(f"HMM model not found at {model_path}")
 
-    def run_inference(self, features_vector: list) -> Tuple[Dict, str, float, int]:
+    def run_inference(self, features_vector: list, features_window: list = None) -> Tuple[Dict, str, float, int]:
+        """
+        Run HMM regime inference.
+        
+        Args:
+            features_vector: The current bar's feature vector (used as fallback).
+            features_window: Optional list of recent feature vectors (list of lists).
+                             When provided, the HMM scores the full sequence and returns
+                             the posterior of the LAST bar. This is the correct usage.
+                             Recommended window: last 6 bars for 4H (= 24 hours).
+        """
         if self.hmm_package is None:
             return None, None, None, None
         try:
@@ -30,10 +40,20 @@ class HMMEngine:
             
             # Force uniform start probabilities to prevent degenerate single-bar inference
             hmm.startprob_ = np.full(hmm.n_components, 1.0 / hmm.n_components)
-            obs = np.array([features_vector])
+            
+            # Build observation sequence: use rolling window if provided, else single bar
+            if features_window and len(features_window) > 1:
+                obs = np.array(features_window)
+                logger.info(f"HMM inference on {len(features_window)}-bar window sequence.")
+            else:
+                obs = np.array([features_vector])
+                logger.warning("HMM inference on single bar — regime transitions will be unstable. Provide features_window for better results.")
+            
             obs_scaled = scaler.transform(obs)
             _, posteriors = hmm.score_samples(obs_scaled)
-            state_probs = posteriors[0]
+            
+            # Use the LAST bar's posterior (the current bar, informed by prior sequence)
+            state_probs = posteriors[-1]
             
             state_probs = np.clip(state_probs, 0.01, 0.99)
             state_probs /= state_probs.sum()
@@ -58,7 +78,7 @@ class HMMEngine:
             dominant_regime = max(regime_probs, key=regime_probs.get)
             
             # Reverse map dominant regime to state_id for transition risk
-            dominant_state_id = int(np.argmax(state_probs)) # Default fallback
+            dominant_state_id = int(np.argmax(state_probs))
             for i, label in state_labels.items():
                 if label == dominant_regime:
                     dominant_state_id = i
@@ -67,7 +87,7 @@ class HMMEngine:
             stay_prob = float(hmm.transmat_[dominant_state_id, dominant_state_id])
             transition_risk = round(1.0 - stay_prob, 4)
             
-            logger.info(f"HMM Inference complete. Dominant Regime: {dominant_regime}")
+            logger.info(f"HMM Inference complete. Dominant Regime: {dominant_regime} (window={len(obs)} bars)")
             return regime_probs, dominant_regime, transition_risk, dominant_state_id
         except Exception as e:
             logger.error(f"HMM inference failed: {e}")

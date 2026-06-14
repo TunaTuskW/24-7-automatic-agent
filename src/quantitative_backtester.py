@@ -16,14 +16,11 @@ def run_backtest(interval="1d"):
     print(f"=== Starting Dynamic 6-Month Quantitative Backtest ({interval}) ===")
     
     from datetime import datetime, timedelta
-    
-    end_date = datetime.today()
-    start_fetch_date = "2025-11-01"
-    end_fetch_date = end_date.strftime("%Y-%m-%d")
-    
-    # Target backtest range
-    q1_start = pd.to_datetime("2026-01-01")
-    q1_end = pd.to_datetime(end_date.strftime("%Y-%m-%d"))
+    _today = datetime.today()
+    end_fetch_date = _today.strftime("%Y-%m-%d")
+    q1_start = datetime(_today.year, 1, 1)
+    q1_end   = _today - timedelta(days=5)   # 5-day buffer for forward returns
+    start_fetch_date = (q1_start - timedelta(days=60)).strftime("%Y-%m-%d")
     
     tickers_to_fetch = list(ALL_YF_TICKERS.values()) + ["^TNX", "^FVX"]
     
@@ -99,12 +96,21 @@ def run_backtest(interval="1d"):
         
     # --- TRUE EQUITY SIMULATOR STATE ---
     simulated_equity = 10000.0
-    current_allocations = {"spx": 0.0, "short": 0.0, "btc": 0.0, "gld": 0.0, "wti": 0.0, "cash": 1.0}
+    current_allocations = {"spx": 0.0, "short": 0.0, "btc": 0.0, "gld": 0.0, "wti": 0.0, "nvda": 0.0, "tsla": 0.0, "dell": 0.0, "spce": 0.0, "cash": 1.0}
     total_mock_trades = 0
     total_fees_paid = 0.0
     simulated_slippage_rate = 0.001 # 10 basis points slippage on turnover
+    
+    ledger_entries = []
+    
+    MIN_HOLD_BARS = 3   # For 4H: 3 bars = 12 hours minimum hold
+    last_rebalance_i = -MIN_HOLD_BARS  # Initialize so first bar can trade
         
     for i, current_date in enumerate(q1_trading_days):
+        # Track rolling window of feature vectors for HMM sequence inference
+        if 'hmm_features_window' not in dir():
+            hmm_features_window = []
+            
         # 1. Slice data up to current_date
         historical_slice = raw_data[raw_data.index <= current_date]
         
@@ -209,6 +215,38 @@ def run_backtest(interval="1d"):
             if prev > 0: return ((curr - prev) / prev) * 100
             return 0.0
 
+        rsi_14 = 50.0
+        macd_hist = 0.0
+        bbw_20 = 0.0
+        vix_corr_10 = 0.0
+        
+        if len(spx_close) >= 30:
+            delta = spx_close.diff()
+            gain = delta.where(delta > 0, 0).ewm(alpha=1/14, adjust=False).mean()
+            loss = (-delta.where(delta < 0, 0)).ewm(alpha=1/14, adjust=False).mean()
+            rs = gain / loss.replace(0, 0.0001)
+            rsi = 100 - (100 / (1 + rs))
+            rsi_14 = float(rsi.iloc[-1])
+            
+            ema12 = spx_close.ewm(span=12, adjust=False).mean()
+            ema26 = spx_close.ewm(span=26, adjust=False).mean()
+            macd_line = ema12 - ema26
+            signal_line = macd_line.ewm(span=9, adjust=False).mean()
+            macd_hist_s = macd_line - signal_line
+            macd_hist = float(macd_hist_s.iloc[-1])
+            
+            sma20 = spx_close.rolling(window=20).mean()
+            std20_bb = spx_close.rolling(window=20).std()
+            bbw = (4 * std20_bb) / sma20.replace(0, 0.0001)
+            bbw_20 = float(bbw.iloc[-1])
+            
+            vix_close = historical_slice["^VIX"]["Close"].dropna()
+            if len(vix_close) >= 20:
+                spx_ret_alpha = spx_close.pct_change() * 100
+                vix_ret_alpha = vix_close.pct_change() * 100
+                corr_s = spx_ret_alpha.rolling(window=10).corr(vix_ret_alpha).fillna(0)
+                vix_corr_10 = float(corr_s.iloc[-1])
+
         features_dict = {
             "spx_ret": get_ret("SPX"),
             "dxy_ret": get_ret("DXY"),
@@ -219,21 +257,39 @@ def run_backtest(interval="1d"):
             "us10y_delta": us10y_delta,
             "spread_level": us_2s10s_spread,
             "btc_ret": get_ret("BTC"),
-            "usdcad_ret": get_ret("USDCAD"),
             "es_ret": get_ret("ES"),
             "nq_ret": get_ret("NQ"),
-            "ym_ret": get_ret("YM"),
-            "rty_ret": get_ret("RTY")
+            "rty_ret": get_ret("RTY"),
+            "nvda_ret": get_ret("NVDA"),
+            "tsla_ret": get_ret("TSLA"),
+            "dell_ret": get_ret("DELL"),
+            "spce_ret": get_ret("SPCE"),
+            "spx_rsi_14": rsi_14,
+            "spx_macd_hist": macd_hist,
+            "spx_bbw": bbw_20,
+            "spx_vix_corr": vix_corr_10
         }
         
-        ordered_keys = ["spx_ret", "dxy_ret", "vix_zscore", "Inst_Heat_Index", "wti_ret", "gsr_ret", "us10y_delta", "spread_level", "btc_ret", "usdcad_ret"]
-        features_vector = [float(features_dict[k]) for k in ordered_keys]
+        ordered_keys = [
+            "spx_ret", "dxy_ret", "vix_zscore", "Inst_Heat_Index", "wti_ret",
+            "gsr_ret", "us10y_delta", "spread_level", "btc_ret",
+            "es_ret", "nq_ret", "rty_ret", "nvda_ret", "tsla_ret", "dell_ret", "spce_ret",
+            "spx_rsi_14", "spx_macd_hist", "spx_bbw", "spx_vix_corr"
+        ]
+        features_vector = [float(features_dict.get(k, 0.0)) for k in ordered_keys]
+        
+        hmm_features_window.append(features_vector)
+        if len(hmm_features_window) > 30:   # 30 × 4H bars = 120H context
+            hmm_features_window = hmm_features_window[-30:]
         
         if i < 3:
             print(f"[{current_date.strftime('%Y-%m-%d')}] Features: {features_vector}")
         
         # 5. Math Engines
-        regime_probs, dom_regime, tr_risk, _ = hmm.run_inference(features_vector)
+        regime_probs, dom_regime, tr_risk, _ = hmm.run_inference(
+            features_vector,
+            features_window=hmm_features_window
+        )
         if regime_probs is None:
             regime_probs = {"NEUTRAL_TRANSITIONAL": 1.0}
             
@@ -297,7 +353,8 @@ def run_backtest(interval="1d"):
             is_bull_trap=is_bull_trap,
             hmm_regime=dom_regime,
             current_ihi=ihi_val,
-            is_downtrend=is_downtrend
+            is_downtrend=is_downtrend,
+            max_kelly_cap=0.30 if interval == "4h" else 0.40
         )
         spx_kelly = kelly_dict.get("SPX_Kelly", 0.0)
         
@@ -313,6 +370,10 @@ def run_backtest(interval="1d"):
         future_slice_btc = raw_data["BTC-USD"][raw_data["BTC-USD"].index > current_date]
         future_slice_gld = raw_data["GC=F"][raw_data["GC=F"].index > current_date]
         future_slice_wti = raw_data["CL=F"][raw_data["CL=F"].index > current_date]
+        future_slice_nvda = raw_data["NVDA"][raw_data["NVDA"].index > current_date]
+        future_slice_tsla = raw_data["TSLA"][raw_data["TSLA"].index > current_date]
+        future_slice_dell = raw_data["DELL"][raw_data["DELL"].index > current_date]
+        future_slice_spce = raw_data["SPCE"][raw_data["SPCE"].index > current_date]
 
         def get_1bar_ret(fs, current_val):
             if len(fs) >= 1:
@@ -325,6 +386,10 @@ def run_backtest(interval="1d"):
         btc_1bar = get_1bar_ret(future_slice_btc, float(parsed_daily.get("BTC", {}).get("current", 0)))
         gld_1bar = get_1bar_ret(future_slice_gld, float(parsed_daily.get("Gold", {}).get("current", 0)))
         wti_1bar = get_1bar_ret(future_slice_wti, float(parsed_daily.get("WTI", {}).get("current", 0)))
+        nvda_1bar = get_1bar_ret(future_slice_nvda, float(parsed_daily.get("NVDA", {}).get("current", 0)))
+        tsla_1bar = get_1bar_ret(future_slice_tsla, float(parsed_daily.get("TSLA", {}).get("current", 0)))
+        dell_1bar = get_1bar_ret(future_slice_dell, float(parsed_daily.get("DELL", {}).get("current", 0)))
+        spce_1bar = get_1bar_ret(future_slice_spce, float(parsed_daily.get("SPCE", {}).get("current", 0)))
         
         # Calculate Forward 5d return strictly for edge-accuracy scoring (legacy reporting)
         def get_fwd_5d(fs):
@@ -341,6 +406,10 @@ def run_backtest(interval="1d"):
         btc_kelly = kelly_dict.get("BTC_Kelly", 0.0)
         gld_kelly = kelly_dict.get("GLD_Kelly", 0.0)
         wti_kelly = kelly_dict.get("WTI_Kelly", 0.0)
+        nvda_kelly = kelly_dict.get("NVDA_Kelly", 0.0)
+        tsla_kelly = kelly_dict.get("TSLA_Kelly", 0.0)
+        dell_kelly = kelly_dict.get("DELL_Kelly", 0.0)
+        spce_kelly = kelly_dict.get("SPCE_Kelly", 0.0)
         cash_kelly = kelly_dict.get("Cash", 0.0)
         
         # 1. Apply Mark-to-Market Growth based on current (previous bar's) allocations
@@ -349,22 +418,58 @@ def run_backtest(interval="1d"):
             (current_allocations["short"] * -spx_1bar) +
             (current_allocations["btc"] * btc_1bar) +
             (current_allocations["gld"] * gld_1bar) +
-            (current_allocations["wti"] * wti_1bar)
+            (current_allocations["wti"] * wti_1bar) +
+            (current_allocations["nvda"] * nvda_1bar) +
+            (current_allocations["tsla"] * tsla_1bar) +
+            (current_allocations["dell"] * dell_1bar) +
+            (current_allocations["spce"] * spce_1bar)
         )
         simulated_equity *= (1.0 + portfolio_1bar_return)
         
-        # 2. Rebalance to Target Kellys (Calculate Turnover)
-        target_allocations = {"spx": spx_kelly, "short": short_kelly, "btc": btc_kelly, "gld": gld_kelly, "wti": wti_kelly, "cash": cash_kelly}
+        # 2. Rebalance to Target Kellys — only if min hold period has elapsed
+        target_allocations = {"spx": spx_kelly, "short": short_kelly, "btc": btc_kelly, "gld": gld_kelly, "wti": wti_kelly, "nvda": nvda_kelly, "tsla": tsla_kelly, "dell": dell_kelly, "spce": spce_kelly, "cash": cash_kelly}
+        bars_since_rebalance = i - last_rebalance_i
         
-        turnover_fraction = sum(abs(target_allocations[k] - current_allocations[k]) for k in ["spx", "short", "btc", "gld", "wti"])
-        if turnover_fraction > 0.01:
-            slippage_cost = turnover_fraction * simulated_equity * simulated_slippage_rate
-            simulated_equity -= slippage_cost
-            total_fees_paid += slippage_cost
-            total_mock_trades += 1
-            
-        # 3. Update Allocations
-        current_allocations = target_allocations
+        if bars_since_rebalance >= MIN_HOLD_BARS:
+            turnover_fraction = sum(abs(target_allocations[k] - current_allocations[k]) for k in ["spx", "short", "btc", "gld", "wti", "nvda", "tsla", "dell", "spce"])
+            if turnover_fraction > 0.10:  # Only trade if drift > 10% of portfolio
+                slippage_cost = turnover_fraction * simulated_equity * simulated_slippage_rate
+                simulated_equity -= slippage_cost
+                total_fees_paid += slippage_cost
+                total_mock_trades += 1
+                last_rebalance_i = i
+                
+                ticker_map = {"spx": "SPX", "short": "SPX", "btc": "BTC", "gld": "Gold", "wti": "WTI", "nvda": "NVDA", "tsla": "TSLA", "dell": "DELL", "spce": "SPCE"}
+                
+                # Log mock trade to ledger
+                for k, target_alloc in target_allocations.items():
+                    if k == "cash": continue
+                    current_alloc = current_allocations[k]
+                    if abs(target_alloc - current_alloc) > 0.05:
+                        action = "BUY" if target_alloc > current_alloc else "SELL"
+                        asset_name = k.upper()
+                        
+                        mapped_key = ticker_map.get(k, "SPX")
+                        actual_price = float(parsed_daily.get(mapped_key, {}).get("current", 100.0))
+                        if actual_price <= 0: actual_price = 100.0
+                        
+                        if asset_name == "SHORT":
+                            asset_name = "SH"  # ProShares Short S&P500 ETF
+                            
+                        trade_value = abs(target_alloc - current_alloc) * simulated_equity
+                        trade_shares = trade_value / actual_price
+                        
+                        # Statistics
+                        prob = mlp_predictions.get(k, {}).get("bull_probability", 0.0)
+                        if k == "short": prob = 1.0 - mlp_predictions.get("spx", {}).get("bull_probability", 0.5)
+                        
+                        stat_str = f"Prob:{prob:.2f} | Reg:{dom_regime}"
+                        
+                        ledger_entries.append(f"{current_date.strftime('%Y-%m-%d %H:%M:%S')},{action},{asset_name},{trade_shares:.4f},{actual_price:.2f},{trade_value:.2f},{stat_str}")
+
+            # 3. Update Allocations
+                current_allocations = target_allocations
+        # else: hold current allocations unchanged — no trade, no fee
         
         # Backwards compatible fwd_5d_ret calculation for the report logging
         fwd_5d_ret = (
@@ -372,7 +477,11 @@ def run_backtest(interval="1d"):
             (short_kelly * -spx_fwd_5d) +
             (btc_kelly * get_fwd_5d(future_slice_btc)) +
             (gld_kelly * get_fwd_5d(future_slice_gld)) +
-            (wti_kelly * get_fwd_5d(future_slice_wti))
+            (wti_kelly * get_fwd_5d(future_slice_wti)) +
+            (nvda_kelly * get_fwd_5d(future_slice_nvda)) +
+            (tsla_kelly * get_fwd_5d(future_slice_tsla)) +
+            (dell_kelly * get_fwd_5d(future_slice_dell)) +
+            (spce_kelly * get_fwd_5d(future_slice_spce))
         )
         # Final forward return validation
         results.append({
@@ -484,7 +593,40 @@ def run_backtest(interval="1d"):
     with open(f"/Users/mac/agent/reports/backtest_extended_results_{interval}.md", "w") as f:
         f.write(report)
         
-    print("Backtest complete! Report generated.")
+    # Overwrite the paper trading portfolio so the UI reflects the backtest's final simulated state
+    final_cash = simulated_equity * current_allocations.get("cash", 1.0)
+    final_positions = {}
+    for k, alloc in current_allocations.items():
+        if k != "cash" and alloc > 0:
+            asset_label = k.upper()
+            if asset_label == "SHORT":
+                asset_label = "SH"
+            # Approximation of shares: alloc * simulated_equity / 100
+            final_positions[asset_label] = (alloc * simulated_equity) / 100.0
+            
+    portfolio_state = {
+        "cash": final_cash,
+        "positions": final_positions,
+        "position_details": {},
+        "total_equity": simulated_equity,
+        "peak_equity": simulated_equity,
+        "last_update": datetime.now().isoformat(),
+        "total_fees_paid": total_fees_paid,
+        "win_rate": accuracy
+    }
+    
+    portfolio_path = "/Users/mac/agent/data/paper_trading/backtest_portfolio.json"
+    os.makedirs(os.path.dirname(portfolio_path), exist_ok=True)
+    with open(portfolio_path, "w") as f:
+        json.dump(portfolio_state, f, indent=4)
+        
+    ledger_path = "/Users/mac/agent/data/paper_trading/backtest_ledger.csv"
+    os.makedirs(os.path.dirname(ledger_path), exist_ok=True)
+    with open(ledger_path, "w") as f:
+        f.write("timestamp,action,ticker,shares,price,value,stats\n")
+        f.write("\n".join(ledger_entries) + "\n")
+        
+    print("Backtest complete! Report generated and Paper Trading UI state updated.")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

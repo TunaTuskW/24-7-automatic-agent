@@ -15,4 +15,4 @@ COPY . .
 # Set PYTHONPATH to the root directory
 ENV PYTHONPATH=/app
 
-CMD ["python3", "src/fetch_market_data.py"]
+CMD ["python3", "src/scheduler.py"]

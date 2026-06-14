@@ -11,7 +11,11 @@ class ConsensusEngine:
             fear_greed = llm_res.get("fear_greed_sentiment_score", 0.5)
             divergence = llm_res.get("quantitative_divergence_flag", False)
             
-            combined_reasoning = f"LLM macro: {llm_res.get('reasoning', '')}"
+            reasoning = llm_res.get("reasoning", "")
+            if not reasoning.startswith("LLM macro:"):
+                combined_reasoning = f"LLM macro: {reasoning}"
+            else:
+                combined_reasoning = reasoning
             
             # Base conviction calculation
             conviction = (hawkish_prob + fear_greed) / 2.0
@@ -38,12 +42,19 @@ class ConsensusEngine:
                 
             final_conviction = conviction
                 
+            credit_stress = llm_res.get("credit_stress", 0.0)
+            liquidity_withdrawal = llm_res.get("liquidity_withdrawal", 0.0)
+            kelly_multiplier = llm_res.get("kelly_multiplier", 1.0)
+                
             return NewsSignal(
                 signal=signal_type,
                 conviction=round(final_conviction, 3),
                 impact=impact_msg,
                 reasoning=combined_reasoning,
-                quantitative_divergence_flag=divergence
+                quantitative_divergence_flag=divergence,
+                credit_stress=credit_stress,
+                liquidity_withdrawal=liquidity_withdrawal,
+                kelly_multiplier=kelly_multiplier
             )
         except Exception as e:
             logger.error(f"Consensus engine failed: {e}")

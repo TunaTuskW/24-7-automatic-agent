@@ -6,6 +6,9 @@ import feedparser
 import numpy as np
 import pandas as pd
 from datetime import datetime, timezone
+import src.config_loader
+import joblib
+from collections import deque
 
 from src.observability.logger import get_logger
 from src.observability.event_bus import EventBus
@@ -46,9 +49,10 @@ def fetch_rss_headlines():
     return headlines
 
 class Conductor:
-    def __init__(self, interval="1d"):
+    def __init__(self, interval="1d", use_1h_context=False):
         self.interval = interval
-        logger.info(f"Initializing v5.2.0 Event-Driven Conductor (Interval: {interval})")
+        self.use_1h_context = use_1h_context
+        logger.info(f"Initializing v6.0.0 Real-Time Event-Driven Conductor (Interval: {interval}, 1H-Context: {use_1h_context})")
         
         self.lake_manager = LakeManager()
         self.event_bus = EventBus()
@@ -72,6 +76,12 @@ class Conductor:
         self.clean_daily = {}
         self.bonds = {}
         self.features_vector = []
+        self.features_window = deque(maxlen=30)
+        self.FEATURES_WINDOW_SIZE = 30
+        self.last_rebalance_bar = -1
+        self.bar_count = 0
+        self.MIN_HOLD_BARS = 3
+        self._spx_raw_series = None
         self.feature_metadata = {}
         self.ordered_feature_keys = [
             ("spx_ret", "SPX", "delta_pct"),
@@ -83,7 +93,17 @@ class Conductor:
             ("us10y_delta", "bonds", "delta"),
             ("spread_level", "bonds", "spread_2s10s"),
             ("btc_ret", "BTC", "delta_pct"),
-            ("usdcad_ret", "USDCAD", "delta_pct")
+            ("es_ret", "ES", "delta_pct"),
+            ("nq_ret", "NQ", "delta_pct"),
+            ("rty_ret", "RTY", "delta_pct"),
+            ("nvda_ret", "NVDA", "delta_pct"),
+            ("tsla_ret", "TSLA", "delta_pct"),
+            ("dell_ret", "DELL", "delta_pct"),
+            ("spce_ret", "SPCE", "delta_pct"),
+            ("spx_rsi_14", "SPX_Alpha", "rsi_14"),
+            ("spx_macd_hist", "SPX_Alpha", "macd_hist"),
+            ("spx_bbw", "SPX_Alpha", "bbw_20"),
+            ("spx_vix_corr", "SPX_Alpha", "vix_corr_10")
         ]
         
         # Register Event Callbacks
@@ -134,6 +154,8 @@ class Conductor:
         parsed_daily = parse_assets(raw_daily_data)
         parsed_hourly = parse_assets(raw_hourly_data)
         
+        self._spx_raw_series = parsed_daily.get("SPX", {}).get("raw_series")
+        
         clean_daily = {}
         for k, v in parsed_daily.items():
             clean_daily[k] = {ik: iv for ik, iv in v.items() if ik != "raw_series"}
@@ -181,8 +203,50 @@ class Conductor:
         self.garch_layer = garch_layer
             
         spx_s = parsed_daily.get("SPX", {}).get("raw_series")
-        if spx_s is not None and len(spx_s) >= 20:
+        vix_s = parsed_daily.get("VIX", {}).get("raw_series")
+        if spx_s is not None and len(spx_s) >= 30:
             clean_daily["SPX"]["ema_20"] = float(spx_s.ewm(span=20, adjust=False).mean().iloc[-1])
+            
+            # SPX RSI 14
+            delta = spx_s.diff()
+            gain = delta.where(delta > 0, 0).ewm(alpha=1/14, adjust=False).mean()
+            loss = (-delta.where(delta < 0, 0)).ewm(alpha=1/14, adjust=False).mean()
+            rs = gain / loss.replace(0, 0.0001)
+            rsi = 100 - (100 / (1 + rs))
+            
+            # SPX MACD Hist
+            ema12 = spx_s.ewm(span=12, adjust=False).mean()
+            ema26 = spx_s.ewm(span=26, adjust=False).mean()
+            macd_line = ema12 - ema26
+            signal_line = macd_line.ewm(span=9, adjust=False).mean()
+            macd_hist = macd_line - signal_line
+            
+            # SPX BBW 20
+            sma20 = spx_s.rolling(window=20).mean()
+            std20_bb = spx_s.rolling(window=20).std()
+            bbw = (4 * std20_bb) / sma20.replace(0, 0.0001)
+            
+            # SPX VIX Corr 10
+            vix_corr = 0.0
+            if vix_s is not None and len(vix_s) >= 20:
+                spx_ret_alpha = spx_s.pct_change() * 100
+                vix_ret_alpha = vix_s.pct_change() * 100
+                corr_s = spx_ret_alpha.rolling(window=10).corr(vix_ret_alpha).fillna(0)
+                vix_corr = float(corr_s.iloc[-1])
+            
+            clean_daily["SPX_Alpha"] = {
+                "rsi_14": float(rsi.iloc[-1]),
+                "macd_hist": float(macd_hist.iloc[-1]),
+                "bbw_20": float(bbw.iloc[-1]),
+                "vix_corr_10": float(vix_corr)
+            }
+        else:
+            clean_daily["SPX_Alpha"] = {
+                "rsi_14": 50.0,
+                "macd_hist": 0.0,
+                "bbw_20": 0.0,
+                "vix_corr_10": 0.0
+            }
             
         vix_s = parsed_daily.get("VIX", {}).get("raw_series")
         vvix_s = parsed_daily.get("VVIX", {}).get("raw_series")
@@ -241,13 +305,69 @@ class Conductor:
         self.event_bus.publish("FeaturesEngineered", {"vector": self.features_vector, "meta": self.feature_metadata})
 
     def handle_features_engineered(self, payload):
-        hmm_beta_probs, hmm_beta_dom, tr_risk, _ = self.hmm_engine.run_inference(self.features_vector)
-        hmm_alpha_probs = hmm_beta_probs
-        hmm_alpha_dom = hmm_beta_dom
+        # Manage persistent rolling window of features for HMM inference
+        window_path = os.path.join(os.path.dirname(__file__), "..", "data", "state", f"features_window_{self.interval}.json")
+        persistent_window = []
+        if os.path.exists(window_path):
+            try:
+                with open(window_path, 'r') as f:
+                    persistent_window = json.load(f)
+            except Exception:
+                pass
+                
+        persistent_window.append(self.features_vector)
+        # Keep last 6 bars for the HMM sequence
+        if len(persistent_window) > 6:
+            persistent_window = persistent_window[-6:]
+            
+        try:
+            with open(window_path, 'w') as f:
+                json.dump(persistent_window, f)
+        except Exception as e:
+            logger.warning(f"Could not save features window: {e}")
+            
+        self.features_window = persistent_window
+        
+        if self.use_1h_context:
+            logger.info("Using 1H HMM context for Daily Execution.")
+            prior_path = os.path.join(os.path.dirname(__file__), "..", "data", "state", "market_snapshot_prior.json")
+            if os.path.exists(prior_path):
+                try:
+                    with open(prior_path, 'r') as f:
+                        prior = json.load(f)
+                    hmm_beta_probs = prior.get("regime", {}).get("probabilities", {})
+                    hmm_beta_dom = prior.get("regime", {}).get("dominant_regime", "NEUTRAL_TRANSITIONAL")
+                    hmm_alpha_probs = prior.get("regime", {}).get("tactical_alpha_probabilities", {})
+                    hmm_alpha_dom = prior.get("regime", {}).get("tactical_alpha_regime", "NEUTRAL_TRANSITIONAL")
+                    tr_risk = prior.get("regime", {}).get("transition_risk", 0.0)
+                except Exception as e:
+                    logger.warning(f"Error reading 1H context: {e}. Falling back.")
+                    hmm_beta_probs, hmm_beta_dom, hmm_alpha_probs, hmm_alpha_dom, tr_risk = {}, "NEUTRAL_TRANSITIONAL", {}, "NEUTRAL_TRANSITIONAL", 0.0
+            else:
+                logger.warning("No prior 1H snapshot found! Falling back to flat probabilities.")
+                hmm_beta_probs, hmm_beta_dom, hmm_alpha_probs, hmm_alpha_dom, tr_risk = {}, "NEUTRAL_TRANSITIONAL", {}, "NEUTRAL_TRANSITIONAL", 0.0
+        else:
+            hmm_beta_probs, hmm_beta_dom, tr_risk, _ = self.hmm_engine.run_inference(
+                self.features_vector, 
+                features_window=list(self.features_window)
+            )
+            hmm_alpha_probs = hmm_beta_probs
+            hmm_alpha_dom = hmm_beta_dom
         
         current_regime = hmm_beta_dom if hmm_beta_dom else "NEUTRAL_TRANSITIONAL"
         
-        mlp_packages = load_mlp_models(self.interval)
+        # Backend Settings Sync & Isolation: Fetch active tickers to simulate independent execution
+        trading_settings_path = os.path.join(os.path.dirname(__file__), "..", "config", "trading_settings.json")
+        active_tickers = ["spx", "btc", "gld", "wti", "nvda", "tsla", "dell", "spce"]
+        if os.path.exists(trading_settings_path):
+            try:
+                with open(trading_settings_path, 'r') as f:
+                    settings_data = json.load(f)
+                    if "active_tickers" in settings_data:
+                        active_tickers = settings_data["active_tickers"]
+            except: pass
+            
+        mlp_packages = load_mlp_models(self.interval, assets=active_tickers)
         features_vector_clipped = np.clip(self.features_vector, -4.0, 4.0).tolist()
         mlp_state = run_multi_mlp_inference(features_vector_clipped, mlp_packages, current_regime)
         
@@ -321,8 +441,10 @@ class Conductor:
                 
         current_spx_val = self.clean_daily.get("SPX", {}).get("current", 0.0) if self.clean_daily.get("SPX") else 0.0
         
-        spx_ema = self.clean_daily.get("SPX", {}).get("ema_20")
-        is_downtrend = (current_spx_val < spx_ema) if spx_ema is not None else False
+        is_downtrend = False
+        if self._spx_raw_series is not None and len(self._spx_raw_series) >= 20:
+            ema_20 = float(self._spx_raw_series.ewm(span=20, adjust=False).mean().iloc[-1])
+            is_downtrend = float(current_spx_val) < ema_20
         
         current_ihi = self.clean_daily.get("volume_activity_heat", {}).get("institutional_heat_index", 0.0)
         
@@ -375,7 +497,9 @@ class Conductor:
             is_bull_trap=is_bull_trap,
             hmm_regime=self.snapshot.regime.current,
             current_ihi=current_ihi,
-            is_downtrend=is_downtrend
+            is_downtrend=is_downtrend,
+            max_kelly_cap=0.30 if self.interval == "4h" else 0.40,
+            equity_drawdown=self.paper_broker.get_equity_drawdown()
         )
 
         
@@ -405,6 +529,24 @@ class Conductor:
         volume_heat = self.snapshot.data_science_layer.get("advanced_metrics", {}).get("volume_activity_heat", 0.0)
         
         def run_llm():
+            # Prevent 429 quota exhaustion: skip LLM macro for 1h intervals and use cached state
+            if getattr(self, "interval", "") == "1h":
+                prior_path = os.path.join(os.path.dirname(__file__), "..", "data", "state", "market_snapshot.json")
+                if os.path.exists(prior_path):
+                    try:
+                        with open(prior_path, 'r') as f:
+                            prior_data = json.load(f)
+                            if prior_data and "news_signal" in prior_data and prior_data["news_signal"]:
+                                logger.info("Using cached LLM Macro from previous run to save Gemini API quota.")
+                                prior_sig = prior_data["news_signal"]
+                                return {
+                                    "fed_policy_hawkishness_prob": prior_sig.get("fed_policy_hawkishness_prob", 0.5),
+                                    "fear_greed_sentiment_score": prior_sig.get("fear_greed_sentiment_score", 0.5),
+                                    "quantitative_divergence_flag": prior_sig.get("quantitative_divergence_flag", False),
+                                    "reasoning": prior_sig.get("reasoning", "Cached from previous run.")
+                                }
+                    except Exception as e:
+                        logger.warning(f"Failed to load cached macro: {e}")
             return self.gemini_adapter.run_llm_macro(headlines, calendar_events, spread_2s10s, vix_zscore, volume_heat)
 
         import concurrent.futures
@@ -421,13 +563,12 @@ class Conductor:
         regime = self.snapshot.regime.current
         divergence = self.snapshot.news_signal.quantitative_divergence_flag
         
-        multiplier = 1.0
+        multiplier = self.snapshot.news_signal.kelly_multiplier
         if divergence:
-            multiplier = 0.5
-        elif signal == "LONG" and sentiment >= 0.75 and regime == "RISK_ON_EXPANSION":
-            multiplier = 1.2
+            logger.warning("Quantitative divergence flagged by LLM. Slashing multiplier to 0.5.")
+            multiplier = min(multiplier, 0.5)
         elif signal == "SHORT":
-            multiplier = 0.5
+            multiplier = min(multiplier, 0.5)
             
         current_kelly = self.snapshot.data_science_layer["epistemic_metrics"]["kelly_exposure_fraction"]
         if multiplier != 1.0:
@@ -482,35 +623,46 @@ class Conductor:
             
         self.lake_manager.save_unstructured(snapshot_dict, "market_snapshot.jsonl")
         
-        # Execute paper trading simulation
+        # Execute Rebalance in Paper Trading
+        self.bar_count += 1
+        bars_since_rebalance = self.bar_count - self.last_rebalance_bar
+        should_rebalance = bars_since_rebalance >= self.MIN_HOLD_BARS
+        
         try:
-            # Short_Kelly is handled separately from the long-only paper broker currently
-            target_allocs = {
-                "SPX":  kelly_obj.get("SPX_Kelly", 0.0),
-                "Gold": kelly_obj.get("GLD_Kelly", 0.0),
-                "BTC":  kelly_obj.get("BTC_Kelly", 0.0),
-                "WTI":  kelly_obj.get("WTI_Kelly", 0.0)
-            }
-            current_prices = {
-                "SPX":  self.clean_daily.get("SPX",  {}).get("current", 0.0),
-                "Gold": self.clean_daily.get("Gold", {}).get("current", 0.0),
-                "BTC":  self.clean_daily.get("BTC",  {}).get("current", 0.0),
-                "WTI":  self.clean_daily.get("WTI",  {}).get("current", 0.0)
-            }
-            self.paper_broker.execute_rebalance(target_allocs, current_prices)
+            if should_rebalance:
+                target_allocs = {
+                    "SPX":  kelly_obj.get("SPX_Kelly", 0.0),
+                    "Gold": kelly_obj.get("GLD_Kelly", 0.0),
+                    "BTC":  kelly_obj.get("BTC_Kelly", 0.0),
+                    "WTI":  kelly_obj.get("WTI_Kelly", 0.0)
+                }
+                current_prices = {
+                    "SPX":  self.clean_daily.get("SPX",  {}).get("current", 0.0),
+                    "Gold": self.clean_daily.get("Gold", {}).get("current", 0.0),
+                    "BTC":  self.clean_daily.get("BTC",  {}).get("current", 0.0),
+                    "WTI":  self.clean_daily.get("WTI",  {}).get("current", 0.0)
+                }
+                self.paper_broker.execute_rebalance(target_allocs, current_prices, vix_zscore=self.snapshot.market_extremes_insight.temperature_zscore, hmm_regime=self.snapshot.regime.current)
+                self.last_rebalance_bar = self.bar_count
+                logger.info(f"Rebalance executed at bar {self.bar_count}.")
+            else:
+                logger.info(f"Minimum hold period active. {bars_since_rebalance}/{self.MIN_HOLD_BARS} bars since last rebalance. Skipping.")
         except Exception as e:
-            logger.error(f"Paper broker execution failed: {e}")
+            logger.error(f"Paper Execution failed: {e}")
+            
+        logger.info("v6.0.0 Real-Time Event-Driven Pipeline Complete")
             
         with open(prior_path, 'w') as f:
             json.dump(snapshot_dict, f, indent=4)
             
-        logger.info("v5.2.0 Event-Driven Pipeline Complete")
+
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--interval", type=str, default="1d", choices=["1d", "1wk", "1h", "4h"])
+    parser.add_argument("--use-1h-context", action="store_true", help="Bypass HMM and load latest 1H context")
     args = parser.parse_args()
     
-    conductor = Conductor(interval=args.interval)
+    conductor = Conductor(interval=args.interval, use_1h_context=args.use_1h_context)
     conductor.run()

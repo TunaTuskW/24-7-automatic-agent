@@ -43,6 +43,7 @@ class PaperBroker:
             return {
                 "cash": self.starting_cash,
                 "positions": {},
+                "position_details": {},
                 "total_equity": self.starting_cash,
                 "last_update": datetime.now().isoformat()
             }
@@ -105,18 +106,50 @@ class PaperBroker:
         except Exception as e:
             logger.error(f"Failed to push trade alert to Discord: {e}")
 
-    def execute_rebalance(self, target_allocations: dict, current_prices: dict):
+    def get_equity_drawdown(self) -> float:
+        """Calculate the current drawdown from peak equity to adjust risk."""
+        current_eq = self.portfolio.get("total_equity", self.starting_cash)
+        peak_eq = self.portfolio.get("peak_equity", self.starting_cash)
+        
+        # Update peak equity
+        if current_eq > peak_eq:
+            self.portfolio["peak_equity"] = current_eq
+            peak_eq = current_eq
+            self._save_portfolio()
+            
+        if peak_eq > 0:
+            return (peak_eq - current_eq) / peak_eq
+        return 0.0
+
+    def execute_rebalance(self, target_allocations: dict, current_prices: dict, vix_zscore: float = 0.0, hmm_regime: str = "NEUTRAL"):
         """
         target_allocations: dict mapped by ticker to target fraction (e.g. {"SPX": 0.5, "Gold": 0.2})
         current_prices: dict mapped by ticker to current spot price (e.g. {"SPX": 5300.0, "Gold": 2350.0})
         """
         logger.info(f"PaperBroker starting rebalance. Targets: {target_allocations}")
         
-        # 1. Compute current equity
+        # Calculate dynamic slippage based on VIX z-score
+        # Base: 5 bps. Max: 50 bps. If VIX is +3 z-scores, slippage becomes ~11 bps.
+        dynamic_slippage = min(0.005, max(0.0005, 0.0005 + (vix_zscore * 0.0002)))
+        logger.info(f"Applied dynamic slippage: {dynamic_slippage:.4f} (VIX Z: {vix_zscore})")
+        
+        if "position_details" not in self.portfolio:
+            self.portfolio["position_details"] = {}
+        
+        # 1. Compute current equity & update high watermarks
         total_equity = self.portfolio["cash"]
         for ticker, shares in self.portfolio["positions"].items():
             if ticker in current_prices:
-                total_equity += shares * current_prices[ticker]
+                spot = current_prices[ticker]
+                total_equity += shares * spot
+                
+                # Update high watermark for trailing stop
+                if ticker not in self.portfolio["position_details"]:
+                    self.portfolio["position_details"][ticker] = {"peak_price": spot}
+                else:
+                    self.portfolio["position_details"][ticker]["peak_price"] = max(
+                        self.portfolio["position_details"][ticker].get("peak_price", spot), spot
+                    )
             else:
                 logger.warning(f"Price for {ticker} missing during rebalance! Using last known weight.")
                 
@@ -129,9 +162,25 @@ class PaperBroker:
             target_values[ticker] = total_equity * target_frac
             
         # Add tickers we own but aren't in target_allocations (target = 0)
-        for ticker in self.portfolio["positions"].keys():
+        for ticker in list(self.portfolio["positions"].keys()):
             if ticker not in target_values:
                 target_values[ticker] = 0.0
+                
+            # Dynamic Trailing Stop Logic (Check if we need to force 0.0 allocation)
+            if ticker in current_prices and target_values[ticker] > 0.0:
+                spot = current_prices[ticker]
+                peak = self.portfolio["position_details"].get(ticker, {}).get("peak_price", spot)
+                drawdown = (peak - spot) / peak if peak > 0 else 0.0
+                
+                # Tighten stops if regime is risk-off
+                stop_threshold = 0.05 # 5% trailing stop base
+                if hmm_regime.startswith("RISK_OFF") or hmm_regime == "STAGFLATION_STRESS":
+                    stop_threshold = 0.03 # Tighten to 3%
+                    
+                if drawdown >= stop_threshold:
+                    logger.warning(f"TRAILING STOP TRIGGERED for {ticker}: Drawdown {drawdown:.2%} >= limit {stop_threshold:.2%} (Peak: {peak}, Spot: {spot}). Forcing liquidation.")
+                    target_values[ticker] = 0.0
+                    target_allocations[ticker] = 0.0
 
         # 3. Process SELLS first (to free up cash)
         for ticker, target_val in target_values.items():
@@ -148,7 +197,7 @@ class PaperBroker:
             if diff_val < -self.min_trade_size and drift_pct >= self.rebalance_drift_threshold:
                 val_to_sell = abs(diff_val)
                 # Apply slippage (sell at a slightly worse/lower price)
-                exec_price = current_prices[ticker] * (1.0 - self.slippage_pct)
+                exec_price = current_prices[ticker] * (1.0 - dynamic_slippage)
                 shares_to_sell = val_to_sell / exec_price
                 
                 # Cap at what we actually own
@@ -156,13 +205,15 @@ class PaperBroker:
                     shares_to_sell = current_shares
                     val_to_sell = shares_to_sell * exec_price
                     
-                fee = val_to_sell * self.slippage_pct # Record the cost of slippage
+                fee = val_to_sell * dynamic_slippage # Record the cost of slippage
                 
                 self.portfolio["positions"][ticker] -= shares_to_sell
                 self.portfolio["cash"] += val_to_sell
                 
                 if self.portfolio["positions"][ticker] <= 1e-6:
                     del self.portfolio["positions"][ticker]
+                    if ticker in self.portfolio.get("position_details", {}):
+                        del self.portfolio["position_details"][ticker]
                     
                 self._log_trade(ticker, "SELL", shares_to_sell, exec_price, val_to_sell, fee)
                 logger.info(f"PAPER SELL: {shares_to_sell:.4f} {ticker} @ ${exec_price:.2f}")
@@ -189,12 +240,16 @@ class PaperBroker:
                     
                 if val_to_buy > self.min_trade_size:
                     # Apply slippage (buy at a slightly worse/higher price)
-                    exec_price = current_prices[ticker] * (1.0 + self.slippage_pct)
+                    exec_price = current_prices[ticker] * (1.0 + dynamic_slippage)
                     shares_to_buy = val_to_buy / exec_price
                     
-                    fee = val_to_buy * self.slippage_pct # Record the cost of slippage
+                    fee = val_to_buy * dynamic_slippage # Record the cost of slippage
                     
                     self.portfolio["positions"][ticker] = self.portfolio["positions"].get(ticker, 0.0) + shares_to_buy
+                    
+                    # Initialize peak price for new buys
+                    if ticker not in self.portfolio.get("position_details", {}):
+                        self.portfolio["position_details"][ticker] = {"peak_price": exec_price}
                     self.portfolio["cash"] -= val_to_buy
                     
                     self._log_trade(ticker, "BUY", shares_to_buy, exec_price, val_to_buy, fee)

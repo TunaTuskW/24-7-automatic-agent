@@ -59,12 +59,18 @@ Output strictly valid JSON with no markdown. The JSON MUST contain exactly the f
 - "reasoning": A 3 to 4 sentence step-by-step synthesis explaining how the quantitative data and news justify your conclusions.
 - "fed_policy_hawkishness_prob": A float between 0.0 and 1.0 (1.0 = extreme rate hike pressure).
 - "fear_greed_sentiment_score": A float between 0.0 and 1.0 (1.0 = extreme greed/bullishness).
+- "credit_stress": A float between 0.0 and 1.0 (1.0 = high credit stress / default fears).
+- "liquidity_withdrawal": A float between 0.0 and 1.0 (1.0 = rapid liquidity draining).
+- "kelly_multiplier": A float between 0.5 and 1.5. If the macro environment is dangerously toxic (e.g., credit stress + hawkishness), output 0.5 to slash risk. If it's a Goldilocks environment, output 1.2. Otherwise, 1.0.
 - "quantitative_divergence_flag": A boolean. Set to true ONLY if news headlines are extremely bullish but the VIX z-score is spiking > 1.5 (indicating hidden institutional panic).
 
 {{
   "reasoning": "string",
   "fed_policy_hawkishness_prob": 0.5,
   "fear_greed_sentiment_score": 0.5,
+  "credit_stress": 0.0,
+  "liquidity_withdrawal": 0.0,
+  "kelly_multiplier": 1.0,
   "quantitative_divergence_flag": false
 }}
 
@@ -81,7 +87,7 @@ Volume Activity Heat: {volume_heat}"""
         import time
         for attempt in range(max_retries):
             try:
-                response = self.client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
+                response = self.client.models.generate_content(model='gemini-2.0-flash', contents=prompt)
                 raw_text = response.text.replace("```json", "").replace("```", "").strip()
                 return json.loads(raw_text)
             except Exception as e:

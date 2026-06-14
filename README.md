@@ -1,10 +1,10 @@
-# Macro Briefing Agent Setup Guide (v6.0.0)
+# Macro Briefing Agent Setup Guide (v6.1.0)
 
-Welcome to the **Macro Briefing Agent (v6.0.0)**—a 24/7 autonomous containerized **Single LLM & Multi-Asset Ensemble OS with Paper Trading & 14-Feature Space** and execution pipeline. This project decouples data ingestion, economic calendars, LLM synthesis, consensus scaling, and pub-sub event dispatching into an enterprise-grade framework.
+Welcome to the **Macro Briefing Agent (v6.1.0)**—a 24/7 autonomous containerized **Multi-Asset Trading Terminal & Dynamic Conviction Edge OS**. This project decouples data ingestion, economic calendars, LLM synthesis, consensus scaling, and pub-sub event dispatching into an enterprise-grade framework.
 
 
 ## Project Structure Overview
-Following the v6.0.0 Single LLM & Multi-Asset Ensemble OS upgrade, the project is organized into a highly decoupled, professional modular pipeline:
+Following the v6.1.0 Multi-Asset Trading Terminal upgrade, the project is organized into a highly decoupled, professional modular pipeline:
 - **`config/`**: Contains your API keys and webhook configurations (`fred_api_key.txt`, `webhook_config.txt`, `api_keys.json`, `tuning_configs.json`, etc.).
 - **`src/`**: Houses the core Python code organized as modular packages:
   - **`interfaces/`**: Standardized OOP interfaces (`data_broker.py`, `llm_provider.py`) defining loose-coupling contracts.
@@ -137,9 +137,9 @@ graph TD
         DivergeCheck{"VIX z-score > 1.5<br>& Bullish Headlines?"}
         DivergeSlash["Apply 0.5x Divergence Slash"]
         
-        Overrides["System Sizing Overrides & Safety Circuit Breakers:<br>• Black Swan Circuit Breaker (SPX return z < -3.5): Force SPX Kelly = 0.0<br>• Macro Trend Override (SPX below 20 EMA): Force Long SPX Kelly = 0.0<br>• Retail Noise Filter (non-risk-off & ihi < 0.0): Slash SPX Kelly by 50%<br>• Capitulation Override (Oversold z between -1.5 and -3.0, ihi > 0.0, MLP > 0.5): 0.9x contrarian Kelly<br>• Momentum Ignition Override (SPX z > 1.0, ihi > 0.1, MLP > 0.4): 1.25x momentum Kelly"]
+        Overrides["System Sizing Overrides & Safety Circuit Breakers:<br>• Dynamic Asset Conviction Edge (e.g. SPX > 58%, BTC > 62%, GLD > 55%)<br>• Black Swan Circuit Breaker (SPX return z < -3.5): Force SPX Kelly = 0.0<br>• Macro Trend Override (SPX below 20 EMA): Force Long SPX Kelly = 0.0<br>• Retail Noise Filter (non-risk-off & ihi < 0.0): Slash SPX Kelly by 50%<br>• Capitulation Override: 0.9x contrarian Kelly<br>• Momentum Ignition Override: 1.25x momentum Kelly"]
         
-        AssetAlloc["compute_multi_asset_kelly (Capital Rotation Engine:<br>Rotates to alternative assets Gold/BTC/WTI on SPX weakness)"]
+        AssetAlloc["compute_multi_asset_kelly (Capital Rotation Engine:<br>Rotates to alternative assets Gold/BTC/WTI dynamically)"]
         Balancer["Global Portfolio Balancer (Normalize to 1.2 leverage ceiling)"]
         
         MacroEx -->|"CoT reasoning contract"| ConsensusEng

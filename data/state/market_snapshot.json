@@ -1,5 +1,5 @@
 {
-    "generated_utc": "2026-06-13T07:04:07.964403+00:00",
+    "generated_utc": "2026-06-14T17:00:29.218368+00:00",
     "raw_indicators": {
         "SPX": {
             "current": 7430.8599,
@@ -10,7 +10,7 @@
             "std_60d": 106.2101,
             "z_score": 0.253,
             "momentum": "down",
-            "ema_20": 7389.933816284025
+            "ema_20": 7389.933816284026
         },
         "NDX": {
             "current": 29637.5488,
@@ -83,13 +83,13 @@
             "momentum": "down"
         },
         "TASI": {
-            "current": 11030.4297,
-            "prev": 11028.3604,
-            "delta": 2.0693,
-            "delta_pct": 0.019,
-            "mean_60d": 11016.6609,
-            "std_60d": 46.0757,
-            "z_score": 0.049,
+            "current": 11105.6797,
+            "prev": 11097.6104,
+            "delta": 8.0693,
+            "delta_pct": 0.073,
+            "mean_60d": 11025.9217,
+            "std_60d": 49.9954,
+            "z_score": 0.267,
             "momentum": "up"
         },
         "DFM": {
@@ -103,103 +103,143 @@
             "momentum": "up"
         },
         "ES": {
-            "current": 7436.25,
+            "current": 7435.0,
             "prev": 7433.75,
-            "delta": 2.5,
-            "delta_pct": 0.034,
-            "mean_60d": 7357.8667,
-            "std_60d": 56.0219,
-            "z_score": 0.061,
+            "delta": 1.25,
+            "delta_pct": 0.017,
+            "mean_60d": 7357.8458,
+            "std_60d": 55.9925,
+            "z_score": 0.005,
             "momentum": "up"
         },
         "NQ": {
-            "current": 29677.75,
+            "current": 29662.0,
             "prev": 29650.5,
-            "delta": 27.25,
-            "delta_pct": 0.092,
-            "mean_60d": 29093.9667,
-            "std_60d": 411.8047,
-            "z_score": 0.116,
+            "delta": 11.5,
+            "delta_pct": 0.039,
+            "mean_60d": 29093.7042,
+            "std_60d": 411.4311,
+            "z_score": -0.004,
             "momentum": "up"
         },
         "YM": {
-            "current": 51608.0,
+            "current": 51605.0,
             "prev": 51603.0,
-            "delta": 5.0,
-            "delta_pct": 0.01,
-            "mean_60d": 50706.1333,
-            "std_60d": 562.6004,
-            "z_score": -0.061,
+            "delta": 2.0,
+            "delta_pct": 0.004,
+            "mean_60d": 50706.0833,
+            "std_60d": 562.519,
+            "z_score": -0.081,
             "momentum": "up"
         },
         "RTY": {
-            "current": 2949.2,
+            "current": 2947.0,
             "prev": 2946.1001,
-            "delta": 3.0999,
-            "delta_pct": 0.105,
-            "mean_60d": 2891.9667,
-            "std_60d": 41.4051,
-            "z_score": 0.117,
+            "delta": 0.8999,
+            "delta_pct": 0.031,
+            "mean_60d": 2891.93,
+            "std_60d": 41.3545,
+            "z_score": -0.049,
+            "momentum": "up"
+        },
+        "NVDA": {
+            "current": 205.13,
+            "prev": 204.75,
+            "delta": 0.38,
+            "delta_pct": 0.186,
+            "mean_60d": 209.1747,
+            "std_60d": 6.6421,
+            "z_score": 0.373,
+            "momentum": "down"
+        },
+        "TSLA": {
+            "current": 406.445,
+            "prev": 403.1,
+            "delta": 3.345,
+            "delta_pct": 0.83,
+            "mean_60d": 403.8465,
+            "std_60d": 14.1211,
+            "z_score": 0.841,
+            "momentum": "down"
+        },
+        "DELL": {
+            "current": 395.58,
+            "prev": 398.18,
+            "delta": -2.6,
+            "delta_pct": -0.653,
+            "mean_60d": 400.036,
+            "std_60d": 19.0059,
+            "z_score": -0.283,
+            "momentum": "down"
+        },
+        "SPCE": {
+            "current": 3.9,
+            "prev": 3.9786,
+            "delta": -0.0786,
+            "delta_pct": -1.976,
+            "mean_60d": 4.6026,
+            "std_60d": 0.4889,
+            "z_score": -0.316,
             "momentum": "up"
         },
         "WTI": {
-            "current": 84.29,
+            "current": 84.88,
             "prev": 84.3,
-            "delta": -0.01,
-            "delta_pct": -0.012,
-            "mean_60d": 88.2402,
-            "std_60d": 2.6802,
-            "z_score": 0.058,
+            "delta": 0.58,
+            "delta_pct": 0.688,
+            "mean_60d": 88.25,
+            "std_60d": 2.6665,
+            "z_score": 0.77,
             "momentum": "down"
         },
         "Brent": {
-            "current": 86.71,
+            "current": 87.33,
             "prev": 86.81,
-            "delta": -0.1,
-            "delta_pct": -0.115,
-            "mean_60d": 90.9707,
-            "std_60d": 2.7577,
-            "z_score": -0.033,
+            "delta": 0.52,
+            "delta_pct": 0.599,
+            "mean_60d": 90.981,
+            "std_60d": 2.7425,
+            "z_score": 0.755,
             "momentum": "down"
         },
         "TTF": {
-            "current": 46.62,
+            "current": 46.773,
             "prev": 46.605,
-            "delta": 0.015,
-            "delta_pct": 0.032,
-            "mean_60d": 48.3142,
-            "std_60d": 1.354,
-            "z_score": 0.035,
+            "delta": 0.168,
+            "delta_pct": 0.36,
+            "mean_60d": 48.3168,
+            "std_60d": 1.3509,
+            "z_score": 0.226,
             "momentum": "up"
         },
         "Gold": {
-            "current": 4239.8999,
+            "current": 4238.7998,
             "prev": 4231.8999,
-            "delta": 8.0,
-            "delta_pct": 0.189,
-            "mean_60d": 4170.2167,
-            "std_60d": 57.7643,
-            "z_score": 0.388,
+            "delta": 6.8999,
+            "delta_pct": 0.163,
+            "mean_60d": 4170.1983,
+            "std_60d": 57.7419,
+            "z_score": 0.334,
             "momentum": "up"
         },
         "Silver": {
-            "current": 68.12,
+            "current": 67.974,
             "prev": 67.875,
-            "delta": 0.245,
-            "delta_pct": 0.361,
-            "mean_60d": 65.5211,
-            "std_60d": 1.6597,
-            "z_score": 0.328,
+            "delta": 0.099,
+            "delta_pct": 0.146,
+            "mean_60d": 65.5187,
+            "std_60d": 1.6559,
+            "z_score": 0.081,
             "momentum": "up"
         },
         "Copper": {
-            "current": 6.474,
+            "current": 6.445,
             "prev": 6.4905,
-            "delta": -0.0165,
-            "delta_pct": -0.254,
-            "mean_60d": 6.3182,
-            "std_60d": 0.0892,
-            "z_score": -0.763,
+            "delta": -0.0455,
+            "delta_pct": -0.701,
+            "mean_60d": 6.3177,
+            "std_60d": 0.0885,
+            "z_score": -1.853,
             "momentum": "up"
         },
         "DXY": {
@@ -302,6 +342,16 @@
             "z_score": -0.765,
             "momentum": "up"
         },
+        "BTC": {
+            "current": 63908.8086,
+            "prev": 63986.1797,
+            "delta": -77.3711,
+            "delta_pct": -0.121,
+            "mean_60d": 63912.5334,
+            "std_60d": 426.4148,
+            "z_score": -0.406,
+            "momentum": "up"
+        },
         "IBIT": {
             "current": 36.025,
             "prev": 36.095,
@@ -352,14 +402,20 @@
             "z_score": 0.477,
             "momentum": "down"
         },
+        "SPX_Alpha": {
+            "rsi_14": 58.032019701406895,
+            "macd_hist": 15.139044812735182,
+            "bbw_20": 0.033962411260818046,
+            "vix_corr_10": 0.0
+        },
         "volume_activity_heat": {
             "participation_type": "RETAIL_DRIFT",
             "institutional_heat_index": 0.223
         },
         "gold_to_silver_ratio": {
-            "current": 62.242,
+            "current": 62.359,
             "prev": 62.348,
-            "delta_pct": -0.171
+            "delta_pct": 0.017
         },
         "institutional_crypto_mfi": {
             "composite_z": -0.019,
@@ -372,15 +428,15 @@
     },
     "bonds": {
         "US2Y": {
-            "current": 4.2129998207092285
+            "current": 4.05
         },
         "US10Y": {
-            "current": 4.486999988555908,
-            "delta": 0.024,
-            "delta_zscore": 0.4534
+            "current": 4.45,
+            "delta": -0.1,
+            "delta_zscore": -2.1453
         },
-        "spread_zscore": 0.2194,
-        "spread_2s10s": 0.274
+        "spread_zscore": -0.6643,
+        "spread_2s10s": 0.4
     },
     "market_extremes_insight": {
         "temperature_zscore": -0.886,
@@ -390,87 +446,81 @@
         "vvix_vix_ratio": 5.36
     },
     "regime": {
-        "current": "DEFLATION_FEAR_2",
-        "dominant_regime": "DEFLATION_FEAR_2",
-        "tactical_alpha_regime": "DEFLATION_FEAR_2",
+        "current": "NEUTRAL_TRANSITIONAL",
+        "dominant_regime": "NEUTRAL_TRANSITIONAL",
+        "tactical_alpha_regime": "NEUTRAL_TRANSITIONAL",
         "probabilities": {
-            "NEUTRAL_TRANSITIONAL": 0.0096,
-            "DEFLATION_FEAR": 0.0096,
-            "DEFLATION_FEAR_2": 0.9519,
-            "DEFLATION_FEAR_3": 0.0096,
-            "NEUTRAL_TRANSITIONAL_4": 0.0096,
-            "NEUTRAL_TRANSITIONAL_5": 0.0096
+            "LIQUIDITY_DRIVEN_RALLY": 0.0099,
+            "NEUTRAL_TRANSITIONAL": 0.9802,
+            "DEFLATION_FEAR": 0.0099
         },
         "tactical_alpha_probabilities": {
-            "NEUTRAL_TRANSITIONAL": 0.0096,
-            "DEFLATION_FEAR": 0.0096,
-            "DEFLATION_FEAR_2": 0.9519,
-            "DEFLATION_FEAR_3": 0.0096,
-            "NEUTRAL_TRANSITIONAL_4": 0.0096,
-            "NEUTRAL_TRANSITIONAL_5": 0.0096
+            "LIQUIDITY_DRIVEN_RALLY": 0.0099,
+            "NEUTRAL_TRANSITIONAL": 0.9802,
+            "DEFLATION_FEAR": 0.0099
         },
-        "transition_risk": 0.5764,
-        "start_utc": "2026-06-13T07:01:20.590974+00:00",
-        "duration_days": 0.0
+        "transition_risk": 0.2133,
+        "start_utc": "2026-06-14T14:00:16.589119+00:00",
+        "duration_days": 0.1251295351041667
     },
     "kalman_state": {
-        "dominant_prob": 0.715,
+        "dominant_prob": 0.893,
         "dominant_state": "transitional",
-        "tvd": 0.6502,
-        "brier_score_calibration": 0.2396,
+        "tvd": 0.6501,
+        "brier_score_calibration": 0.2344,
         "structural_ambiguity_index": 0.0,
         "probabilities": [
-            0.0776137348081295,
-            0.2071333560406395,
-            0.7152529091512311
+            0.05155755671044411,
+            0.05579667526362627,
+            0.8926457680259297
         ],
         "covariance_matrix": [
             [
-                0.03339262196661944,
-                0.0017088810869049537,
-                0.0017088810869049537
+                0.021738895449797013,
+                0.0007136762268784906,
+                0.0007136762268784907
             ],
             [
-                0.0017088810869049535,
-                0.03339262196661944,
-                0.0017088810869049537
+                0.0007136762268784906,
+                0.02173889544979702,
+                0.000713676226878491
             ],
             [
-                0.0017088810869049535,
-                0.0017088810869049537,
-                0.03339262196661945
+                0.0007136762268784907,
+                0.000713676226878491,
+                0.02173889544979702
             ]
         ],
         "is_ambiguous": false,
-        "risk_on": 0.078,
-        "risk_off": 0.207,
-        "transitional": 0.715
+        "risk_on": 0.052,
+        "risk_off": 0.056,
+        "transitional": 0.893
     },
     "mlp_deep_state": {
         "spx": {
-            "bull_probability": 0.47,
-            "bear_probability": 0.53,
+            "bull_probability": 0.446,
+            "bear_probability": 0.554,
             "neutral_probability": 0.0,
             "predicted_class": 0,
             "consensus_score": 1.0
         },
         "btc": {
-            "bull_probability": 0.344,
-            "bear_probability": 0.656,
+            "bull_probability": 0.174,
+            "bear_probability": 0.826,
             "neutral_probability": 0.0,
             "predicted_class": 0,
             "consensus_score": 1.0
         },
         "gld": {
-            "bull_probability": 0.388,
-            "bear_probability": 0.612,
+            "bull_probability": 0.135,
+            "bear_probability": 0.865,
             "neutral_probability": 0.0,
             "predicted_class": 0,
             "consensus_score": 1.0
         },
         "wti": {
-            "bull_probability": 0.309,
-            "bear_probability": 0.691,
+            "bull_probability": 0.153,
+            "bear_probability": 0.847,
             "neutral_probability": 0.0,
             "predicted_class": 0,
             "consensus_score": 1.0
@@ -487,134 +537,152 @@
             "us10y_delta",
             "spread_level",
             "btc_ret",
-            "usdcad_ret"
+            "es_ret",
+            "nq_ret",
+            "rty_ret",
+            "nvda_ret",
+            "tsla_ret",
+            "dell_ret",
+            "spce_ret",
+            "spx_rsi_14",
+            "spx_macd_hist",
+            "spx_bbw",
+            "spx_vix_corr"
         ],
         "features_vector": [
             0.055,
             0.041,
             -0.098,
             0.223,
-            -0.012,
-            -0.171,
+            0.688,
+            0.017,
             0.0,
-            0.274,
-            0.0,
-            0.018
+            0.4,
+            -0.121,
+            0.017,
+            0.039,
+            0.031,
+            0.186,
+            0.83,
+            -0.653,
+            -1.976,
+            58.032019701406895,
+            15.139044812735182,
+            0.033962411260818046,
+            0.0
         ],
         "features_dict": {
             "spx_ret": 0.055,
             "dxy_ret": 0.041,
             "vix_zscore": -0.098,
             "Inst_Heat_Index": 0.223,
-            "wti_ret": -0.012,
-            "gsr_ret": -0.171,
+            "wti_ret": 0.688,
+            "gsr_ret": 0.017,
             "us10y_delta": 0.0,
-            "spread_level": 0.274,
-            "btc_ret": 0.0,
-            "usdcad_ret": 0.018
+            "spread_level": 0.4,
+            "btc_ret": -0.121,
+            "es_ret": 0.017,
+            "nq_ret": 0.039,
+            "rty_ret": 0.031,
+            "nvda_ret": 0.186,
+            "tsla_ret": 0.83,
+            "dell_ret": -0.653,
+            "spce_ret": -1.976,
+            "spx_rsi_14": 58.032019701406895,
+            "spx_macd_hist": 15.139044812735182,
+            "spx_bbw": 0.033962411260818046,
+            "spx_vix_corr": 0.0
         },
         "epistemic_metrics": {
-            "shannon_entropy": 0.389,
+            "shannon_entropy": 0.125,
             "kelly_exposure_fraction": {
-                "SPX_Kelly": 0.177,
-                "Short_Kelly": 0.0,
-                "BTC_Kelly": 0.014,
-                "GLD_Kelly": 0.071,
+                "SPX_Kelly": 0.0,
+                "Short_Kelly": 0.191,
+                "BTC_Kelly": 0.0,
+                "GLD_Kelly": 0.0,
                 "WTI_Kelly": 0.0,
-                "Cash": 0.738
+                "NVDA_Kelly": 0.0,
+                "TSLA_Kelly": 0.0,
+                "DELL_Kelly": 0.0,
+                "SPCE_Kelly": 0.0,
+                "Cash": 0.809
             },
             "is_high_risk_edge": true,
             "is_capitulation_override_active": false
         }
     },
     "mcs": {
-        "score": 22.35,
+        "score": 24.22,
         "label": "NEUTRAL",
         "components": {
-            "equity_momentum": 1.048,
-            "rate_pressure": -3.825,
-            "energy_stress": -0.104,
+            "equity_momentum": 1.157,
+            "rate_pressure": 2.917,
+            "energy_stress": -6.354,
             "cross_asset_coherence": 25.0
         }
     },
     "data_driven_escalation": "ELEVATED",
     "news_signal": {
         "signal": "MIXED",
-        "conviction": 0.75,
+        "conviction": 0.5,
         "impact": "MIXED_SIGNALS",
-        "reasoning": "LLM macro: Headlines present a mixed market picture, with an initial AI-related stock rout quickly moderated by reassurances, while safe-haven assets like gold and silver declined. Despite some equity-specific jitters, quantitative indicators, particularly the VIX z-score at -0.886, strongly suggest market complacency and low volatility. However, upcoming high-impact USD CPI forecasts showing increases in yearly inflation, alongside an expected hawkish move by the ECB, point towards continued central bank tightening pressures. This creates a scenario of underlying inflation concerns and global monetary policy hawkishness against a backdrop of relative market calm.",
+        "reasoning": "LLM macro: LLM macro: LLM macro: LLM macro: LLM macro: LLM macro: LLM macro: LLM macro: LLM macro: The market exhibits a mixed sentiment with strong bullishness in specific areas like tech (SpaceX IPO, JPM stock pick) contrasted by a notable AI sector rout, while commodity markets are also seeing movement. Quantitative indicators show current market complacency with a low VIX z-score, but the flat 2s10s spread and extremely low volume heat suggest underlying caution and a lack of broad conviction. High-impact FOMC events are upcoming, introducing policy uncertainty despite a stable immediate rate forecast.",
         "quantitative_divergence_flag": false
     },
     "economic_calendar": {
         "events": [
             {
-                "title": "Core CPI m/m",
-                "country": "USD",
-                "date": "2026-06-10T08:30:00-04:00",
+                "title": "BOJ Policy Rate",
+                "country": "JPY",
+                "date": "2026-06-15T22:30:00-04:00",
                 "impact": "High",
-                "forecast": "0.3%",
-                "previous": "0.4%"
-            },
-            {
-                "title": "Core CPI y/y",
-                "country": "USD",
-                "date": "2026-06-10T08:30:00-04:00",
-                "impact": "High",
-                "forecast": "2.9%",
-                "previous": "2.8%"
-            },
-            {
-                "title": "CPI m/m",
-                "country": "USD",
-                "date": "2026-06-10T08:30:00-04:00",
-                "impact": "High",
-                "forecast": "0.5%",
-                "previous": "0.6%"
-            },
-            {
-                "title": "CPI y/y",
-                "country": "USD",
-                "date": "2026-06-10T08:30:00-04:00",
-                "impact": "High",
-                "forecast": "4.2%",
-                "previous": "3.8%"
-            },
-            {
-                "title": "Main Refinancing Rate",
-                "country": "EUR",
-                "date": "2026-06-11T08:15:00-04:00",
-                "impact": "High",
-                "forecast": "2.40%",
-                "previous": "2.15%"
+                "forecast": "<1.00%",
+                "previous": "<0.75%"
             },
             {
                 "title": "Monetary Policy Statement",
-                "country": "EUR",
-                "date": "2026-06-11T08:15:00-04:00",
+                "country": "JPY",
+                "date": "2026-06-15T22:30:00-04:00",
                 "impact": "High",
                 "forecast": "",
                 "previous": ""
             },
             {
-                "title": "Core PPI m/m",
-                "country": "USD",
-                "date": "2026-06-11T08:30:00-04:00",
+                "title": "BOJ Press Conference",
+                "country": "JPY",
+                "date": "2026-06-16T01:30:00-04:00",
                 "impact": "High",
-                "forecast": "0.5%",
-                "previous": "1.0%"
+                "forecast": "",
+                "previous": ""
             },
             {
-                "title": "PPI m/m",
+                "title": "Federal Funds Rate",
                 "country": "USD",
-                "date": "2026-06-11T08:30:00-04:00",
+                "date": "2026-06-17T14:00:00-04:00",
                 "impact": "High",
-                "forecast": "0.7%",
-                "previous": "1.4%"
+                "forecast": "3.75%",
+                "previous": "3.75%"
             },
             {
-                "title": "ECB Press Conference",
-                "country": "EUR",
-                "date": "2026-06-11T08:45:00-04:00",
+                "title": "FOMC Economic Projections",
+                "country": "USD",
+                "date": "2026-06-17T14:00:00-04:00",
+                "impact": "High",
+                "forecast": "",
+                "previous": ""
+            },
+            {
+                "title": "FOMC Statement",
+                "country": "USD",
+                "date": "2026-06-17T14:00:00-04:00",
+                "impact": "High",
+                "forecast": "",
+                "previous": ""
+            },
+            {
+                "title": "FOMC Press Conference",
+                "country": "USD",
+                "date": "2026-06-17T14:30:00-04:00",
                 "impact": "High",
                 "forecast": "",
                 "previous": ""

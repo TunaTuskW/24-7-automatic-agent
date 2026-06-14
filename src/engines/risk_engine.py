@@ -87,20 +87,26 @@ class RiskEngine:
         except Exception:
             return 1.58
 
-    def compute_kelly_sizing(self, max_prob: float, dominant_state: str, brier_score: float, duration_days: float = 0.0, half_life: float = 99.0, sentiment_multiplier: float = 1.0, is_capitulation_override: bool = False, is_momentum_override: bool = False, is_black_swan: bool = False, is_bull_trap: bool = False, hmm_regime: str = "UNKNOWN", current_ihi: float = 0.0, consensus_score: float = 0.0) -> dict:
-        logger.info(f"Computing Kelly size (prob: {max_prob}, state: {dominant_state}, brier: {brier_score}, consensus: {consensus_score})")
+    def compute_kelly_sizing(self, max_prob: float, dominant_state: str, brier_score: float, duration_days: float = 0.0, half_life: float = 99.0, sentiment_multiplier: float = 1.0, is_capitulation_override: bool = False, is_momentum_override: bool = False, is_black_swan: bool = False, is_bull_trap: bool = False, hmm_regime: str = "UNKNOWN", current_ihi: float = 0.0, consensus_score: float = 0.0, conviction_threshold: float = 0.60) -> float:
+        logger.info(f"Computing Kelly size (prob: {max_prob}, state: {dominant_state}, brier: {brier_score}, consensus: {consensus_score}, threshold: {conviction_threshold})")
         
-        # Base probability threshold (need at least 33% win rate expectation to play)
         if is_bull_trap:
             logger.warning("Bull Trap Override Active: MLP Prob > 0.80 is historically inversely calibrated. Inverting to contrarian bearish.")
             max_prob = 1.0 - max_prob
             
-        edge = max_prob - 0.333
+        is_short_bet = False
+        effective_prob = max_prob
+        if max_prob < 0.5:
+            is_short_bet = True
+            effective_prob = 1.0 - max_prob
+            
+        # High Conviction base probability threshold (need at least threshold win rate expectation to play)
+        edge = effective_prob - conviction_threshold
         if edge <= 0:
-            logger.info("No positive expectancy (edge <= 0). Returning 0.0 Kelly allocation.")
+            logger.info(f"No high conviction edge (prob {effective_prob:.3f} <= {conviction_threshold}). Returning 0.0 Kelly allocation.")
             return 0.0
         
-        win_rate = max_prob
+        win_rate = effective_prob
         loss_rate = 1.0 - win_rate
         base_fraction = win_rate - (loss_rate / 2.0)
         
@@ -127,11 +133,6 @@ class RiskEngine:
         elif is_momentum_override:
             logger.info("Momentum Ignition Active: Bypassing risk-off penalties and applying 1.25x momentum multiplier.")
             final_fraction *= 1.25 # Aggressive trend-following Kelly
-        else:
-            if dominant_state == "risk_off":
-                final_fraction *= 0.6  # Moderated penalty for high volatility/stress regimes
-            elif dominant_state == "transitional":
-                final_fraction *= 0.9  # Discounted Kelly for uncertain regimes
                 
         # Consensus Risk Modifier (Smooth Linear Scale: 0.7x to 1.2x)
         consensus_multiplier = 0.7 + (consensus_score * 0.5)
@@ -143,10 +144,13 @@ class RiskEngine:
             final_fraction *= max(0.2, decay_factor)
             
         final_fraction *= sentiment_multiplier
+        
+        if is_short_bet:
+            final_fraction = -final_fraction
             
         return final_fraction
 
-    def compute_multi_asset_kelly(self, mlp_predictions, dominant_state, brier_score, duration_days=0, is_capitulation_override=False, is_momentum_override=False, is_black_swan=False, is_bull_trap=False, hmm_regime="NEUTRAL_TRANSITIONAL", current_ihi=0.0, is_downtrend=False):
+    def compute_multi_asset_kelly(self, mlp_predictions, dominant_state, brier_score, duration_days=0, is_capitulation_override=False, is_momentum_override=False, is_black_swan=False, is_bull_trap=False, hmm_regime="NEUTRAL_TRANSITIONAL", current_ihi=0.0, is_downtrend=False, max_kelly_cap: float = 0.40, equity_drawdown: float = 0.0):
         # Calculate raw kelly for each asset
         raw_allocations = {}
         for asset, preds in mlp_predictions.items():
@@ -164,6 +168,24 @@ class RiskEngine:
             asset_is_bull_trap = False
             if asset == "spx" and is_bull_trap:
                 asset_is_bull_trap = True
+                
+            # Equity Curve Smoothing: Reduce risk if we are in a drawdown
+            if equity_drawdown > 0.05:
+                logger.warning(f"Equity Curve Smoothing Active: Current drawdown is {equity_drawdown:.2%}. Reducing max_kelly_cap by 50%.")
+                max_kelly_cap = max(0.10, max_kelly_cap * 0.5)
+            
+            # Determine Asset-Specific Conviction Threshold
+            asset_thresholds = {
+                "spx": 0.58,   # Core index, slightly lower threshold
+                "btc": 0.62,   # High volatility, requires higher conviction
+                "gld": 0.55,   # Safe haven, lower conviction needed to hedge
+                "wti": 0.60,
+                "nvda": 0.60,
+                "tsla": 0.62,
+                "dell": 0.60,
+                "spce": 0.65   # Extreme volatility, requires extreme conviction
+            }
+            asset_conviction_threshold = asset_thresholds.get(asset, 0.60)
             
             raw_kelly = self.compute_kelly_sizing(
                 max_prob=prob, 
@@ -176,7 +198,8 @@ class RiskEngine:
                 is_bull_trap=asset_is_bull_trap, 
                 hmm_regime=hmm_regime, 
                 current_ihi=current_ihi,
-                consensus_score=consensus_score
+                consensus_score=consensus_score,
+                conviction_threshold=asset_conviction_threshold
             )
             raw_allocations[asset] = raw_kelly
 
@@ -193,7 +216,7 @@ class RiskEngine:
         short_kelly = 0.0
         
         if spx_raw > 0:
-            spx_kelly = round(min(1.2, spx_raw), 3)
+            spx_kelly = round(min(max_kelly_cap, spx_raw), 3)
             # Retail Noise Filter as an active risk multiplier
             if dominant_state != "risk_off" and current_ihi < 0.0:
                 logger.info(f"Retail Noise Filter active: dominant_state={dominant_state}, current_ihi={current_ihi}. Slashed SPX Kelly fraction by 50%.")
@@ -213,28 +236,35 @@ class RiskEngine:
         btc_kelly = round(max(0.0, min(1.0, raw_allocations.get("btc", 0.0))), 3)
         gld_kelly = round(max(0.0, min(1.0, raw_allocations.get("gld", 0.0))), 3)
         wti_kelly = round(max(0.0, min(1.0, raw_allocations.get("wti", 0.0))), 3)
+        nvda_kelly = round(max(0.0, min(1.0, raw_allocations.get("nvda", 0.0))), 3)
+        tsla_kelly = round(max(0.0, min(1.0, raw_allocations.get("tsla", 0.0))), 3)
+        dell_kelly = round(max(0.0, min(1.0, raw_allocations.get("dell", 0.0))), 3)
+        spce_kelly = round(max(0.0, min(1.0, raw_allocations.get("spce", 0.0))), 3)
 
-        # Capital Rotation Engine (Active Rotation)
+        # Capital Rotation Engine (Active Rotation & Diversity)
         spx_prob = mlp_predictions.get("spx", {}).get("bull_probability", 0.5)
+        
+        # High Beta Diversity (Risk-On environment)
+        if spx_kelly > 0.05:
+            logger.info(f"Risk-On environment detected. Allocating proportional high-beta diversity.")
+            nvda_kelly = max(nvda_kelly, round(spx_kelly * 0.35, 3)) # 35% of SPX exposure
+            btc_kelly = max(btc_kelly, round(spx_kelly * 0.25, 3))  # 25% of SPX exposure
+            tsla_kelly = max(tsla_kelly, round(spx_kelly * 0.20, 3))
+            
+        # Safe Haven Diversity (Risk-Off / Short environment)
+        if short_kelly > 0.05:
+            logger.info(f"Risk-Off environment detected. Allocating proportional safe-haven diversity.")
+            gld_kelly = max(gld_kelly, round(short_kelly * 0.40, 3)) # 40% of short exposure
+            
+        # Extreme Weakness rotation
         if spx_prob < 0.40:
-            logger.info(f"SPX weakness detected (prob: {spx_prob}). Activating Capital Rotation Engine for alternative assets.")
-            if mlp_predictions.get("gld", {}).get("bull_probability", 0.0) > 0.50:
-                gld_kelly = min(1.0, round(gld_kelly * 1.5, 3))
-            if mlp_predictions.get("btc", {}).get("bull_probability", 0.0) > 0.50:
-                btc_kelly = min(1.0, round(btc_kelly * 1.5, 3))
-            if mlp_predictions.get("wti", {}).get("bull_probability", 0.0) > 0.50:
-                wti_kelly = min(1.0, round(wti_kelly * 1.5, 3))
-
-        # Apply regime filters for alternative assets
-        if hmm_regime in ["DEFLATION_FEAR", "CRISIS_DISLOCATION"]:
-            btc_kelly = 0.0  # Zero crypto in panic
-            wti_kelly = 0.0  # Zero oil in deflation
-            # Boost Gold as safe haven
-            if gld_kelly < 0.2 and spx_kelly < 0.2:
-                gld_kelly = round(max(gld_kelly, 1.0 - spx_kelly - short_kelly), 3)
+            if mlp_predictions.get("nvda", {}).get("bull_probability", 0.0) > 0.50:
+                nvda_kelly = min(1.0, round(nvda_kelly * 1.5, 3))
+            if mlp_predictions.get("tsla", {}).get("bull_probability", 0.0) > 0.50:
+                tsla_kelly = min(1.0, round(tsla_kelly * 1.5, 3))
 
         # Global Portfolio Balancer (Normalize exposure)
-        total_exposure = spx_kelly + short_kelly + btc_kelly + gld_kelly + wti_kelly
+        total_exposure = spx_kelly + short_kelly + btc_kelly + gld_kelly + wti_kelly + nvda_kelly + tsla_kelly + dell_kelly + spce_kelly
         if total_exposure > 1.2:
             scale = 1.2 / total_exposure
             spx_kelly = round(spx_kelly * scale, 3)
@@ -242,7 +272,11 @@ class RiskEngine:
             btc_kelly = round(btc_kelly * scale, 3)
             gld_kelly = round(gld_kelly * scale, 3)
             wti_kelly = round(wti_kelly * scale, 3)
-            total_exposure = spx_kelly + short_kelly + btc_kelly + gld_kelly + wti_kelly
+            nvda_kelly = round(nvda_kelly * scale, 3)
+            tsla_kelly = round(tsla_kelly * scale, 3)
+            dell_kelly = round(dell_kelly * scale, 3)
+            spce_kelly = round(spce_kelly * scale, 3)
+            total_exposure = spx_kelly + short_kelly + btc_kelly + gld_kelly + wti_kelly + nvda_kelly + tsla_kelly + dell_kelly + spce_kelly
 
         cash = round(max(0.0, 1.0 - total_exposure), 3)
             
@@ -252,5 +286,9 @@ class RiskEngine:
             "BTC_Kelly": btc_kelly,
             "GLD_Kelly": gld_kelly,
             "WTI_Kelly": wti_kelly,
+            "NVDA_Kelly": nvda_kelly,
+            "TSLA_Kelly": tsla_kelly,
+            "DELL_Kelly": dell_kelly,
+            "SPCE_Kelly": spce_kelly,
             "Cash": cash
         }

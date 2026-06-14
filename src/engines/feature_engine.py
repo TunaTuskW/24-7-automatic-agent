@@ -18,6 +18,8 @@ ALL_YF_TICKERS = {
     # Equities
     "SPX": "^GSPC", "NDX": "^NDX", "DAX": "^GDAXI", "FTSE": "^FTSE", "N225": "^N225",
     "HSI": "^HSI", "SHANGHAI": "000001.SS", "KOSPI": "^KS11", "TASI": "^TASI.SR", "DFM": "DFMGI.AE", "ES": "ES=F", "NQ": "NQ=F", "YM": "YM=F", "RTY": "RTY=F",
+    # Single Name High-Vol Tech
+    "NVDA": "NVDA", "TSLA": "TSLA", "DELL": "DELL", "SPCE": "SPCE",
     # Commodities & Safe Havens
     "WTI": "CL=F", "Brent": "BZ=F", "TTF": "TTF=F",
     "Gold": "GC=F", "Silver": "SI=F", "Copper": "HG=F",
@@ -230,7 +232,7 @@ def compute_garch_volatility(ticker_symbol, lookback_days=250):
         return None, None, None
 def load_mlp_models(interval="1d", assets=None):
     if assets is None:
-        assets = ["spx", "btc", "gld", "wti"]
+        assets = ["spx", "btc", "gld", "wti", "nvda", "tsla", "dell", "spce"]
     models = {}
     for asset in assets:
         model_path = os.path.join(os.path.dirname(__file__), '..', '..', 'models', f'mlp_model_{asset}_{interval}.pkl')
@@ -259,6 +261,10 @@ def run_mlp_inference(features_vector, mlp_package, current_regime: str, asset="
             
         scaler = mlp_package["scaler"]
         obs = np.array([features_vector])
+        
+        # Algorithmic Outage Immunity: Replace NaN with 0.0 (mean) to prevent entire pipeline crash
+        obs = np.nan_to_num(obs, nan=0.0, posinf=4.0, neginf=-4.0)
+        
         obs_scaled = scaler.transform(obs)
         
         # Ensemble Prediction

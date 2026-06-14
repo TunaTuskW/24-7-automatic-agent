@@ -8,6 +8,7 @@ import os
 import json
 import logging
 import warnings
+import src.config_loader
 import numpy as np
 import pandas as pd
 import joblib
@@ -19,7 +20,7 @@ from hmmlearn.hmm import GaussianHMM
 from arch import arch_model
 from sklearn.preprocessing import StandardScaler
 from sklearn.neural_network import MLPClassifier
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, HistGradientBoostingClassifier
 warnings.filterwarnings("ignore")
 logging.basicConfig(
     level=logging.INFO,
@@ -27,7 +28,7 @@ logging.basicConfig(
 )
 # Configuration
 TRAINING_YEARS   = 5
-N_HIDDEN_STATES  = 6
+N_HIDDEN_STATES  = 3
 N_ITERATIONS     = 500
 def get_fred_key():
     key = os.environ.get("FRED_API_KEY")
@@ -59,7 +60,7 @@ def fetch_training_data(years=TRAINING_YEARS, interval="1d"):
         ultra_short = int(10 * bars)
         
     fred_key = get_fred_key()
-    tickers = ["^GSPC", "CL=F", "DX-Y.NYB", "SI=F", "USDCAD=X", "GC=F", "BTC-USD", "^VIX", "ES=F", "NQ=F", "YM=F", "RTY=F"]
+    tickers = ["^GSPC", "CL=F", "DX-Y.NYB", "SI=F", "USDCAD=X", "GC=F", "BTC-USD", "^VIX", "ES=F", "NQ=F", "YM=F", "RTY=F", "NVDA", "TSLA", "DELL", "SPCE"]
     data = yf.download(tickers, period=period, interval=interval, progress=False)
     
     spx = data["Close"]["^GSPC"].dropna()
@@ -108,14 +109,28 @@ def fetch_training_data(years=TRAINING_YEARS, interval="1d"):
     nq.index = pd.to_datetime(nq.index).tz_localize(None)
     ym = data["Close"]["YM=F"].dropna()
     ym.index = pd.to_datetime(ym.index).tz_localize(None)
+    ym.index = pd.to_datetime(ym.index).tz_localize(None)
     rty = data["Close"]["RTY=F"].dropna()
     rty.index = pd.to_datetime(rty.index).tz_localize(None)
+    
+    nvda = data["Close"]["NVDA"].dropna()
+    nvda.index = pd.to_datetime(nvda.index).tz_localize(None)
+    tsla = data["Close"]["TSLA"].dropna()
+    tsla.index = pd.to_datetime(tsla.index).tz_localize(None)
+    dell = data["Close"]["DELL"].dropna()
+    dell.index = pd.to_datetime(dell.index).tz_localize(None)
+    spce = data["Close"]["SPCE"].dropna()
+    spce.index = pd.to_datetime(spce.index).tz_localize(None)
     
     if interval == "1d":
         es.index = es.index.normalize()
         nq.index = nq.index.normalize()
         ym.index = ym.index.normalize()
         rty.index = rty.index.normalize()
+        nvda.index = nvda.index.normalize()
+        tsla.index = tsla.index.normalize()
+        dell.index = dell.index.normalize()
+        spce.index = spce.index.normalize()
         
     es = es[~es.index.duplicated(keep='last')]
     es_ret = es.pct_change() * 100
@@ -125,6 +140,14 @@ def fetch_training_data(years=TRAINING_YEARS, interval="1d"):
     ym_ret = ym.pct_change() * 100
     rty = rty[~rty.index.duplicated(keep='last')]
     rty_ret = rty.pct_change() * 100
+    nvda = nvda[~nvda.index.duplicated(keep='last')]
+    nvda_ret = nvda.pct_change() * 100
+    tsla = tsla[~tsla.index.duplicated(keep='last')]
+    tsla_ret = tsla.pct_change() * 100
+    dell = dell[~dell.index.duplicated(keep='last')]
+    dell_ret = dell.pct_change() * 100
+    spce = spce[~spce.index.duplicated(keep='last')]
+    spce_ret = spce.pct_change() * 100
     
     us2y_series = None
     us10y_series = None
@@ -165,6 +188,10 @@ def fetch_training_data(years=TRAINING_YEARS, interval="1d"):
         "nq_ret":        nq_ret.reindex(spx_ret.index, method="ffill"),
         "ym_ret":        ym_ret.reindex(spx_ret.index, method="ffill"),
         "rty_ret":       rty_ret.reindex(spx_ret.index, method="ffill"),
+        "nvda_ret":      nvda_ret.reindex(spx_ret.index, method="ffill"),
+        "tsla_ret":      tsla_ret.reindex(spx_ret.index, method="ffill"),
+        "dell_ret":      dell_ret.reindex(spx_ret.index, method="ffill"),
+        "spce_ret":      spce_ret.reindex(spx_ret.index, method="ffill"),
         "Volume":        spx_vol,
         "High":          spx_high,
         "Low":           spx_low,
@@ -197,6 +224,30 @@ def fetch_training_data(years=TRAINING_YEARS, interval="1d"):
     
     # Continuous calculation matches live ingestion perfectly
     df["Inst_Heat_Index"] = effort_z * result_vector
+    
+    # [NEW ALPHA FEATURES]
+    # 1. SPX RSI (14)
+    delta = df["Close"].diff()
+    gain = delta.where(delta > 0, 0).ewm(alpha=1/14, adjust=False).mean()
+    loss = (-delta.where(delta < 0, 0)).ewm(alpha=1/14, adjust=False).mean()
+    rs = gain / loss.replace(0, 0.0001)
+    df["spx_rsi_14"] = 100 - (100 / (1 + rs))
+    
+    # 2. SPX MACD Histogram (12, 26, 9)
+    ema12 = df["Close"].ewm(span=12, adjust=False).mean()
+    ema26 = df["Close"].ewm(span=26, adjust=False).mean()
+    macd_line = ema12 - ema26
+    signal_line = macd_line.ewm(span=9, adjust=False).mean()
+    df["spx_macd_hist"] = macd_line - signal_line
+    
+    # 3. SPX Bollinger Band Width (20)
+    sma20 = df["Close"].rolling(window=20).mean()
+    std20_bb = df["Close"].rolling(window=20).std()
+    df["spx_bbw"] = (4 * std20_bb) / sma20.replace(0, 0.0001)
+    
+    # 4. SPX / VIX Rolling Correlation (10)
+    vix_ret = df["vix"].pct_change() * 100
+    df["spx_vix_corr"] = df["spx_ret"].rolling(window=10).corr(vix_ret).fillna(0)
     
     # CRITICAL: Drop NaNs generated by the new 20-day rolling windows
     df = df.dropna()
@@ -265,9 +316,9 @@ def train_ensemble_classifier(df, feature_names, output_path, interval="1d", tar
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
     
-    # Neural architecture: 16 hidden -> 8 hidden -> 3 outputs
+    # Neural architecture: scaled up
     mlp = MLPClassifier(
-        hidden_layer_sizes=(16, 8),
+        hidden_layer_sizes=(64, 32),
         activation="relu",
         solver="adam",
         max_iter=1000,
@@ -278,18 +329,18 @@ def train_ensemble_classifier(df, feature_names, output_path, interval="1d", tar
     
     # Random Forest: Robust against overfitting
     rf = RandomForestClassifier(
-        n_estimators=100,
-        max_depth=5,
-        min_samples_leaf=5,
+        n_estimators=300,
+        max_depth=7,
+        min_samples_leaf=3,
         random_state=42
     )
     rf.fit(X_scaled, y)
     
-    # Gradient Boosting: Sequential feature dominance
-    gb = GradientBoostingClassifier(
-        n_estimators=100,
+    # Gradient Boosting: HistGradientBoosting is optimized for tabular data
+    gb = HistGradientBoostingClassifier(
+        max_iter=300,
         learning_rate=0.05,
-        max_depth=3,
+        max_depth=5,
         random_state=42
     )
     gb.fit(X_scaled, y)
@@ -307,10 +358,12 @@ def train_ensemble_classifier(df, feature_names, output_path, interval="1d", tar
 def train_hmm(interval="1d"):
     df = fetch_training_data(interval=interval)
     
-    # Aligned 10 features schema
+    # Aligned 16 features schema
     feature_names = [
         "spx_ret", "dxy_ret", "vix_zscore", "Inst_Heat_Index", "wti_ret", 
-        "gsr_ret", "us10y_delta", "spread_level", "btc_ret", "usdcad_ret"
+        "gsr_ret", "us10y_delta", "spread_level", "btc_ret",
+        "es_ret", "nq_ret", "rty_ret", "nvda_ret", "tsla_ret", "dell_ret", "spce_ret",
+        "spx_rsi_14", "spx_macd_hist", "spx_bbw", "spx_vix_corr"
     ]
     
     X = df[feature_names].values
@@ -343,10 +396,14 @@ def train_hmm(interval="1d"):
     logging.info(f"HMM Model saved to {output_hmm}")
     # Target Assets for Multi-Model ML Pipeline
     assets = [
-        {"name": "spx", "col": "spx_ret", "threshold": 0.5},
-        {"name": "btc", "col": "btc_ret", "threshold": 3.0},
-        {"name": "gld", "col": "gld_ret", "threshold": 1.0},
-        {"name": "wti", "col": "wti_ret", "threshold": 2.5}
+        {"name": "spx", "col": "spx_ret", "threshold": 1.25},  
+        {"name": "btc", "col": "btc_ret", "threshold": 7.5},   
+        {"name": "gld", "col": "gld_ret", "threshold": 2.5},   
+        {"name": "wti", "col": "wti_ret", "threshold": 6.25},
+        {"name": "nvda", "col": "nvda_ret", "threshold": 8.0},
+        {"name": "tsla", "col": "tsla_ret", "threshold": 8.0},
+        {"name": "dell", "col": "dell_ret", "threshold": 8.0},
+        {"name": "spce", "col": "spce_ret", "threshold": 2.0}
     ]
     
     for asset in assets:

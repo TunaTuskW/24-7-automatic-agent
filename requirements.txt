@@ -3,7 +3,8 @@ pandas
 numpy
 yfinance
 feedparser
-scikit-learn
+scikit-learn==1.6.1
+pyarrow
 hmmlearn
 arch
 requests
@@ -13,3 +14,8 @@ joblib
 matplotlib
 seaborn
 jupyter
+fastapi
+uvicorn
+apscheduler
+aiofiles
+websockets
