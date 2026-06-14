@@ -1,10 +1,10 @@
-# Macro Briefing Agent Setup Guide (v5.3.2)
+# Macro Briefing Agent Setup Guide (v6.0.0)
 
-Welcome to the **Macro Briefing Agent (v5.3.2)**—a 24/7 autonomous containerized **Single LLM & Multi-Asset Ensemble OS with Paper Trading & 14-Feature Space** and execution pipeline. This project decouples data ingestion, economic calendars, LLM synthesis, consensus scaling, and pub-sub event dispatching into an enterprise-grade framework.
+Welcome to the **Macro Briefing Agent (v6.0.0)**—a 24/7 autonomous containerized **Single LLM & Multi-Asset Ensemble OS with Paper Trading & 14-Feature Space** and execution pipeline. This project decouples data ingestion, economic calendars, LLM synthesis, consensus scaling, and pub-sub event dispatching into an enterprise-grade framework.
 
 
 ## Project Structure Overview
-Following the v5.3.0 Single LLM & Multi-Asset Ensemble OS upgrade, the project is organized into a highly decoupled, professional modular pipeline:
+Following the v6.0.0 Single LLM & Multi-Asset Ensemble OS upgrade, the project is organized into a highly decoupled, professional modular pipeline:
 - **`config/`**: Contains your API keys and webhook configurations (`fred_api_key.txt`, `webhook_config.txt`, `api_keys.json`, `tuning_configs.json`, etc.).
 - **`src/`**: Houses the core Python code organized as modular packages:
   - **`interfaces/`**: Standardized OOP interfaces (`data_broker.py`, `llm_provider.py`) defining loose-coupling contracts.
@@ -29,12 +29,37 @@ Following the v5.3.0 Single LLM & Multi-Asset Ensemble OS upgrade, the project i
 - **`models/`**: Saved machine learning models and scaler binaries.
 - **`reports/`**: Mapped output briefings, backtest records, paper trading PNG dashboards, and XLSX spreadsheets.
 - **`logs/`**: Execution, error, and immutable audit logs.
-- **`run_1h.sh`, `run_4h.sh`, `run_weekly.sh`**: Automatic pipeline runner scripts.
 - **`Dockerfile`, `docker-compose.yml`, `requirements.txt`**: Complete containerization and deployment configurations.
 
 ---
 
-## v5.3.0 Single LLM & Multi-Asset Ensemble OS
+## Docker Architecture & Storage
+
+This system is fully containerized for seamless, reproducible deployment. The architecture utilizes two main containers:
+- **`quant_backend`**: A headless Python container that runs the internal `APScheduler` and the FastAPI server. It handles data ingestion, ML inference, paper trading execution, and JSON state management.
+- **`quant_frontend`**: An NGINX Alpine container serving the compiled React/Vite Glassmorphism dashboard on Port 80.
+
+### Where is the container data stored?
+Docker containers are managed internally by the Docker Engine, but **all of your actual data and configurations are securely stored inside your `agent` folder**.
+We use **Docker Bind Mounts** in `docker-compose.yml` to achieve this:
+- `./data:/app/data`: Your market snapshots, logs, paper trading ledgers, and data lakes are saved directly to your Mac.
+- `./config:/app/config`: Your API keys and webhooks are mapped natively to the backend container.
+
+Because the data physically lives in your `agent` directory, **the folder is completely portable**. You can safely stop the containers, move the folder to a cloud server, and run `docker-compose up` without losing your paper trading history or trained models.
+
+### Docker Quickstart
+To boot the entire OS, open your terminal inside the `agent` folder and run:
+```bash
+# Build and start the backend and frontend
+docker-compose up -d --build
+
+# View real-time logs
+docker logs -f quant_backend
+```
+
+---
+
+## v6.0.0 Single LLM & Multi-Asset Ensemble OS
 
 The data pipeline operates as an enterprise-grade containerized event-driven OS featuring parallel LLM experts, step-by-step Chain-of-Thought (CoT) verification, and quantitative divergence protection filters:
 ```mermaid
@@ -321,51 +346,6 @@ The agent can push generated reports to a Discord channel using a webhook.
 
 ---
 
-## 4. Cron Job Setup
-
-To fully automate the agent, you can schedule the bash scripts using your system's cron daemon. `cron` runs silently in the background and executes scripts at specific times or intervals.
-
-**Note on Sleep Mode:** 
-Cron requires your Mac to be awake. If your Mac goes to sleep, the cron job will skip any scheduled runs that occur while asleep. It will resume once the Mac wakes up.
-
-### Setting Up the Automation
-1. Open your terminal and edit your crontab:
-   ```bash
-   crontab -e
-   ```
-2. Add the following entries to schedule the briefings. Make sure to use the absolute paths to the scripts:
-   ```cron
-   # Run the hourly automated pipeline (every hour)
-   0 * * * * /Users/mac/agent/run_1h.sh >> /Users/mac/agent/logs/cron.log 2>&1
-
-   # Run the 4-hour automated pipeline (every 4 hours)
-   0 */4 * * * /Users/mac/agent/run_4h.sh >> /Users/mac/agent/logs/cron.log 2>&1
-
-   # Run the weekly synthesis pipeline (every Sunday at 08:00 AM UTC)
-   0 8 * * 0 /Users/mac/agent/run_weekly.sh >> /Users/mac/agent/logs/cron.log 2>&1
-   ```
-3. Save and exit the editor. Your cron jobs are now scheduled!
-
-### How to "Catch Up"
-If your Mac was asleep and missed a run, you can always catch up manually! Just open your terminal and run the exact absolute path for whichever script you missed:
-- Missed an hourly update? Run: `/Users/mac/agent/run_1h.sh`
-- Missed a 4-hour update? Run: `/Users/mac/agent/run_4h.sh`
-- Missed the Sunday weekly report? Run: `/Users/mac/agent/run_weekly.sh`
-
-### How to Pause or Remove the Automation
-**To Pause (Temporarily Disable):**
-1. Run `crontab -e`
-2. Add a hashtag `#` at the beginning of the lines to comment them out.
-3. Save and exit.
-
-**To Remove Permanently:**
-1. Run `crontab -e`
-2. Delete the lines completely.
-3. Save and exit.
-*(Alternatively, running `crontab -r` in the terminal will wipe your entire schedule).*
-
-
----
 
 ## 5. Offline Model Training & Backtesting
 
