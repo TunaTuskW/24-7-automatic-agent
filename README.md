@@ -19,7 +19,7 @@ Following the v6.2.0 RL Agent upgrade, the project is organized into a highly de
   - **`training/`**: `rl_environment.py`, `rl_trainer.py`, `train_models.py`, `backtest.py`, `tune_hyperparameters.py` for model training, reinforcement learning, auditing, and tuning meta-agents.
   - **`generate_visual_map.py`**: Centralized stacked portfolio visualization generator script.
   - **`visualize_paper_trading.py`**: Paper trading dashboard plotter and Excel ledger exporter.
-- **`docs/`**: Documentation and System Architecture Manuals (`macro_agent_setup_v5.2.0.md`).
+- **`docs/`**: Documentation and System Architecture Manuals (`concept_and_model.md`).
 - **`data/`**: Structured subdirectories isolating state and logs:
   - **`data/state/`**: Active validations snapshot matrices (`market_snapshot.json`, `market_snapshot_prior.json`).
   - **`data/predictions/`**: Calibration forecast history logs (`mlp_predictions_history_{interval}.json`).
@@ -162,7 +162,7 @@ graph TD
         ExcelDash["Reports (paper_trading_performance.png & .xlsx)"]
         VM["generate_visual_map.py"]
         VisMap["visualize_map.png (Stacked allocation charts)"]
-        BR["build_report.py (v5.2.0 presenter)"]
+        BR["build_report.py (v6.2.0 presenter)"]
         PD["push_to_discord.py"]
         Discord["Discord Channels"]
         
@@ -318,10 +318,10 @@ To configure operational parameters, API keys, and configurations:
 
 ## 2. System Architecture & Technical Manual
 
-The agent is now structured under the **v5.3.0 Single LLM & Multi-Asset Ensemble OS**, featuring centralized LLM synthesis, type-safe validations, in-memory `EventBus` pub-sub, paper broker engines, and Docker container support.
+The agent is now structured under the **v6.2.0 Single LLM & Multi-Asset Ensemble OS**, featuring centralized LLM synthesis, type-safe validations, in-memory `EventBus` pub-sub, paper broker engines, Docker container support, and RL-agent integration.
 
 For a full breakdown of the mathematical engines, data ingestion layers, GARCH penalty filters, consensus logic, and paper trading ledgers, please refer to the **Technical Developer Manual** located at:
-`docs/macro_agent_setup_v5.3.0.md`
+`docs/concept_and_model.md`
 
 ---
 
@@ -427,6 +427,15 @@ Whenever changes are made to the system architecture, automatically update the v
   - **[FIXED]** Overhauled `run_self_calibration` to correctly track 5-period rolling cumulative returns for grading targets, matching the neural network's original training objective.
   - **[FIXED]** Repaired `predict_proba` matrix indexing in `feature_engine.py` to properly map 3-class target vectors (bull, bear, transitional).
   - **[MODIFIED]** Updated `quantitative_backtester.py` from hard-coded dates to dynamic 6-month trailing windows.
+- **v6.2.0** (RL Agent Integration & Trading Tuning):
+  - Transitioned from standard Kelly rules to a trained Proximal Policy Optimization (PPO) Reinforcement Learning Agent for dynamic 8-asset portfolio sizing.
+  - Reduced rigid holding periods to enable rapid momentum-driven rebalancing on volatile green days.
+  - Refined the Mathematical UI dashboard to sync accurately with Deep Learning state vectors and resolve crash edge cases.
+
+- **v6.1.0** (Multi-Asset Trading Terminal):
+  - Expanded inference, predictions, and paper broker logic from 2 assets to 8 assets (SPX, BTC, GLD, WTI, NVDA, TSLA, DELL, SPCE).
+  - Designed and deployed the Glassmorphism Trading Terminal GUI via React/Vite.
+  
 - **v5.3.0** (Single LLM Architecture Consolidation):
   - **[REMOVED] Groq Adapter & Mixture of Experts (MoE):** Simplified the cognitive architecture by deprecating the dual-provider MoE setup. Removed the `GroqAdapter` and consolidated logical synthesis entirely within the `GeminiAdapter`.
   - **[REMOVED] Echo Chamber Detector:** Removed the parallel LLM echo chamber penalty (0.70x conviction slash) as the pipeline now relies on a centralized Google Gemini Flash reasoning engine.
