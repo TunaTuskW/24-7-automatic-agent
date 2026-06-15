@@ -410,6 +410,15 @@ Whenever changes are made to the system architecture, automatically update the v
 - **Small change** (e.g., prompt tweak, new section): Increment patch version (x.x.1 to 9). Example: v1.3.1 -> v1.3.2
 - **Tiny change** (e.g., typo fix, formatting): Increment sub-patch version (x.x.x.1 to 9). Example: v1.3.1 -> v1.3.1.1
 
+- **v6.2.0** (RL Agent Integration & Trading Tuning):
+  - Transitioned from standard Kelly rules to a trained Proximal Policy Optimization (PPO) Reinforcement Learning Agent for dynamic 8-asset portfolio sizing.
+  - Reduced rigid holding periods to enable rapid momentum-driven rebalancing on volatile green days.
+  - Refined the Mathematical UI dashboard to sync accurately with Deep Learning state vectors and resolve crash edge cases.
+
+- **v6.1.0** (Multi-Asset Trading Terminal):
+  - Expanded inference, predictions, and paper broker logic from 2 assets to 8 assets (SPX, BTC, GLD, WTI, NVDA, TSLA, DELL, SPCE).
+  - Designed and deployed the Glassmorphism Trading Terminal GUI via React/Vite.
+
 - **v5.3.2** (Continuous Compounding Backtester Upgrade):
   - **[ADDED]** Integrated a **TRUE EQUITY SIMULATOR STATE** into `quantitative_backtester.py`, simulating continuous compounding over 1-bar multi-asset forward returns.
   - **[ADDED]** Modeled 10 basis points (0.10%) transaction friction slippage penalty calculated dynamically on portfolio rotation turnover.
@@ -427,14 +436,7 @@ Whenever changes are made to the system architecture, automatically update the v
   - **[FIXED]** Overhauled `run_self_calibration` to correctly track 5-period rolling cumulative returns for grading targets, matching the neural network's original training objective.
   - **[FIXED]** Repaired `predict_proba` matrix indexing in `feature_engine.py` to properly map 3-class target vectors (bull, bear, transitional).
   - **[MODIFIED]** Updated `quantitative_backtester.py` from hard-coded dates to dynamic 6-month trailing windows.
-- **v6.2.0** (RL Agent Integration & Trading Tuning):
-  - Transitioned from standard Kelly rules to a trained Proximal Policy Optimization (PPO) Reinforcement Learning Agent for dynamic 8-asset portfolio sizing.
-  - Reduced rigid holding periods to enable rapid momentum-driven rebalancing on volatile green days.
-  - Refined the Mathematical UI dashboard to sync accurately with Deep Learning state vectors and resolve crash edge cases.
 
-- **v6.1.0** (Multi-Asset Trading Terminal):
-  - Expanded inference, predictions, and paper broker logic from 2 assets to 8 assets (SPX, BTC, GLD, WTI, NVDA, TSLA, DELL, SPCE).
-  - Designed and deployed the Glassmorphism Trading Terminal GUI via React/Vite.
   
 - **v5.3.0** (Single LLM Architecture Consolidation):
   - **[REMOVED] Groq Adapter & Mixture of Experts (MoE):** Simplified the cognitive architecture by deprecating the dual-provider MoE setup. Removed the `GroqAdapter` and consolidated logical synthesis entirely within the `GeminiAdapter`.
