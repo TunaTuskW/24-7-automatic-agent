@@ -46,8 +46,11 @@ class GeminiAdapter(LLMProvider):
             return {
                 "fed_policy_hawkishness_prob": 0.5, 
                 "fear_greed_sentiment_score": 0.5, 
+                "credit_stress": 0.0,
+                "liquidity_withdrawal": 0.0,
+                "kelly_multiplier": 1.0,
                 "quantitative_divergence_flag": False, 
-                "reasoning": "Default fallback due to missing client."
+                "reasoning": "System operating in Local Bypass Mode. LLM Macro Provider disabled or unconfigured. Assuming standard baseline environment with neutral macroeconomic stance."
             }
             
         headlines_text = "\n".join(headlines[:20])
@@ -97,6 +100,11 @@ Volume Activity Heat: {volume_heat}"""
                     time.sleep(sleep_time)
                 else:
                     logger.error(f"Provider: Gemini | LLM Macro failed after {attempt+1} attempts: {e}")
+                    
+                    reasoning_text = f"Fallback to neutral. LLM Macro Provider error: {str(e)[:100]}..."
+                    if "API key not valid" in str(e) or "400" in str(e) or "API_KEY_INVALID" in str(e):
+                        reasoning_text = "System operating in Local Bypass Mode. Gemini API Key is missing or invalid. Assuming baseline macro environment with neutral risk sentiment."
+                        
                     return {
                         "fed_policy_hawkishness_prob": 0.5, 
                         "fear_greed_sentiment_score": 0.5, 
@@ -104,5 +112,5 @@ Volume Activity Heat: {volume_heat}"""
                         "liquidity_withdrawal": 0.0,
                         "kelly_multiplier": 1.0,
                         "quantitative_divergence_flag": False, 
-                        "reasoning": f"Fallback to neutral. LLM Macro Provider error: {str(e)[:100]}..."
+                        "reasoning": reasoning_text
                     }

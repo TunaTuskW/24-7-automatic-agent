@@ -11,9 +11,10 @@ warnings.filterwarnings("ignore")
 from src.engines.hmm_engine import HMMEngine
 from src.engines.risk_engine import RiskEngine
 from src.engines.feature_engine import ALL_YF_TICKERS, compute_stats, compute_volume_heat, load_mlp_models, run_multi_mlp_inference, run_self_calibration
+from src.engines.rl_agent import RLAgent
 
-def run_backtest(interval="1d"):
-    print(f"=== Starting Dynamic 6-Month Quantitative Backtest ({interval}) ===")
+def run_backtest(interval="1d", use_rl_agent=False):
+    print(f"=== Starting Dynamic 6-Month Quantitative Backtest ({interval}) | RL Agent: {use_rl_agent} ===")
     
     from datetime import datetime, timedelta
     _today = datetime.today()
@@ -57,6 +58,10 @@ def run_backtest(interval="1d"):
     
     prior_k_state = None
     prior_k_cov = None
+    
+    rl_agent_instance = None
+    if use_rl_agent:
+        rl_agent_instance = RLAgent(interval=interval)
     
     predictions_history = []
     dynamic_brier_score = 0.15
@@ -433,6 +438,10 @@ def run_backtest(interval="1d"):
         
         # 2. Rebalance to Target Kellys — only if min hold period has elapsed
         target_allocations = {"spx": spx_kelly, "short": short_kelly, "btc": btc_kelly, "gld": gld_kelly, "wti": wti_kelly, "nvda": nvda_kelly, "tsla": tsla_kelly, "dell": dell_kelly, "spce": spce_kelly, "cash": cash_kelly}
+        
+        if use_rl_agent and rl_agent_instance:
+            target_allocations = rl_agent_instance.predict_allocations(features_vector_clipped, current_allocations)
+            
         bars_since_rebalance = i - last_rebalance_i
         
         if bars_since_rebalance >= MIN_HOLD_BARS:
@@ -637,5 +646,6 @@ def run_backtest(interval="1d"):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--interval", type=str, default="1d", choices=["1d", "1wk", "1h", "4h"])
+    parser.add_argument("--use_rl", action="store_true", help="Enable RL Agent for allocations")
     args = parser.parse_args()
-    run_backtest(interval=args.interval)
+    run_backtest(interval=args.interval, use_rl_agent=args.use_rl)
