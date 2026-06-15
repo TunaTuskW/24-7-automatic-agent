@@ -13,15 +13,25 @@ from src.engines.risk_engine import RiskEngine
 from src.engines.feature_engine import ALL_YF_TICKERS, compute_stats, compute_volume_heat, load_mlp_models, run_multi_mlp_inference, run_self_calibration
 from src.engines.rl_agent import RLAgent
 
-def run_backtest(interval="1d", use_rl_agent=False):
-    print(f"=== Starting Dynamic 6-Month Quantitative Backtest ({interval}) | RL Agent: {use_rl_agent} ===")
+def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_date: str = None):
+    print(f"=== Starting Dynamic Quantitative Backtest ({interval}) | RL Agent: {use_rl_agent} ===")
     
     from datetime import datetime, timedelta
     _today = datetime.today()
-    end_fetch_date = _today.strftime("%Y-%m-%d")
-    q1_start = datetime(_today.year, 1, 1)
-    q1_end   = _today - timedelta(days=5)   # 5-day buffer for forward returns
-    start_fetch_date = (q1_start - timedelta(days=60)).strftime("%Y-%m-%d")
+
+    if start_date:
+        q1_start = datetime.strptime(start_date, "%Y-%m-%d")
+    else:
+        q1_start = datetime(_today.year, 1, 1)
+
+    if end_date:
+        q1_end = datetime.strptime(end_date, "%Y-%m-%d")
+    else:
+        q1_end = _today - timedelta(days=5)
+
+    # 90-day warmup window before start to allow rolling statistics to stabilise
+    start_fetch_date = (q1_start - timedelta(days=90)).strftime("%Y-%m-%d")
+    end_fetch_date = q1_end.strftime("%Y-%m-%d")
     
     tickers_to_fetch = list(ALL_YF_TICKERS.values()) + ["^TNX", "^FVX"]
     
@@ -440,7 +450,20 @@ def run_backtest(interval="1d", use_rl_agent=False):
         target_allocations = {"spx": spx_kelly, "short": short_kelly, "btc": btc_kelly, "gld": gld_kelly, "wti": wti_kelly, "nvda": nvda_kelly, "tsla": tsla_kelly, "dell": dell_kelly, "spce": spce_kelly, "cash": cash_kelly}
         
         if use_rl_agent and rl_agent_instance:
-            target_allocations = rl_agent_instance.predict_allocations(features_vector_clipped, current_allocations)
+            rl_allocs = rl_agent_instance.predict_allocations(features_vector_clipped, current_allocations)
+            if rl_allocs:
+                target_allocations = {
+                    "spx": rl_allocs.get("SPX_Kelly", 0.0),
+                    "short": rl_allocs.get("Short_Kelly", 0.0),
+                    "btc": rl_allocs.get("BTC_Kelly", 0.0),
+                    "gld": rl_allocs.get("GLD_Kelly", 0.0),
+                    "wti": rl_allocs.get("WTI_Kelly", 0.0),
+                    "nvda": rl_allocs.get("NVDA_Kelly", 0.0),
+                    "tsla": rl_allocs.get("TSLA_Kelly", 0.0),
+                    "dell": rl_allocs.get("DELL_Kelly", 0.0),
+                    "spce": rl_allocs.get("SPCE_Kelly", 0.0),
+                    "cash": rl_allocs.get("Cash", 0.0)
+                }
             
         bars_since_rebalance = i - last_rebalance_i
         
@@ -645,7 +668,16 @@ def run_backtest(interval="1d", use_rl_agent=False):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--interval", type=str, default="1d", choices=["1d", "1wk", "1h", "4h"])
+    parser.add_argument("--interval",   type=str, default="1d", choices=["1d", "1wk", "1h", "4h"])
     parser.add_argument("--use_rl", action="store_true", help="Enable RL Agent for allocations")
+    parser.add_argument("--start-date", type=str, default=None,
+                        help="Backtest start date (YYYY-MM-DD). Defaults to Jan 1 of current year.")
+    parser.add_argument("--end-date",   type=str, default=None,
+                        help="Backtest end date (YYYY-MM-DD). Defaults to today minus 5 days.")
     args = parser.parse_args()
-    run_backtest(interval=args.interval, use_rl_agent=args.use_rl)
+    run_backtest(
+        interval=args.interval,
+        use_rl_agent=args.use_rl,
+        start_date=args.start_date,
+        end_date=args.end_date
+    )

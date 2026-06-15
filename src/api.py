@@ -338,12 +338,14 @@ def get_chart_data(ticker: str):
 
 class TriggerPayload(BaseModel):
     job: str
+    start_date: str = None   # YYYY-MM-DD, optional
+    end_date: str = None     # YYYY-MM-DD, optional
 
 import subprocess
 import logging
 logger = logging.getLogger("api_trigger")
 
-def run_job_background(job_type: str):
+def run_job_background(job_type: str, start_date: str = None, end_date: str = None):
     try:
         if job_type == "1h":
             logger.info("Running 1H Context Inference manually...")
@@ -359,8 +361,13 @@ def run_job_background(job_type: str):
             subprocess.run(["python3", "src/build_report.py", "--title", "Weekly Execution Report"])
             subprocess.run(["python3", "src/build_weekly_synthesis.py"])
         elif job_type == "test":
-            logger.info("Running Quantitative Backtester manually...")
-            subprocess.run(["python3", "src/quantitative_backtester.py", "--interval", "1d"])
+            logger.info("Running Quantitative Backtester manually with RL Agent...")
+            cmd = ["python3", "src/quantitative_backtester.py", "--interval", "1d", "--use_rl"]
+            if start_date:
+                cmd += ["--start-date", start_date]
+            if end_date:
+                cmd += ["--end-date", end_date]
+            subprocess.run(cmd)
     except Exception as e:
         logger.error(f"Manual job {job_type} failed: {e}")
 
@@ -368,9 +375,19 @@ def run_job_background(job_type: str):
 def trigger_job(payload: TriggerPayload, background_tasks: BackgroundTasks):
     if payload.job not in ["1h", "1d", "1w", "weekly", "test"]:
         return {"error": "Invalid job type"}
-    
-    background_tasks.add_task(run_job_background, payload.job)
-    return {"status": "success", "message": f"Job {payload.job} dispatched to background."}
+
+    background_tasks.add_task(
+        run_job_background,
+        payload.job,
+        payload.start_date,
+        payload.end_date
+    )
+    return {
+        "status": "success",
+        "message": f"Job {payload.job} dispatched.",
+        "start_date": payload.start_date,
+        "end_date": payload.end_date
+    }
 
 @app.get("/api/reports")
 def get_reports_list():

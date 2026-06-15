@@ -176,14 +176,14 @@ class RiskEngine:
             
             # Determine Asset-Specific Conviction Threshold
             asset_thresholds = {
-                "spx": 0.58,   # Core index, slightly lower threshold
-                "btc": 0.62,   # High volatility, requires higher conviction
-                "gld": 0.55,   # Safe haven, lower conviction needed to hedge
-                "wti": 0.60,
-                "nvda": 0.60,
-                "tsla": 0.62,
-                "dell": 0.60,
-                "spce": 0.65   # Extreme volatility, requires extreme conviction
+                "spx":  0.58,   # Core index, slightly lower threshold
+                "btc":  0.63,   # High volatility, tighter
+                "gld":  0.55,   # Safe haven, lower threshold to hedge
+                "wti":  0.60,
+                "nvda": 0.63,   # High vol tech, tightened from 0.60
+                "tsla": 0.65,   # High vol, tightened from 0.62
+                "dell": 0.63,   # Tightened from 0.60
+                "spce": 0.72,   # Near-zero liquidity — requires extraordinary conviction
             }
             asset_conviction_threshold = asset_thresholds.get(asset, 0.60)
             
@@ -254,6 +254,38 @@ class RiskEngine:
         dell_kelly = round(max(0.0, min(1.0, raw_allocations.get("dell", 0.0))), 3)
         spce_kelly = round(max(0.0, min(1.0, raw_allocations.get("spce", 0.0))), 3)
 
+        # Universal Equity Regime Gate
+        # When Kalman state is risk_off, suppress all single-name long equity exposure.
+        # SPX is already handled by is_downtrend above. This extends that gate to all names.
+        if dominant_state == "risk_off" or is_black_swan:
+            logger.warning(
+                f"Regime Gate: dominant_state={dominant_state}. "
+                "Suppressing all single-name long equity (NVDA, TSLA, DELL, SPCE)."
+            )
+            nvda_kelly = 0.0
+            tsla_kelly = 0.0
+            dell_kelly = 0.0
+            spce_kelly = 0.0
+            # BTC partial suppression: correlated with equity in hard selloffs
+            if dominant_state == "risk_off":
+                btc_kelly = round(btc_kelly * 0.30, 3)
+                
+        # HMM Regime Coherence Gate
+        # When HMM explicitly identifies a stress or shock state, zero all single-name equity
+        # regardless of Kalman state. The Kalman filter may lag the HMM on sudden regime shifts.
+        STRESS_REGIMES = {
+            "STAGFLATION_STRESS", "RATE_SHOCK", "DEFLATION_FEAR",
+            "CRISIS_DISLOCATION", "VOLATILITY_EXPANSION", "COMMODITY_SHOCK"
+        }
+        if any(hmm_regime.startswith(s) for s in STRESS_REGIMES):
+            logger.warning(
+                f"HMM Coherence Gate: {hmm_regime} is a stress regime. "
+                "Zeroing all single-name long equity."
+            )
+            nvda_kelly = 0.0
+            tsla_kelly = 0.0
+            dell_kelly = 0.0
+            spce_kelly = 0.0
         # Capital Rotation Engine (Active Rotation & Diversity)
         spx_prob = mlp_predictions.get("spx", {}).get("bull_probability", 0.5)
         
@@ -269,12 +301,16 @@ class RiskEngine:
             logger.info(f"Risk-Off environment detected. Allocating proportional safe-haven diversity.")
             gld_kelly = max(gld_kelly, round(short_kelly * 0.40, 3)) # 40% of short exposure
             
-        # Extreme Weakness rotation
+        # Extreme Weakness: SPX collapsing means high-beta single names fall harder.
+        # Suppress rather than amplify. Redirect defensive capital to safe havens only.
         if spx_prob < 0.40:
-            if mlp_predictions.get("nvda", {}).get("bull_probability", 0.0) > 0.50:
-                nvda_kelly = min(1.0, round(nvda_kelly * 1.5, 3))
-            if mlp_predictions.get("tsla", {}).get("bull_probability", 0.0) > 0.50:
-                tsla_kelly = min(1.0, round(tsla_kelly * 1.5, 3))
+            logger.info(
+                f"Extreme Weakness detected (spx_prob={spx_prob:.3f}). "
+                "Suppressing single-name amplification."
+            )
+            nvda_kelly = round(nvda_kelly * 0.50, 3)
+            tsla_kelly = round(tsla_kelly * 0.50, 3)
+            spce_kelly = 0.0  # Never hold SPCE in extreme SPX weakness
 
         # Global Portfolio Balancer (Normalize exposure)
         total_exposure = spx_kelly + short_kelly + btc_kelly + gld_kelly + wti_kelly + nvda_kelly + tsla_kelly + dell_kelly + spce_kelly
