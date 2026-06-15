@@ -92,7 +92,7 @@ def train_rl_agent(interval: str = "1d"):
     )
 
     print(f"Training PPO agent for {interval}...")
-    model.learn(total_timesteps=1000)
+    model.learn(total_timesteps=100000)
 
     output_path = f"models/rl_agent_{interval}/best_model.zip"
     model.save(output_path)

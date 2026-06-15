@@ -83,8 +83,14 @@ class QuantOSEnv(gym.Env):
         drawdown = (self.peak_equity - self.equity) / self.peak_equity
 
         # Reward: net return, penalizing drawdown and excessive turnover
-        reward = net_return - (self.DRAWDOWN_PENALTY * max(0.0, drawdown - 0.05)) \
-                            - (self.TURNOVER_PENALTY * slippage_cost)
+        reward = (net_return * 100.0) \
+                 - (self.DRAWDOWN_PENALTY * max(0.0, drawdown - 0.05) * 100.0) \
+                 - (self.TURNOVER_PENALTY * slippage_cost * 100.0)
+
+        # Penalize sitting in cash too much
+        cash_holding = 1.0 - total
+        if cash_holding > 0.5:
+            reward -= (cash_holding - 0.5) * 1.0
 
         # Advance
         self.current_allocs = target_allocs
