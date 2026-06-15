@@ -275,7 +275,7 @@ class RiskEngine:
         # regardless of Kalman state. The Kalman filter may lag the HMM on sudden regime shifts.
         STRESS_REGIMES = {
             "STAGFLATION_STRESS", "RATE_SHOCK", "DEFLATION_FEAR",
-            "CRISIS_DISLOCATION", "VOLATILITY_EXPANSION", "COMMODITY_SHOCK"
+            "CRISIS_DISLOCATION", "VOLATILITY_EXPANSION", "COMMODITY_SHOCK", "RISK_OFF_STRESS"
         }
         if any(hmm_regime.startswith(s) for s in STRESS_REGIMES):
             logger.warning(
