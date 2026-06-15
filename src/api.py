@@ -1,7 +1,7 @@
 import json
 import os
 import csv
-from fastapi import FastAPI, BackgroundTasks, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, BackgroundTasks, WebSocket, WebSocketDisconnect, Header, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import uvicorn
@@ -14,11 +14,17 @@ app = FastAPI(title="QuantOS API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:5173", "http://localhost:8000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+QUANTOS_SECRET = os.environ.get("QUANTOS_API_SECRET", "")
+
+def require_auth(x_api_key: str = Header(None)):
+    if not QUANTOS_SECRET or x_api_key != QUANTOS_SECRET:
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
 @app.websocket("/api/ws/pipeline")
 async def websocket_pipeline(websocket: WebSocket):
@@ -76,17 +82,13 @@ def get_snapshot():
     epistemic = ds_layer.get("epistemic_metrics", {})
     kelly_obj = epistemic.get("kelly_exposure_fraction", {})
     if isinstance(kelly_obj, (float, int)):
+        allocations = {"SPX_Kelly": float(kelly_obj)}
         spx_kelly = float(kelly_obj)
         safe_haven = 0.0
     else:
+        allocations = kelly_obj
         spx_kelly = kelly_obj.get("SPX_Kelly", 0.0)
         safe_haven = kelly_obj.get("GLD_Kelly", 0.0)
-    
-    raw_indicators = data.get("raw_indicators", {})
-    bonds = data.get("bonds", {})
-    
-    vix = raw_indicators.get("VIX", {}).get("current", 0.0)
-    spread = bonds.get("2s10s_spread", 0.0)
     
     return {
         "status": "Active",
@@ -94,10 +96,53 @@ def get_snapshot():
         "regimeProb": prob,
         "kelly": spx_kelly,
         "safeHaven": safe_haven,
-        "vix": vix,
-        "spread": spread,
-        "lastUpdate": data.get("generated_utc", datetime.utcnow().isoformat())
+        "allocations": allocations,
+        "vix": ds_layer.get("features_vector", [0,0,0])[2],
+        "spread": ds_layer.get("features_vector", [0,0,0,0,0,0,0,0])[7],
+        "lastUpdate": data.get("timestamp_utc", datetime.utcnow().isoformat())
     }
+
+@app.get("/api/entry_quality")
+def get_entry_quality():
+    path = os.path.join(os.path.dirname(__file__), '..', 'data', 'state', 'entry_quality.json')
+    if os.path.exists(path):
+        try:
+            with open(path, 'r') as f:
+                return json.load(f)
+        except:
+            pass
+    return {"entry_score": None, "entry_bias": "FLAT", "computed_utc": None}
+
+@app.get("/api/frequency")
+def get_frequency():
+    path = os.path.join(os.path.dirname(__file__), '..', 'data', 'state', 'frequency_state.json')
+    if os.path.exists(path):
+        try:
+            with open(path, 'r') as f:
+                return json.load(f)
+        except:
+            pass
+    return {"recommended_frequency": "4h", "score": 0, "reason": "No data yet", "evaluated_utc": None}
+
+@app.get("/api/events/recent")
+def get_recent_events(limit: int = 50):
+    log_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'logs', 'system_events.jsonl')
+    events = []
+    if os.path.exists(log_path):
+        try:
+            with open(log_path, 'r') as f:
+                lines = f.readlines()
+            for line in lines[-limit:]:
+                if line.strip():
+                    try:
+                        obj = json.loads(line)
+                        if obj.get("source") == "market_monitor":
+                            events.append(obj)
+                    except Exception:
+                        pass
+        except Exception as e:
+            return {"error": str(e)}
+    return {"events": list(reversed(events))}
 
 @app.get("/api/portfolio")
 def get_portfolio(type: str = "live"):
@@ -231,7 +276,7 @@ def get_settings():
         "has_webhook": bool(webhook)
     }
 
-@app.post("/api/settings")
+@app.post("/api/settings", dependencies=[Depends(require_auth)])
 def update_settings(payload: SettingsPayload):
     # Only overwrite if a new non-empty value was provided
     if payload.gemini_key:
@@ -257,7 +302,7 @@ def get_trading_settings():
             pass
     return {"active_tickers": ["spx", "btc", "gld", "wti", "nvda", "tsla", "dell", "spce"]}
 
-@app.post("/api/trading_settings")
+@app.post("/api/trading_settings", dependencies=[Depends(require_auth)])
 def update_trading_settings(payload: TradingSettingsPayload):
     path = os.path.join(os.path.dirname(__file__), '..', 'config', 'trading_settings.json')
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -319,7 +364,7 @@ def run_job_background(job_type: str):
     except Exception as e:
         logger.error(f"Manual job {job_type} failed: {e}")
 
-@app.post("/api/trigger")
+@app.post("/api/trigger", dependencies=[Depends(require_auth)])
 def trigger_job(payload: TriggerPayload, background_tasks: BackgroundTasks):
     if payload.job not in ["1h", "1d", "1w", "weekly", "test"]:
         return {"error": "Invalid job type"}

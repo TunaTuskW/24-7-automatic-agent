@@ -131,25 +131,34 @@
     {
         "predicted_risk_on": 0.567,
         "spx_val_at_prediction": 7393.0601,
-        "target_graded": false,
+        "target_graded": true,
         "spx_vals_window": [
-            7430.8599
-        ]
+            7430.8599,
+            7555.2598
+        ],
+        "actual_outcome": 1,
+        "squared_error": 0.18748900000000004
     },
     {
         "predicted_risk_on": 0.57,
         "spx_val_at_prediction": 7393.0601,
-        "target_graded": false,
+        "target_graded": true,
         "spx_vals_window": [
-            7430.8599
-        ]
+            7430.8599,
+            7555.2598,
+            7555.2598
+        ],
+        "actual_outcome": 1,
+        "squared_error": 0.18490000000000004
     },
     {
         "predicted_risk_on": 0.563,
         "spx_val_at_prediction": 7393.0601,
         "target_graded": false,
         "spx_vals_window": [
-            7430.8599
+            7430.8599,
+            7555.2598,
+            7555.2598
         ]
     },
     {
@@ -157,7 +166,9 @@
         "spx_val_at_prediction": 7393.0601,
         "target_graded": false,
         "spx_vals_window": [
-            7430.8599
+            7430.8599,
+            7555.2598,
+            7555.2598
         ]
     },
     {
@@ -165,12 +176,31 @@
         "spx_val_at_prediction": 7429.6001,
         "target_graded": false,
         "spx_vals_window": [
-            7430.8599
+            7430.8599,
+            7555.2598,
+            7555.2598
         ]
     },
     {
         "predicted_risk_on": 0.368,
         "spx_val_at_prediction": 7430.8599,
+        "target_graded": false,
+        "spx_vals_window": [
+            7555.2598,
+            7555.2598
+        ]
+    },
+    {
+        "predicted_risk_on": 0.5,
+        "spx_val_at_prediction": 7555.2598,
+        "target_graded": false,
+        "spx_vals_window": [
+            7555.2598
+        ]
+    },
+    {
+        "predicted_risk_on": 0.5,
+        "spx_val_at_prediction": 7555.2598,
         "target_graded": false
     }
 ]

@@ -107,9 +107,6 @@ def fetch_training_data(years=TRAINING_YEARS, interval="1d"):
     es.index = pd.to_datetime(es.index).tz_localize(None)
     nq = data["Close"]["NQ=F"].dropna()
     nq.index = pd.to_datetime(nq.index).tz_localize(None)
-    ym = data["Close"]["YM=F"].dropna()
-    ym.index = pd.to_datetime(ym.index).tz_localize(None)
-    ym.index = pd.to_datetime(ym.index).tz_localize(None)
     rty = data["Close"]["RTY=F"].dropna()
     rty.index = pd.to_datetime(rty.index).tz_localize(None)
     
@@ -125,7 +122,6 @@ def fetch_training_data(years=TRAINING_YEARS, interval="1d"):
     if interval == "1d":
         es.index = es.index.normalize()
         nq.index = nq.index.normalize()
-        ym.index = ym.index.normalize()
         rty.index = rty.index.normalize()
         nvda.index = nvda.index.normalize()
         tsla.index = tsla.index.normalize()
@@ -136,8 +132,6 @@ def fetch_training_data(years=TRAINING_YEARS, interval="1d"):
     es_ret = es.pct_change() * 100
     nq = nq[~nq.index.duplicated(keep='last')]
     nq_ret = nq.pct_change() * 100
-    ym = ym[~ym.index.duplicated(keep='last')]
-    ym_ret = ym.pct_change() * 100
     rty = rty[~rty.index.duplicated(keep='last')]
     rty_ret = rty.pct_change() * 100
     nvda = nvda[~nvda.index.duplicated(keep='last')]

@@ -31,25 +31,23 @@ export default function OverviewTab({ data }) {
       {/* Action Panel */}
       <div className="glass-panel col-span-4 animate-fade-in delay-2">
         <h2><Zap size={20} className="text-muted"/> Current Allocation</h2>
-        <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div className="data-item" style={{ padding: 0, border: 'none' }}>
-            <span className="text-muted">Target SPX (Kelly)</span>
-            <span style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--success)' }}>
-              {(data.kelly * 100).toFixed(1)}%
-            </span>
-          </div>
-          <div className="data-item" style={{ padding: 0, border: 'none' }}>
-            <span className="text-muted">Safe Haven (GLD)</span>
-            <span style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--warning)' }}>
-              {(data.safeHaven * 100).toFixed(1)}%
-            </span>
-          </div>
-          <div className="data-item" style={{ padding: 0, border: 'none' }}>
-            <span className="text-muted">Cash Buffer</span>
-            <span style={{ fontSize: '1.25rem', fontWeight: 600 }}>
-              {((1 - data.kelly - data.safeHaven) * 100).toFixed(1)}%
-            </span>
-          </div>
+        <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '200px', overflowY: 'auto' }}>
+          {data.allocations && Object.entries(data.allocations).map(([asset, alloc]) => (
+            <div key={asset} className="data-item" style={{ padding: 0, border: 'none' }}>
+              <span className="text-muted">{asset.replace('_Kelly', '')}</span>
+              <span style={{ fontSize: '1.25rem', fontWeight: 600, color: alloc > 0 ? 'var(--success)' : 'var(--text)' }}>
+                {(alloc * 100).toFixed(1)}%
+              </span>
+            </div>
+          ))}
+          {(!data.allocations || Object.keys(data.allocations).length === 0) && (
+            <div className="data-item" style={{ padding: 0, border: 'none' }}>
+              <span className="text-muted">Target SPX (Kelly)</span>
+              <span style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--success)' }}>
+                {(data.kelly * 100).toFixed(1)}%
+              </span>
+            </div>
+          )}
         </div>
       </div>
 

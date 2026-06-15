@@ -1,0 +1,14 @@
+{
+    "recommended_frequency": "1d",
+    "score": -1,
+    "reason": "Low confidence \u2014 reducing to daily cadence. Factors: regime ambiguous or transitional; degraded model Brier score (0.287); regime too new (0.0 days).",
+    "inputs": {
+        "shannon_entropy": 0.305,
+        "vix_zscore": -0.906,
+        "dominant_regime": "RISK_OFF_STRESS",
+        "brier_score": 0.2875,
+        "duration_days": 0.01,
+        "kalman_is_ambiguous": false
+    },
+    "evaluated_utc": "2026-06-15T21:45:49.871415+00:00"
+}

@@ -187,6 +187,19 @@ class RiskEngine:
             }
             asset_conviction_threshold = asset_thresholds.get(asset, 0.60)
             
+            # DYNAMIC CONVICTION SCALING: Boost frequency & accuracy
+            # Lower threshold when trading WITH the macro wind, raise when against it.
+            is_bull_bet = prob >= 0.5
+            if hmm_regime == "LIQUIDITY_DRIVEN_RALLY":
+                if is_bull_bet: asset_conviction_threshold -= 0.05
+                else: asset_conviction_threshold += 0.05
+            elif hmm_regime in ["DEFENSIVE_RISK_OFF", "CRISIS_BEAR_MARKET"]:
+                if not is_bull_bet: asset_conviction_threshold -= 0.05
+                else: asset_conviction_threshold += 0.05
+                
+            # Floor/Cap threshold to sane bounds [0.52, 0.75]
+            asset_conviction_threshold = max(0.52, min(0.75, asset_conviction_threshold))
+            
             raw_kelly = self.compute_kelly_sizing(
                 max_prob=prob, 
                 dominant_state=dominant_state, 

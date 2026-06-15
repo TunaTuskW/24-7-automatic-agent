@@ -1,6 +1,6 @@
 [
     {
-        "predicted_risk_on": 0.485,
+        "predicted_risk_on": 0.45,
         "spx_val_at_prediction": 7430.8599,
         "target_graded": true,
         "spx_vals_window": [
@@ -12,232 +12,7 @@
             7430.8599
         ],
         "actual_outcome": 0,
-        "squared_error": 0.235225
-    },
-    {
-        "predicted_risk_on": 0.485,
-        "spx_val_at_prediction": 7430.8599,
-        "target_graded": true,
-        "spx_vals_window": [
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599
-        ],
-        "actual_outcome": 0,
-        "squared_error": 0.235225
-    },
-    {
-        "predicted_risk_on": 0.485,
-        "spx_val_at_prediction": 7430.8599,
-        "target_graded": true,
-        "spx_vals_window": [
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599
-        ],
-        "actual_outcome": 0,
-        "squared_error": 0.235225
-    },
-    {
-        "predicted_risk_on": 0.483,
-        "spx_val_at_prediction": 7430.8599,
-        "target_graded": true,
-        "spx_vals_window": [
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599
-        ],
-        "actual_outcome": 0,
-        "squared_error": 0.233289
-    },
-    {
-        "predicted_risk_on": 0.485,
-        "spx_val_at_prediction": 7430.8599,
-        "target_graded": true,
-        "spx_vals_window": [
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599
-        ],
-        "actual_outcome": 0,
-        "squared_error": 0.235225
-    },
-    {
-        "predicted_risk_on": 0.485,
-        "spx_val_at_prediction": 7430.8599,
-        "target_graded": true,
-        "spx_vals_window": [
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599
-        ],
-        "actual_outcome": 0,
-        "squared_error": 0.235225
-    },
-    {
-        "predicted_risk_on": 0.456,
-        "spx_val_at_prediction": 7430.8599,
-        "target_graded": true,
-        "spx_vals_window": [
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599
-        ],
-        "actual_outcome": 0,
-        "squared_error": 0.207936
-    },
-    {
-        "predicted_risk_on": 0.491,
-        "spx_val_at_prediction": 7430.8599,
-        "target_graded": true,
-        "spx_vals_window": [
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599
-        ],
-        "actual_outcome": 0,
-        "squared_error": 0.241081
-    },
-    {
-        "predicted_risk_on": 0.5,
-        "spx_val_at_prediction": 7430.8599,
-        "target_graded": true,
-        "spx_vals_window": [
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599
-        ],
-        "actual_outcome": 0,
-        "squared_error": 0.25
-    },
-    {
-        "predicted_risk_on": 0.485,
-        "spx_val_at_prediction": 7430.8599,
-        "target_graded": true,
-        "spx_vals_window": [
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599
-        ],
-        "actual_outcome": 0,
-        "squared_error": 0.235225
-    },
-    {
-        "predicted_risk_on": 0.5,
-        "spx_val_at_prediction": 7430.8599,
-        "target_graded": true,
-        "spx_vals_window": [
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599
-        ],
-        "actual_outcome": 0,
-        "squared_error": 0.25
-    },
-    {
-        "predicted_risk_on": 0.5,
-        "spx_val_at_prediction": 7430.8599,
-        "target_graded": true,
-        "spx_vals_window": [
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599
-        ],
-        "actual_outcome": 0,
-        "squared_error": 0.25
-    },
-    {
-        "predicted_risk_on": 0.5,
-        "spx_val_at_prediction": 7430.8599,
-        "target_graded": true,
-        "spx_vals_window": [
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599
-        ],
-        "actual_outcome": 0,
-        "squared_error": 0.25
-    },
-    {
-        "predicted_risk_on": 0.491,
-        "spx_val_at_prediction": 7430.8599,
-        "target_graded": true,
-        "spx_vals_window": [
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599
-        ],
-        "actual_outcome": 0,
-        "squared_error": 0.241081
-    },
-    {
-        "predicted_risk_on": 0.488,
-        "spx_val_at_prediction": 7430.8599,
-        "target_graded": true,
-        "spx_vals_window": [
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599
-        ],
-        "actual_outcome": 0,
-        "squared_error": 0.238144
-    },
-    {
-        "predicted_risk_on": 0.483,
-        "spx_val_at_prediction": 7430.8599,
-        "target_graded": true,
-        "spx_vals_window": [
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599
-        ],
-        "actual_outcome": 0,
-        "squared_error": 0.233289
+        "squared_error": 0.2025
     },
     {
         "predicted_risk_on": 0.465,
@@ -255,7 +30,7 @@
         "squared_error": 0.21622500000000003
     },
     {
-        "predicted_risk_on": 0.464,
+        "predicted_risk_on": 0.428,
         "spx_val_at_prediction": 7430.8599,
         "target_graded": true,
         "spx_vals_window": [
@@ -267,10 +42,10 @@
             7430.8599
         ],
         "actual_outcome": 0,
-        "squared_error": 0.21529600000000002
+        "squared_error": 0.18318399999999999
     },
     {
-        "predicted_risk_on": 0.464,
+        "predicted_risk_on": 0.432,
         "spx_val_at_prediction": 7430.8599,
         "target_graded": true,
         "spx_vals_window": [
@@ -282,76 +57,301 @@
             7430.8599
         ],
         "actual_outcome": 0,
-        "squared_error": 0.21529600000000002
-    },
-    {
-        "predicted_risk_on": 0.461,
-        "spx_val_at_prediction": 7430.8599,
-        "target_graded": true,
-        "spx_vals_window": [
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599
-        ],
-        "actual_outcome": 0,
-        "squared_error": 0.21252100000000002
-    },
-    {
-        "predicted_risk_on": 0.452,
-        "spx_val_at_prediction": 7430.8599,
-        "target_graded": false,
-        "spx_vals_window": [
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599
-        ]
-    },
-    {
-        "predicted_risk_on": 0.45,
-        "spx_val_at_prediction": 7430.8599,
-        "target_graded": false,
-        "spx_vals_window": [
-            7430.8599,
-            7430.8599,
-            7430.8599,
-            7430.8599
-        ]
-    },
-    {
-        "predicted_risk_on": 0.452,
-        "spx_val_at_prediction": 7430.8599,
-        "target_graded": false,
-        "spx_vals_window": [
-            7430.8599,
-            7430.8599,
-            7430.8599
-        ]
-    },
-    {
-        "predicted_risk_on": 0.453,
-        "spx_val_at_prediction": 7430.8599,
-        "target_graded": false,
-        "spx_vals_window": [
-            7430.8599,
-            7430.8599
-        ]
+        "squared_error": 0.18662399999999998
     },
     {
         "predicted_risk_on": 0.446,
         "spx_val_at_prediction": 7430.8599,
-        "target_graded": false,
+        "target_graded": true,
         "spx_vals_window": [
+            7430.8599,
+            7430.8599,
+            7430.8599,
+            7430.8599,
+            7430.8599,
             7430.8599
-        ]
+        ],
+        "actual_outcome": 0,
+        "squared_error": 0.198916
+    },
+    {
+        "predicted_risk_on": 0.415,
+        "spx_val_at_prediction": 7430.8599,
+        "target_graded": true,
+        "spx_vals_window": [
+            7430.8599,
+            7430.8599,
+            7430.8599,
+            7430.8599,
+            7430.8599,
+            7430.8599
+        ],
+        "actual_outcome": 0,
+        "squared_error": 0.172225
+    },
+    {
+        "predicted_risk_on": 0.415,
+        "spx_val_at_prediction": 7430.8599,
+        "target_graded": true,
+        "spx_vals_window": [
+            7430.8599,
+            7430.8599,
+            7430.8599,
+            7430.8599,
+            7430.8599,
+            7430.8599
+        ],
+        "actual_outcome": 0,
+        "squared_error": 0.172225
+    },
+    {
+        "predicted_risk_on": 0.411,
+        "spx_val_at_prediction": 7430.8599,
+        "target_graded": true,
+        "spx_vals_window": [
+            7430.8599,
+            7430.8599,
+            7430.8599,
+            7430.8599,
+            7430.8599,
+            7430.8599
+        ],
+        "actual_outcome": 0,
+        "squared_error": 0.168921
+    },
+    {
+        "predicted_risk_on": 0.463,
+        "spx_val_at_prediction": 7430.8599,
+        "target_graded": true,
+        "spx_vals_window": [
+            7430.8599,
+            7430.8599,
+            7430.8599,
+            7430.8599,
+            7430.8599,
+            7430.8599
+        ],
+        "actual_outcome": 0,
+        "squared_error": 0.21436900000000003
+    },
+    {
+        "predicted_risk_on": 0.401,
+        "spx_val_at_prediction": 7430.8599,
+        "target_graded": true,
+        "spx_vals_window": [
+            7430.8599,
+            7430.8599,
+            7430.8599,
+            7430.8599,
+            7430.8599,
+            7430.8599
+        ],
+        "actual_outcome": 0,
+        "squared_error": 0.16080100000000003
+    },
+    {
+        "predicted_risk_on": 0.37,
+        "spx_val_at_prediction": 7430.8599,
+        "target_graded": true,
+        "spx_vals_window": [
+            7430.8599,
+            7430.8599,
+            7430.8599,
+            7430.8599,
+            7430.8599,
+            7430.8599
+        ],
+        "actual_outcome": 0,
+        "squared_error": 0.1369
+    },
+    {
+        "predicted_risk_on": 0.441,
+        "spx_val_at_prediction": 7430.8599,
+        "target_graded": true,
+        "spx_vals_window": [
+            7430.8599,
+            7430.8599,
+            7430.8599,
+            7430.8599,
+            7430.8599,
+            7542.9502
+        ],
+        "actual_outcome": 0,
+        "squared_error": 0.19448100000000001
+    },
+    {
+        "predicted_risk_on": 0.419,
+        "spx_val_at_prediction": 7430.8599,
+        "target_graded": true,
+        "spx_vals_window": [
+            7430.8599,
+            7430.8599,
+            7430.8599,
+            7430.8599,
+            7542.9502,
+            7553.1899
+        ],
+        "actual_outcome": 1,
+        "squared_error": 0.33756099999999994
+    },
+    {
+        "predicted_risk_on": 0.463,
+        "spx_val_at_prediction": 7430.8599,
+        "target_graded": true,
+        "spx_vals_window": [
+            7430.8599,
+            7430.8599,
+            7430.8599,
+            7542.9502,
+            7553.1899,
+            7573.5898
+        ],
+        "actual_outcome": 1,
+        "squared_error": 0.28836899999999993
+    },
+    {
+        "predicted_risk_on": 0.423,
+        "spx_val_at_prediction": 7430.8599,
+        "target_graded": true,
+        "spx_vals_window": [
+            7430.8599,
+            7430.8599,
+            7542.9502,
+            7553.1899,
+            7573.5898,
+            7570.1201
+        ],
+        "actual_outcome": 1,
+        "squared_error": 0.332929
+    },
+    {
+        "predicted_risk_on": 0.442,
+        "spx_val_at_prediction": 7430.8599,
+        "target_graded": true,
+        "spx_vals_window": [
+            7430.8599,
+            7542.9502,
+            7553.1899,
+            7573.5898,
+            7570.1201,
+            7564.3701
+        ],
+        "actual_outcome": 1,
+        "squared_error": 0.3113640000000001
+    },
+    {
+        "predicted_risk_on": 0.405,
+        "spx_val_at_prediction": 7430.8599,
+        "target_graded": true,
+        "spx_vals_window": [
+            7542.9502,
+            7553.1899,
+            7573.5898,
+            7570.1201,
+            7564.3701,
+            7560.9302
+        ],
+        "actual_outcome": 1,
+        "squared_error": 0.354025
+    },
+    {
+        "predicted_risk_on": 0.442,
+        "spx_val_at_prediction": 7542.9502,
+        "target_graded": true,
+        "spx_vals_window": [
+            7553.1899,
+            7573.5898,
+            7570.1201,
+            7564.3701,
+            7560.9302,
+            7555.2598
+        ],
+        "actual_outcome": 0,
+        "squared_error": 0.195364
     },
     {
         "predicted_risk_on": 0.45,
-        "spx_val_at_prediction": 7430.8599,
+        "spx_val_at_prediction": 7553.1899,
+        "target_graded": true,
+        "spx_vals_window": [
+            7573.5898,
+            7570.1201,
+            7564.3701,
+            7560.9302,
+            7555.2598,
+            7555.2598
+        ],
+        "actual_outcome": 0,
+        "squared_error": 0.2025
+    },
+    {
+        "predicted_risk_on": 0.478,
+        "spx_val_at_prediction": 7573.5898,
+        "target_graded": true,
+        "spx_vals_window": [
+            7570.1201,
+            7564.3701,
+            7560.9302,
+            7555.2598,
+            7555.2598,
+            7555.2598
+        ],
+        "actual_outcome": 0,
+        "squared_error": 0.228484
+    },
+    {
+        "predicted_risk_on": 0.443,
+        "spx_val_at_prediction": 7570.1201,
+        "target_graded": false,
+        "spx_vals_window": [
+            7564.3701,
+            7560.9302,
+            7555.2598,
+            7555.2598,
+            7555.2598
+        ]
+    },
+    {
+        "predicted_risk_on": 0.468,
+        "spx_val_at_prediction": 7564.3701,
+        "target_graded": false,
+        "spx_vals_window": [
+            7560.9302,
+            7555.2598,
+            7555.2598,
+            7555.2598
+        ]
+    },
+    {
+        "predicted_risk_on": 0.424,
+        "spx_val_at_prediction": 7560.9302,
+        "target_graded": false,
+        "spx_vals_window": [
+            7555.2598,
+            7555.2598,
+            7555.2598
+        ]
+    },
+    {
+        "predicted_risk_on": 0.387,
+        "spx_val_at_prediction": 7555.2598,
+        "target_graded": false,
+        "spx_vals_window": [
+            7555.2598,
+            7555.2598
+        ]
+    },
+    {
+        "predicted_risk_on": 0.404,
+        "spx_val_at_prediction": 7555.2598,
+        "target_graded": false,
+        "spx_vals_window": [
+            7555.2598
+        ]
+    },
+    {
+        "predicted_risk_on": 0.42,
+        "spx_val_at_prediction": 7555.2598,
         "target_graded": false
     }
 ]

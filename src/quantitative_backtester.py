@@ -96,6 +96,7 @@ def run_backtest(interval="1d"):
         
     # --- TRUE EQUITY SIMULATOR STATE ---
     simulated_equity = 10000.0
+    peak_equity = simulated_equity
     current_allocations = {"spx": 0.0, "short": 0.0, "btc": 0.0, "gld": 0.0, "wti": 0.0, "nvda": 0.0, "tsla": 0.0, "dell": 0.0, "spce": 0.0, "cash": 1.0}
     total_mock_trades = 0
     total_fees_paid = 0.0
@@ -342,6 +343,9 @@ def run_backtest(interval="1d"):
         current_spx_ema = spx_ema.loc[current_date]
         is_downtrend = current_spx_close < current_spx_ema
 
+        peak_equity = max(peak_equity, simulated_equity)
+        equity_drawdown = (peak_equity - simulated_equity) / peak_equity if peak_equity > 0 else 0.0
+
         kelly_dict = risk.compute_multi_asset_kelly(
             mlp_predictions=mlp_predictions,
             dominant_state=kalman_state.dominant_state,
@@ -354,7 +358,8 @@ def run_backtest(interval="1d"):
             hmm_regime=dom_regime,
             current_ihi=ihi_val,
             is_downtrend=is_downtrend,
-            max_kelly_cap=0.30 if interval == "4h" else 0.40
+            max_kelly_cap=0.30 if interval == "4h" else 0.40,
+            equity_drawdown=equity_drawdown
         )
         spx_kelly = kelly_dict.get("SPX_Kelly", 0.0)
         
@@ -590,7 +595,8 @@ def run_backtest(interval="1d"):
     for r in results:
         report += f"| {r['date']} | {r['spx_close']} | {r['dom_regime']} | {r['kalman_state']} | {r['mlp_prob']:.3f} | {r['consensus']:.1f} | {r['kelly_exposure']} | {r['short_exposure']} | {r['btc_exposure']} | {r['gld_exposure']} | {r['wti_exposure']} | {r['safe_haven_exposure']} | {r['fwd_5d_ret']:.3f}% |\n"
         
-    with open(f"/Users/mac/agent/reports/backtest_extended_results_{interval}.md", "w") as f:
+    report_path = os.path.join(os.path.dirname(__file__), "..", "reports", f"backtest_extended_results_{interval}.md")
+    with open(report_path, "w") as f:
         f.write(report)
         
     # Overwrite the paper trading portfolio so the UI reflects the backtest's final simulated state
@@ -615,12 +621,12 @@ def run_backtest(interval="1d"):
         "win_rate": accuracy
     }
     
-    portfolio_path = "/Users/mac/agent/data/paper_trading/backtest_portfolio.json"
+    portfolio_path = os.path.join(os.path.dirname(__file__), "..", "data", "paper_trading", "backtest_portfolio.json")
     os.makedirs(os.path.dirname(portfolio_path), exist_ok=True)
     with open(portfolio_path, "w") as f:
         json.dump(portfolio_state, f, indent=4)
         
-    ledger_path = "/Users/mac/agent/data/paper_trading/backtest_ledger.csv"
+    ledger_path = os.path.join(os.path.dirname(__file__), "..", "data", "paper_trading", "backtest_ledger.csv")
     os.makedirs(os.path.dirname(ledger_path), exist_ok=True)
     with open(ledger_path, "w") as f:
         f.write("timestamp,action,ticker,shares,price,value,stats\n")

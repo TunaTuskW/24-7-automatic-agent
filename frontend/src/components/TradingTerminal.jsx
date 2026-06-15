@@ -112,13 +112,19 @@ const TradingTerminal = () => {
                 .then(r => r.json())
                 .then(data => {
                     if (data) {
-                        if (data.portfolio) setPortfolio(data.portfolio);
+                        if (data.portfolio) {
+                            setPortfolio({
+                                equity: data.portfolio.total_equity || data.portfolio.equity || 100000,
+                                positions: data.portfolio.positions || {},
+                                win_rate: data.portfolio.win_rate || 0
+                            });
+                        }
                         if (data.ledger) {
                             setLedger(data.ledger);
                             const markers = [];
                             data.ledger.forEach(row => {
                                 if (row.ticker && row.ticker.toUpperCase() === selectedTicker) {
-                                    const timeMatch = chartData.find(d => row.timestamp.includes(d.time));
+                                    const timeMatch = chartData.find(d => row.timestamp && String(row.timestamp).includes(d.time));
                                     if (timeMatch) {
                                         markers.push({
                                             time: timeMatch.time,

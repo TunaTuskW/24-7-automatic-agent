@@ -100,6 +100,9 @@ Volume Activity Heat: {volume_heat}"""
                     return {
                         "fed_policy_hawkishness_prob": 0.5, 
                         "fear_greed_sentiment_score": 0.5, 
+                        "credit_stress": 0.0,
+                        "liquidity_withdrawal": 0.0,
+                        "kelly_multiplier": 1.0,
                         "quantitative_divergence_flag": False, 
-                        "reasoning": f"Provider: Gemini | Error: {e}"
+                        "reasoning": f"Fallback to neutral. LLM Macro Provider error: {str(e)[:100]}..."
                     }

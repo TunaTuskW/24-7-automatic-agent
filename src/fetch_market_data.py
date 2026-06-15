@@ -20,6 +20,8 @@ from src.adapters.paper_broker import PaperBroker
 from src.engines.hmm_engine import HMMEngine
 from src.engines.risk_engine import RiskEngine
 from src.engines.consensus_engine import ConsensusEngine
+from src.engines.entry_engine import EntryEngine
+from src.engines.frequency_controller import FrequencyController
 from src.schemas.models import MarketSnapshot, RegimeState, MarketExtremes, NewsSignal, KalmanState, EconomicCalendar
 from src.engines.feature_engine import (
     ALL_YF_TICKERS, get_fred_key, get_signature_salt, sign_snapshot_payload,
@@ -70,6 +72,15 @@ class Conductor:
         self.hmm_engine = HMMEngine(model_path=hmm_model_path)
         self.risk_engine = RiskEngine()
         self.consensus_engine = ConsensusEngine()
+        self.entry_engine = EntryEngine()
+        self.entry_quality_path = os.path.join(os.path.dirname(__file__), "..", "data", "state", "entry_quality.json")
+        self.frequency_controller = FrequencyController()
+        self.frequency_state_path = os.path.join(os.path.dirname(__file__), "..", "data", "state", "frequency_state.json")
+        
+        # RL Agent sizing option
+        self.use_rl_agent = True
+        from src.engines.rl_agent import RLAgent
+        self.rl_agent = RLAgent(interval=self.interval) if self.use_rl_agent else None
         
         self.snapshot = MarketSnapshot()
         
@@ -80,7 +91,7 @@ class Conductor:
         self.FEATURES_WINDOW_SIZE = 30
         self.last_rebalance_bar = -1
         self.bar_count = 0
-        self.MIN_HOLD_BARS = 3
+        self.MIN_HOLD_BARS = 1
         self._spx_raw_series = None
         self.feature_metadata = {}
         self.ordered_feature_keys = [
@@ -136,6 +147,7 @@ class Conductor:
     def handle_data_fetched(self, payload):
         raw_daily_data = payload["daily"]
         raw_hourly_data = payload["hourly"]
+        self.raw_hourly_data = raw_hourly_data
         
         self.snapshot.economic_calendar = EconomicCalendar.model_validate(payload.get("calendar", {}))
         
@@ -293,7 +305,7 @@ class Conductor:
             try:
                 if category == "bonds":
                     if key == "delta_zscore" and bonds.get("US10Y"): val = bonds["US10Y"].get("delta_zscore", 0.0)
-                    elif key == "us10y_delta" and bonds.get("US10Y"): val = bonds["US10Y"].get("delta", 0.0)
+                    elif key == "delta" and bonds.get("US10Y"): val = bonds["US10Y"].get("delta", 0.0)
                     elif key == "spread_zscore": val = bonds.get("spread_zscore", 0.0)
                     elif key == "spread_2s10s": val = bonds.get("spread_2s10s", 0.0)
                 else: val = self.clean_daily.get(category, {}).get(key, 0.0)
@@ -483,26 +495,69 @@ class Conductor:
             is_black_swan = True
             
         is_bull_trap = False
-        if mlp_prob > 0.80:
+        if spx_ret_z > 2.0 and self.clean_daily.get("VIX", {}).get("current", 0) > 25:
             is_bull_trap = True
 
-        kelly = self.risk_engine.compute_multi_asset_kelly(
-            mlp_predictions=mlp_state,
-            dominant_state=kalman_res.dominant_state,
-            brier_score=brier_score,
-            duration_days=duration_days,
-            is_capitulation_override=is_capitulation_override,
-            is_momentum_override=is_momentum_override,
-            is_black_swan=is_black_swan,
-            is_bull_trap=is_bull_trap,
-            hmm_regime=self.snapshot.regime.current,
-            current_ihi=current_ihi,
-            is_downtrend=is_downtrend,
-            max_kelly_cap=0.30 if self.interval == "4h" else 0.40,
-            equity_drawdown=self.paper_broker.get_equity_drawdown()
-        )
+        # --- Sizing: RL Agent or Kelly (feature-flagged) ---
+        kelly = None
+        if self.use_rl_agent and self.rl_agent and self.rl_agent.is_loaded():
+            current_allocs = {k.lower().replace("_kelly", ""): v 
+                              for k, v in self.snapshot.data_science_layer.get(
+                                  "target_allocations", {}).items()}
+            kelly = self.rl_agent.predict_allocations(
+                features_vector=self.features_vector,
+                current_allocations=current_allocs
+            )
+            
+        if kelly is None:
+            kelly = self.risk_engine.compute_multi_asset_kelly(
+                mlp_predictions=mlp_state,
+                dominant_state=kalman_res.dominant_state,
+                brier_score=brier_score,
+                duration_days=duration_days,
+                is_capitulation_override=is_capitulation_override,
+                is_momentum_override=is_momentum_override,
+                is_black_swan=is_black_swan,
+                is_bull_trap=is_bull_trap,
+                hmm_regime=self.snapshot.regime.current,
+                current_ihi=current_ihi,
+                is_downtrend=is_downtrend,
+                max_kelly_cap=0.30 if self.interval == "4h" else 0.40,
+                equity_drawdown=self.paper_broker.get_equity_drawdown()
+            )
 
-        
+        # --- Multi-Timeframe Entry Gating (4H and 1D only) ---
+        if self.interval in ("4h", "1d") and os.path.exists(self.entry_quality_path):
+            try:
+                with open(self.entry_quality_path, "r") as f:
+                    entry_quality = json.load(f)
+
+                computed_at = datetime.fromisoformat(entry_quality.get("computed_utc", "2000-01-01T00:00:00+00:00"))
+                age_hours = (datetime.now(timezone.utc) - computed_at).total_seconds() / 3600.0
+
+                if age_hours <= 5.0:
+                    entry_score = float(entry_quality.get("entry_score", 0.5))
+                    entry_bias  = entry_quality.get("entry_bias", "FLAT")
+
+                    if entry_score < 0.20:
+                        logger.warning(f"MTF Entry Gate: score {entry_score:.2f} below 0.20 floor. Zeroing long Kelly.")
+                        for k in kelly:
+                            if k not in ["Short_Kelly", "Cash"]: kelly[k] = 0.0
+                    elif entry_score < 0.35:
+                        logger.info(f"MTF Entry Gate: score {entry_score:.2f} below 0.35. Halving long Kelly.")
+                        for k in kelly:
+                            if k not in ["Short_Kelly", "Cash"]: kelly[k] = round(kelly[k] * 0.5, 3)
+                    else:
+                        logger.info(f"MTF Entry Gate: score {entry_score:.2f} — no adjustment.")
+
+                    if entry_bias == "SHORT" and kelly.get("SPX_Kelly", 0.0) > 0:
+                        logger.info("MTF bias conflict: 1H SHORT, 4H LONG. Applying 0.70x long discount.")
+                        kelly["SPX_Kelly"] = round(kelly["SPX_Kelly"] * 0.70, 3)
+                else:
+                    logger.warning(f"Entry quality score is stale ({age_hours:.1f}h old). Skipping MTF gate.")
+            except Exception as e:
+                logger.error(f"MTF entry gate failed: {e}")
+                
         self.snapshot.kalman_state = kalman_res
         self.snapshot.mlp_deep_state = mlp_state or {}
         self.snapshot.data_science_layer = {
@@ -520,13 +575,37 @@ class Conductor:
         self.event_bus.publish("EnginesCompleted", {})
 
     def handle_engines_completed(self, payload):
+        # --- Entry Quality Scoring (1H only) ---
+        if self.interval == "1h" and hasattr(self, 'raw_hourly_data'):
+            spx_1h_close = self.raw_hourly_data["^GSPC"]["Close"].dropna() if "^GSPC" in self.raw_hourly_data.columns.levels[0] else pd.Series()
+            spx_1h_vol   = self.raw_hourly_data["^GSPC"]["Volume"].dropna() if "^GSPC" in self.raw_hourly_data.columns.levels[0] else pd.Series()
+            spx_1h_high  = self.raw_hourly_data["^GSPC"]["High"].dropna()   if "^GSPC" in self.raw_hourly_data.columns.levels[0] else pd.Series()
+            spx_1h_low   = self.raw_hourly_data["^GSPC"]["Low"].dropna()    if "^GSPC" in self.raw_hourly_data.columns.levels[0] else pd.Series()
+            vix_1h       = self.raw_hourly_data["^VIX"]["Close"].dropna()   if "^VIX" in self.raw_hourly_data.columns.levels[0] else pd.Series()
+
+            entry_result = self.entry_engine.score_entry(
+                spx_close_1h=spx_1h_close,
+                spx_vol_1h=spx_1h_vol,
+                spx_high_1h=spx_1h_high,
+                spx_low_1h=spx_1h_low,
+                vix_1h=vix_1h,
+                dominant_regime=self.snapshot.regime.current,
+                kalman_dominant_state=self.snapshot.kalman_state.dominant_state
+            )
+            entry_result["computed_utc"] = datetime.now(timezone.utc).isoformat()
+            entry_result["interval_used"] = "1h"
+
+            with open(self.entry_quality_path, "w") as f:
+                json.dump(entry_result, f, indent=4)
+            logger.info(f"Entry quality score computed: {entry_result['entry_score']:.2f} ({entry_result['entry_bias']})")
+
         headlines = fetch_rss_headlines()
         
         # Prepare inputs for experts
         calendar_events = self.snapshot.economic_calendar.events
-        spread_2s10s = self.snapshot.bonds.get("2s10s_spread", 0.0)
+        spread_2s10s = self.snapshot.bonds.get("spread_2s10s", 0.0)
         vix_zscore = self.snapshot.market_extremes_insight.temperature_zscore
-        volume_heat = self.snapshot.data_science_layer.get("advanced_metrics", {}).get("volume_activity_heat", 0.0)
+        volume_heat = self.clean_daily.get("volume_activity_heat", {}).get("institutional_heat_index", 0.0)
         
         def run_llm():
             # Prevent 429 quota exhaustion: skip LLM macro for 1h intervals and use cached state
@@ -563,7 +642,7 @@ class Conductor:
         regime = self.snapshot.regime.current
         divergence = self.snapshot.news_signal.quantitative_divergence_flag
         
-        multiplier = self.snapshot.news_signal.kelly_multiplier
+        multiplier = 1.0
         if divergence:
             logger.warning("Quantitative divergence flagged by LLM. Slashing multiplier to 0.5.")
             multiplier = min(multiplier, 0.5)
@@ -609,13 +688,23 @@ class Conductor:
         if not isinstance(kelly_obj, dict):
             kelly_obj = {"SPX_Kelly": kelly_obj, "GLD_Kelly": 0.0}
             
+        entry_quality = {}
+        if os.path.exists(self.entry_quality_path):
+            try:
+                with open(self.entry_quality_path, "r") as f:
+                    entry_quality = json.load(f)
+            except Exception:
+                pass
+                
         telemetry_payload = {
             "timestamp_utc": self.snapshot.generated_utc,
             "dominant_regime": self.snapshot.regime.dominant_regime,
             "spx_kelly_fraction": kelly_obj.get("SPX_Kelly", 0.0),
             "safe_haven_kelly_fraction": kelly_obj.get("GLD_Kelly", 0.0),
             "is_capitulation_override_active": self.snapshot.data_science_layer.get("epistemic_metrics", {}).get("is_capitulation_override_active", False),
-            "institutional_heat_index": self.snapshot.raw_indicators.get("volume_activity_heat", {}).get("institutional_heat_index", 0.0)
+            "institutional_heat_index": self.snapshot.raw_indicators.get("volume_activity_heat", {}).get("institutional_heat_index", 0.0),
+            "entry_quality_score": entry_quality.get("entry_score", None) if entry_quality else None,
+            "entry_bias": entry_quality.get("entry_bias", "FLAT") if entry_quality else "FLAT"
         }
         
         with open(telemetry_path, 'w') as f:
@@ -634,13 +723,21 @@ class Conductor:
                     "SPX":  kelly_obj.get("SPX_Kelly", 0.0),
                     "Gold": kelly_obj.get("GLD_Kelly", 0.0),
                     "BTC":  kelly_obj.get("BTC_Kelly", 0.0),
-                    "WTI":  kelly_obj.get("WTI_Kelly", 0.0)
+                    "WTI":  kelly_obj.get("WTI_Kelly", 0.0),
+                    "NVDA": kelly_obj.get("NVDA_Kelly", 0.0),
+                    "TSLA": kelly_obj.get("TSLA_Kelly", 0.0),
+                    "DELL": kelly_obj.get("DELL_Kelly", 0.0),
+                    "SPCE": kelly_obj.get("SPCE_Kelly", 0.0)
                 }
                 current_prices = {
                     "SPX":  self.clean_daily.get("SPX",  {}).get("current", 0.0),
                     "Gold": self.clean_daily.get("Gold", {}).get("current", 0.0),
                     "BTC":  self.clean_daily.get("BTC",  {}).get("current", 0.0),
-                    "WTI":  self.clean_daily.get("WTI",  {}).get("current", 0.0)
+                    "WTI":  self.clean_daily.get("WTI",  {}).get("current", 0.0),
+                    "NVDA": self.clean_daily.get("NVDA", {}).get("current", 0.0),
+                    "TSLA": self.clean_daily.get("TSLA", {}).get("current", 0.0),
+                    "DELL": self.clean_daily.get("DELL", {}).get("current", 0.0),
+                    "SPCE": self.clean_daily.get("SPCE", {}).get("current", 0.0)
                 }
                 self.paper_broker.execute_rebalance(target_allocs, current_prices, vix_zscore=self.snapshot.market_extremes_insight.temperature_zscore, hmm_regime=self.snapshot.regime.current)
                 self.last_rebalance_bar = self.bar_count
@@ -650,6 +747,30 @@ class Conductor:
         except Exception as e:
             logger.error(f"Paper Execution failed: {e}")
             
+        # --- Regime-Adaptive Frequency Recommendation ---
+        try:
+            entropy = self.snapshot.data_science_layer.get("epistemic_metrics", {}).get("shannon_entropy", 1.58)
+            vix_z = float(self.snapshot.market_extremes_insight.temperature_zscore)
+            brier = float(self.snapshot.kalman_state.brier_score_calibration) if self.snapshot.kalman_state else 0.15
+            duration = float(self.snapshot.regime.duration_days)
+
+            freq_result = self.frequency_controller.evaluate(
+                shannon_entropy=entropy,
+                vix_zscore=vix_z,
+                dominant_regime=self.snapshot.regime.current,
+                brier_score=brier,
+                duration_days=duration,
+                kalman_dominant_state=self.snapshot.kalman_state.dominant_state if self.snapshot.kalman_state else "neutral",
+                kalman_is_ambiguous=self.snapshot.kalman_state.is_ambiguous if self.snapshot.kalman_state else True
+            )
+            freq_result["evaluated_utc"] = datetime.now(timezone.utc).isoformat()
+
+            with open(self.frequency_state_path, "w") as f:
+                json.dump(freq_result, f, indent=4)
+            logger.info(f"FrequencyController: recommended={freq_result['recommended_frequency']} (score={freq_result['score']}). {freq_result['reason']}")
+        except Exception as e:
+            logger.error(f"FrequencyController evaluation failed: {e}")
+
         logger.info("v6.0.0 Real-Time Event-Driven Pipeline Complete")
             
         with open(prior_path, 'w') as f:

@@ -269,7 +269,7 @@ def run_mlp_inference(features_vector, mlp_package, current_regime: str, asset="
         
         # Ensemble Prediction
         models = [
-            mlp_package.get("model_mlp", mlp_package.get("model")),
+            mlp_package.get("model_mlp", mlp_package.get("model", mlp_package.get("model_base"))),
             mlp_package.get("model_rf"),
             mlp_package.get("model_gb")
         ]
@@ -279,13 +279,19 @@ def run_mlp_inference(features_vector, mlp_package, current_regime: str, asset="
             return None
             
         prob_up_list = []
+        prob_down_list = []
+        prob_neutral_list = []
         for m in valid_models:
             p = m.predict_proba(obs_scaled)[0]
             if len(p) >= 3:
                 # Class 0 = bear, 1 = bull, 2 = transitional
                 prob_up_list.append(float(p[1]))
+                prob_down_list.append(float(p[0]))
+                prob_neutral_list.append(float(p[2]))
             elif len(p) >= 2:
                 prob_up_list.append(float(p[1]))
+                prob_down_list.append(float(p[0]))
+                prob_neutral_list.append(0.0)
                 
         if not prob_up_list:
             return None
@@ -297,14 +303,15 @@ def run_mlp_inference(features_vector, mlp_package, current_regime: str, asset="
         # High consensus if standard deviation is low (models agree)
         consensus_score = 1.0 if std_prob_up < 0.15 else 0.0
         
-        prob_down = round(float(1.0 - mean_prob_up), 3)
+        prob_down = round(float(np.mean(prob_down_list)), 3)
         prob_up = round(float(mean_prob_up), 3)
+        prob_neutral = round(float(np.mean(prob_neutral_list)), 3)
         predicted_class = 1 if prob_up > 0.5 else 0
         
         return {
             "bull_probability": prob_up,
             "bear_probability": prob_down,
-            "neutral_probability": 0.0,
+            "neutral_probability": prob_neutral,
             "predicted_class": predicted_class,
             "consensus_score": consensus_score
         }
@@ -353,7 +360,15 @@ def calculate_model_tvd(p_dist, q_dist):
         hmm_trans = max(0.0, 1.0 - hmm_risk_on - hmm_risk_off)
         
         P = np.array([hmm_risk_on, hmm_risk_off, hmm_trans])
-        Q = np.array([q_dist.get("risk_on", 0.33), q_dist.get("risk_off", 0.34), q_dist.get("transitional", 0.33)])
+        
+        if isinstance(q_dist, dict) and "bull_probability" in q_dist:
+            Q = np.array([
+                q_dist.get("bull_probability", 0.33),
+                q_dist.get("bear_probability", 0.34),
+                q_dist.get("neutral_probability", 0.33)
+            ])
+        else:
+            Q = np.array([q_dist.get("risk_on", 0.33), q_dist.get("risk_off", 0.34), q_dist.get("transitional", 0.33)])
         
         # Clip to prevent 0.0
         P = np.clip(P, 0.01, 0.99); P /= P.sum()
