@@ -361,8 +361,8 @@ def run_job_background(job_type: str, start_date: str = None, end_date: str = No
             subprocess.run(["python3", "src/build_report.py", "--title", "Weekly Execution Report"])
             subprocess.run(["python3", "src/build_weekly_synthesis.py"])
         elif job_type == "test":
-            logger.info("Running Quantitative Backtester manually with RL Agent...")
-            cmd = ["python3", "src/quantitative_backtester.py", "--interval", "1d", "--use_rl"]
+            logger.info("Running Quantitative Backtester manually...")
+            cmd = ["python3", "src/quantitative_backtester.py", "--interval", "1d"]
             if start_date:
                 cmd += ["--start-date", start_date]
             if end_date:
