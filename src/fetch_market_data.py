@@ -95,22 +95,22 @@ class Conductor:
         self._spx_raw_series = None
         self.feature_metadata = {}
         self.ordered_feature_keys = [
-            ("spx_ret", "SPX", "delta_pct"),
-            ("dxy_ret", "DXY", "delta_pct"),
+            ("spx_ret", "SPX", "z_score"),
+            ("dxy_ret", "DXY", "z_score"),
             ("vix_zscore", "VIX", "z_score"),
             ("Inst_Heat_Index", "volume_activity_heat", "institutional_heat_index"),
-            ("wti_ret", "WTI", "delta_pct"),
-            ("gsr_ret", "gold_to_silver_ratio", "delta_pct"),
+            ("wti_ret", "WTI", "z_score"),
+            ("gsr_ret", "gold_to_silver_ratio", "z_score"),
             ("us10y_delta", "bonds", "delta"),
             ("spread_level", "bonds", "spread_2s10s"),
-            ("btc_ret", "BTC", "delta_pct"),
-            ("es_ret", "ES", "delta_pct"),
-            ("nq_ret", "NQ", "delta_pct"),
-            ("rty_ret", "RTY", "delta_pct"),
-            ("nvda_ret", "NVDA", "delta_pct"),
-            ("tsla_ret", "TSLA", "delta_pct"),
-            ("dell_ret", "DELL", "delta_pct"),
-            ("spce_ret", "SPCE", "delta_pct"),
+            ("btc_ret", "BTC", "z_score"),
+            ("es_ret", "ES", "z_score"),
+            ("nq_ret", "NQ", "z_score"),
+            ("rty_ret", "RTY", "z_score"),
+            ("nvda_ret", "NVDA", "z_score"),
+            ("tsla_ret", "TSLA", "z_score"),
+            ("dell_ret", "DELL", "z_score"),
+            ("spce_ret", "SPCE", "z_score"),
             ("spx_rsi_14", "SPX_Alpha", "rsi_14"),
             ("spx_macd_hist", "SPX_Alpha", "macd_hist"),
             ("spx_bbw", "SPX_Alpha", "bbw_20"),
@@ -261,6 +261,14 @@ class Conductor:
             }
             
         vix_s = parsed_daily.get("VIX", {}).get("raw_series")
+        if vix_s is not None and len(vix_s) >= 20:
+            v_mean = vix_s.rolling(self.dynamic_rolling_window).mean().iloc[-1]
+            v_std = vix_s.rolling(self.dynamic_rolling_window).std().iloc[-1]
+            v_zscore = (vix_s.iloc[-1] - v_mean) / v_std if v_std > 0 else 0.0
+            if "VIX" not in self.clean_daily:
+                self.clean_daily["VIX"] = {}
+            self.clean_daily["VIX"]["z_score"] = float(v_zscore)
+            
         vvix_s = parsed_daily.get("VVIX", {}).get("raw_series")
         dxy_s = parsed_daily.get("DXY", {}).get("raw_series")
         vix9d_s = parsed_daily.get("VIX9D", {}).get("raw_series")

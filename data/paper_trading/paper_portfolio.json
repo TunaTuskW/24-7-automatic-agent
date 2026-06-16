@@ -1,7 +1,13 @@
 {
-    "cash": 10000.0,
-    "positions": {},
-    "position_details": {},
+    "cash": 7700.0,
+    "positions": {
+        "Gold": 0.5307162530337562
+    },
+    "position_details": {
+        "Gold": {
+            "peak_price": 4333.76590005
+        }
+    },
     "total_equity": 10000.0,
-    "last_update": "2026-06-16T04:45:49.869831"
+    "last_update": "2026-06-15T23:00:37.383803"
 }

@@ -226,10 +226,7 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
         # 4. Construct feature vector
         def get_ret(asset):
             d = parsed_daily.get(asset, {})
-            curr = d.get("current", 0)
-            prev = d.get("prev", 0)
-            if prev > 0: return ((curr - prev) / prev) * 100
-            return 0.0
+            return d.get("z_score", 0.0)
 
         rsi_14 = 50.0
         macd_hist = 0.0
@@ -257,19 +254,34 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
             bbw_20 = float(bbw.iloc[-1])
             
             vix_close = historical_slice["^VIX"]["Close"].dropna()
+            vix_zscore_val = 0.0
             if len(vix_close) >= 20:
                 spx_ret_alpha = spx_close.pct_change() * 100
                 vix_ret_alpha = vix_close.pct_change() * 100
                 corr_s = spx_ret_alpha.rolling(window=10).corr(vix_ret_alpha).fillna(0)
                 vix_corr_10 = float(corr_s.iloc[-1])
+                
+                v_mean = vix_close.rolling(dynamic_rolling_window).mean().iloc[-1]
+                v_std = vix_close.rolling(dynamic_rolling_window).std().iloc[-1]
+                vix_zscore_val = (vix_close.iloc[-1] - v_mean) / v_std if v_std > 0 else 0.0
+
+        # Gold Silver Ratio needs its own z-score
+        gsr_zscore = 0.0
+        if gold and silver and "raw_series" in gold and "raw_series" in silver:
+            gsr_series = gold["raw_series"] / silver["raw_series"]
+            if len(gsr_series) > dynamic_rolling_window:
+                gsr_ret_series = gsr_series.pct_change() * 100
+                gsr_mean = gsr_ret_series.rolling(dynamic_rolling_window).mean().iloc[-1]
+                gsr_std = gsr_ret_series.rolling(dynamic_rolling_window).std().iloc[-1]
+                gsr_zscore = (gsr_delta_pct - gsr_mean) / gsr_std if gsr_std > 0 else 0.0
 
         features_dict = {
             "spx_ret": get_ret("SPX"),
             "dxy_ret": get_ret("DXY"),
-            "vix_zscore": parsed_daily.get("VIX", {}).get("z_score", 0.0),
+            "vix_zscore": vix_zscore_val,
             "Inst_Heat_Index": ihi,
             "wti_ret": get_ret("WTI"),
-            "gsr_ret": gsr_delta_pct,
+            "gsr_ret": gsr_zscore,
             "us10y_delta": us10y_delta,
             "spread_level": us_2s10s_spread,
             "btc_ret": get_ret("BTC"),

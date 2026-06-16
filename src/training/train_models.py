@@ -189,16 +189,22 @@ def train(interval="1d"):
     hmm = GaussianHMM(n_components=5, covariance_type="diag", n_iter=100, random_state=42, min_covar=0.01)
     hmm.fit(X_hmm_scaled)
     
+    # Dynamically map state labels by sorting clusters based on SPX return mean (index 0)
+    spx_means = hmm.means_[:, 0]
+    sorted_indices = np.argsort(spx_means)
+    
+    state_labels_map = {
+        int(sorted_indices[0]): "CRISIS_DISLOCATION",
+        int(sorted_indices[1]): "RISK_OFF_STRESS",
+        int(sorted_indices[2]): "NEUTRAL_TRANSITIONAL",
+        int(sorted_indices[3]): "RISK_ON_EXPANSION",
+        int(sorted_indices[4]): "LIQUIDITY_DRIVEN_RALLY"
+    }
+
     hmm_package = {
         "hmm": hmm,
         "scaler": scaler_hmm,
-        "state_labels": {
-            0: "RISK_OFF_STRESS",
-            1: "RISK_ON_EXPANSION",
-            2: "NEUTRAL_TRANSITIONAL",
-            3: "LIQUIDITY_DRIVEN_RALLY",
-            4: "INFLATIONARY_SHOCK"
-        }
+        "state_labels": state_labels_map
     }
     
     os.makedirs(os.path.join(os.path.dirname(__file__), "..", "..", "models"), exist_ok=True)
