@@ -320,8 +320,6 @@ To configure operational parameters, API keys, and configurations:
 
 The agent is now structured under the **v6.4.0 Multi-Asset Trading Terminal & Dynamic Conviction Edge OS**, featuring centralized LLM synthesis, type-safe validations, in-memory `EventBus` pub-sub, paper broker execution engines, short ETF mapping, and Docker container support.
 
-![Workflow Map](reports/workflow_map.png)
-
 For a full breakdown of the mathematical engines, data ingestion layers, GARCH penalty filters, consensus logic, and paper trading ledgers, please refer to the **Technical Developer Manual** located at:
 `docs/concept_and_model.md`
 
