@@ -22,20 +22,28 @@ def fetch_training_data(interval="1d", period="10y"):
         
     raw_data = yf.download(tickers, period=period, interval=interval, group_by="ticker", auto_adjust=True, progress=False)
     
-    spx_close = raw_data["^GSPC"]["Close"]
-    spx_vol = raw_data["^GSPC"]["Volume"]
-    
-    # Define the 20 features exactly matching fetch_market_data.py order
+    def safe_get(ticker, col="Close"):
+        try:
+            if ticker in raw_data and col in raw_data[ticker]:
+                return raw_data[ticker][col].ffill().bfill()
+        except:
+            pass
+        # Fallback to empty series of same index
+        idx = raw_data.index if not raw_data.empty else []
+        return pd.Series(0.0, index=idx)
+
+    spx_close = safe_get("^GSPC", "Close")
+    spx_vol = safe_get("^GSPC", "Volume")
     
     # 1. spx_ret
     spx_ret = spx_close.pct_change(fill_method=None) * 100
     
     # 2. dxy_ret
-    dxy_close = raw_data["DX-Y.NYB"]["Close"]
+    dxy_close = safe_get("DX-Y.NYB", "Close")
     dxy_ret = dxy_close.pct_change(fill_method=None) * 100
     
     # 3. vix_zscore
-    vix_close = raw_data["^VIX"]["Close"]
+    vix_close = safe_get("^VIX", "Close")
     vix_zscore = (vix_close - vix_close.rolling(ROLLING_DAYS).mean()) / vix_close.rolling(ROLLING_DAYS).std()
     
     # 4. Inst_Heat_Index
@@ -49,45 +57,34 @@ def fetch_training_data(interval="1d", period="10y"):
     ihi = effort_z * (result_vector - 0.5)
     
     # 5. wti_ret
-    wti_ret = raw_data["CL=F"]["Close"].pct_change(fill_method=None) * 100
+    wti_ret = safe_get("CL=F", "Close").pct_change(fill_method=None) * 100
     
     # 6. gsr_ret
-    gsr_ret = (raw_data["GC=F"]["Close"] / raw_data["SI=F"]["Close"]).pct_change(fill_method=None) * 100
+    gc_close = safe_get("GC=F", "Close")
+    si_close = safe_get("SI=F", "Close")
+    # avoid division by zero
+    gsr_series = gc_close / si_close.replace(0, np.nan)
+    gsr_ret = gsr_series.pct_change(fill_method=None) * 100
     
     # 7. us10y_delta & 8. spread_level
-    # Use ^TNX and ^IRX as proxy since pandas_datareader FRED is slow/unreliable here
-    try:
-        us10y = raw_data["^TNX"]["Close"]
-    except KeyError:
-        us10y = pd.Series(index=spx_close.index, data=4.0) # Mock fallback
-        
+    us10y = safe_get("^TNX", "Close")
+    us2y = safe_get("^IRX", "Close")  # IRX is 13-week but used as short-term proxy in earlier code
     us10y_delta = us10y.diff()
-    # Mock spread if 2y not available easily
-    spread_2s10s = pd.Series(index=spx_close.index, data=0.0) 
+    spread_2s10s = us10y - us2y
     
     # 9. btc_ret
-    btc_ret = raw_data["BTC-USD"]["Close"].pct_change(fill_method=None) * 100
+    btc_ret = safe_get("BTC-USD", "Close").pct_change(fill_method=None) * 100
     
-    # 10. es_ret
-    es_ret = raw_data["ES=F"]["Close"].pct_change(fill_method=None) * 100
+    # 10. es_ret, nq_ret, rty_ret
+    es_ret = safe_get("ES=F", "Close").pct_change(fill_method=None) * 100
+    nq_ret = safe_get("NQ=F", "Close").pct_change(fill_method=None) * 100
+    rty_ret = safe_get("RTY=F", "Close").pct_change(fill_method=None) * 100
     
-    # 11. nq_ret
-    nq_ret = raw_data["NQ=F"]["Close"].pct_change(fill_method=None) * 100
-    
-    # 12. rty_ret
-    rty_ret = raw_data["RTY=F"]["Close"].pct_change(fill_method=None) * 100
-    
-    # 13. nvda_ret
-    nvda_ret = raw_data["NVDA"]["Close"].pct_change(fill_method=None) * 100
-    
-    # 14. tsla_ret
-    tsla_ret = raw_data["TSLA"]["Close"].pct_change(fill_method=None) * 100
-    
-    # 15. dell_ret
-    dell_ret = raw_data["DELL"]["Close"].pct_change(fill_method=None) * 100
-    
-    # 16. spce_ret
-    spce_ret = raw_data["SPCE"]["Close"].pct_change(fill_method=None) * 100
+    # Single Names
+    nvda_ret = safe_get("NVDA", "Close").pct_change(fill_method=None) * 100
+    tsla_ret = safe_get("TSLA", "Close").pct_change(fill_method=None) * 100
+    dell_ret = safe_get("DELL", "Close").pct_change(fill_method=None) * 100
+    spce_ret = safe_get("SPCE", "Close").pct_change(fill_method=None) * 100
     
     # 17. spx_rsi_14
     delta = spx_close.diff()
@@ -186,7 +183,24 @@ def train(interval="1d"):
     
     scaler_hmm = StandardScaler()
     X_hmm_scaled = scaler_hmm.fit_transform(X)
-    hmm = GaussianHMM(n_components=5, covariance_type="diag", n_iter=100, random_state=42, min_covar=0.01)
+    
+    # Enforce stable regimes by setting a strong prior on self-transitions
+    # This prevents the HMM from learning transient 1-day states and forces it to find persistent market regimes
+    n_states = 5
+    transmat_prior = np.full((n_states, n_states), 1.0 / n_states)
+    np.fill_diagonal(transmat_prior, 100.0) # Strong prior for staying in the same state
+    
+    hmm = GaussianHMM(
+        n_components=n_states, 
+        covariance_type="diag", 
+        n_iter=200, 
+        random_state=42, 
+        min_covar=0.01,
+        init_params="smc", # Initialize everything but transmat
+        params="smc"       # Update everything but transmat during EM
+    )
+    hmm.transmat_ = transmat_prior / transmat_prior.sum(axis=1, keepdims=True)
+    
     hmm.fit(X_hmm_scaled)
     
     # Dynamically map state labels by sorting clusters based on SPX return mean (index 0)

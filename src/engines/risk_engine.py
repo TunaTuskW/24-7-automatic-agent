@@ -114,14 +114,15 @@ class RiskEngine:
         # We relax the Brier penalty if the model correctly identified a Risk Off regime.
         if is_momentum_override:
             calibration_penalty = 1.0
-            logger.info("Momentum Ignition Active: Bypassing Brier Score penalties.")
-        elif dominant_state == "risk_off":
-            if brier_score > 0.35: calibration_penalty = 0.5
-            elif brier_score > 0.20: calibration_penalty = 0.9
+        # Calibration Penalty (Brier Score scaling)
+        calibration_penalty = 1.0
+        if dominant_state == "risk_off":
+            if brier_score > 0.45: calibration_penalty = 0.5
+            elif brier_score > 0.35: calibration_penalty = 0.9
             else: calibration_penalty = 1.0
         else:
-            if brier_score > 0.25: calibration_penalty = 0.5
-            elif brier_score > 0.15: calibration_penalty = 0.8
+            if brier_score > 0.40: calibration_penalty = 0.5
+            elif brier_score > 0.30: calibration_penalty = 0.8
             else: calibration_penalty = 1.0
         
         final_fraction = base_fraction * calibration_penalty
@@ -169,21 +170,16 @@ class RiskEngine:
             if asset == "spx" and is_bull_trap:
                 asset_is_bull_trap = True
                 
-            # Equity Curve Smoothing: Reduce risk if we are in a drawdown
-            if equity_drawdown > 0.05:
-                logger.warning(f"Equity Curve Smoothing Active: Current drawdown is {equity_drawdown:.2%}. Reducing max_kelly_cap by 50%.")
-                max_kelly_cap = max(0.10, max_kelly_cap * 0.5)
-            
             # Determine Asset-Specific Conviction Threshold
             asset_thresholds = {
-                "spx":  0.58,   # Core index, slightly lower threshold
-                "btc":  0.63,   # High volatility, tighter
-                "gld":  0.55,   # Safe haven, lower threshold to hedge
-                "wti":  0.60,
-                "nvda": 0.63,   # High vol tech, tightened from 0.60
-                "tsla": 0.65,   # High vol, tightened from 0.62
-                "dell": 0.63,   # Tightened from 0.60
-                "spce": 0.72,   # Near-zero liquidity — requires extraordinary conviction
+                "spx":  0.50,
+                "btc":  0.52,
+                "gld":  0.52,
+                "wti":  0.54,
+                "nvda": 0.53,
+                "tsla": 0.56,
+                "dell": 0.55,
+                "spce": 0.72,
             }
             asset_conviction_threshold = asset_thresholds.get(asset, 0.60)
             
@@ -218,27 +214,14 @@ class RiskEngine:
 
         # Extract SPX for specific filters
         spx_raw = raw_allocations.get("spx", 0.0)
-        
-        # Macro Trend Override: Block Longs in technical downtrends
-        if is_downtrend and spx_raw > 0:
-            logger.info("Macro Trend Override active (SPX below 20 EMA). Forcing SPX Long Kelly to 0.0.")
-            spx_raw = 0.0
-            
-
         spx_kelly = 0.0
         short_kelly = 0.0
         
         if spx_raw > 0:
             spx_kelly = round(min(max_kelly_cap, spx_raw), 3)
-            # Retail Noise Filter as an active risk multiplier
-            if dominant_state != "risk_off" and current_ihi < 0.0:
-                logger.info(f"Retail Noise Filter active: dominant_state={dominant_state}, current_ihi={current_ihi}. Slashed SPX Kelly fraction by 50%.")
-                spx_kelly = round(spx_kelly * 0.5, 3)
         else:
-            short_kelly = round(min(1.0, abs(spx_raw)), 3)
-            if dominant_state == "transitional":
-                short_kelly = round(short_kelly * 0.6, 3)
-            logger.info(f"Negative Edge Detected. Activating Short Kelly: {short_kelly}")
+            short_kelly = 0.0
+            logger.info(f"Negative Edge Detected. Shorting disabled.")
 
         # Black Swan Circuit Breaker overrides SPX
         if is_black_swan:
@@ -254,63 +237,58 @@ class RiskEngine:
         dell_kelly = round(max(0.0, min(1.0, raw_allocations.get("dell", 0.0))), 3)
         spce_kelly = round(max(0.0, min(1.0, raw_allocations.get("spce", 0.0))), 3)
 
-        # Universal Equity Regime Gate
-        # When Kalman state is risk_off, suppress all single-name long equity exposure.
-        # SPX is already handled by is_downtrend above. This extends that gate to all names.
-        if dominant_state == "risk_off" or is_black_swan:
-            logger.warning(
-                f"Regime Gate: dominant_state={dominant_state}. "
-                "Suppressing all single-name long equity (NVDA, TSLA, DELL, SPCE)."
-            )
-            nvda_kelly = 0.0
-            tsla_kelly = 0.0
-            dell_kelly = 0.0
-            spce_kelly = 0.0
-            # BTC partial suppression: correlated with equity in hard selloffs
-            if dominant_state == "risk_off":
-                btc_kelly = round(btc_kelly * 0.30, 3)
-                
-        # HMM Regime Coherence Gate
-        # When HMM explicitly identifies a stress or shock state, zero all single-name equity
-        # regardless of Kalman state. The Kalman filter may lag the HMM on sudden regime shifts.
-        STRESS_REGIMES = {
-            "STAGFLATION_STRESS", "RATE_SHOCK", "DEFLATION_FEAR",
-            "CRISIS_DISLOCATION", "VOLATILITY_EXPANSION", "COMMODITY_SHOCK", "RISK_OFF_STRESS"
-        }
-        if any(hmm_regime.startswith(s) for s in STRESS_REGIMES):
-            logger.warning(
-                f"HMM Coherence Gate: {hmm_regime} is a stress regime. "
-                "Zeroing all single-name long equity."
-            )
-            nvda_kelly = 0.0
-            tsla_kelly = 0.0
-            dell_kelly = 0.0
-            spce_kelly = 0.0
+
         # Capital Rotation Engine (Active Rotation & Diversity)
         spx_prob = mlp_predictions.get("spx", {}).get("bull_probability", 0.5)
         
-        # High Beta Diversity (Risk-On environment)
-        if spx_kelly > 0.05:
-            logger.info(f"Risk-On environment detected. Allocating proportional high-beta diversity.")
-            nvda_kelly = max(nvda_kelly, round(spx_kelly * 0.35, 3)) # 35% of SPX exposure
-            btc_kelly = max(btc_kelly, round(spx_kelly * 0.25, 3))  # 25% of SPX exposure
-            tsla_kelly = max(tsla_kelly, round(spx_kelly * 0.20, 3))
-            
         # Safe Haven Diversity (Risk-Off / Short environment)
         if short_kelly > 0.05:
             logger.info(f"Risk-Off environment detected. Allocating proportional safe-haven diversity.")
             gld_kelly = max(gld_kelly, round(short_kelly * 0.40, 3)) # 40% of short exposure
             
-        # Extreme Weakness: SPX collapsing means high-beta single names fall harder.
-        # Suppress rather than amplify. Redirect defensive capital to safe havens only.
-        if spx_prob < 0.40:
-            logger.info(
-                f"Extreme Weakness detected (spx_prob={spx_prob:.3f}). "
-                "Suppressing single-name amplification."
+        # Extreme Weakness Rotation (Defense / Alpha Rotation)
+        if spx_prob < 0.35:
+            logger.info("Extreme Weakness: SPX collapsing. Suppressing high-beta names, boosting safe havens.")
+            gld_kelly   = min(1.0, round(gld_kelly * 1.5, 3))
+            short_kelly = min(1.0, round(short_kelly * 1.2, 3))
+            nvda_kelly  = round(nvda_kelly * 0.25, 3)
+            tsla_kelly  = round(tsla_kelly * 0.25, 3)
+            spce_kelly  = 0.0
+
+        # Universal Equity Regime Gate
+        # Kalman risk_off or black swan: zero ALL single-name long equity.
+        # SPX is already handled above via is_downtrend. This extends to all names.
+        if dominant_state == "risk_off" or is_black_swan:
+            nvda_kelly = 0.0
+            tsla_kelly = 0.0
+            dell_kelly = 0.0
+            spce_kelly = 0.0
+            if dominant_state == "risk_off":
+                btc_kelly = round(btc_kelly * 0.30, 3)
+            logger.warning(
+                f"Regime Gate: dominant_state={dominant_state}. "
+                "All single-name long equity zeroed."
             )
-            nvda_kelly = round(nvda_kelly * 0.50, 3)
-            tsla_kelly = round(tsla_kelly * 0.50, 3)
-            spce_kelly = 0.0  # Never hold SPCE in extreme SPX weakness
+
+        # HMM Coherence Gate
+        # If HMM explicitly names a stress regime, single names are forbidden.
+        STRESS_REGIMES = {
+            "STAGFLATION_STRESS", "RATE_SHOCK", "DEFLATION_FEAR",
+            "CRISIS_DISLOCATION", "VOLATILITY_EXPANSION", "COMMODITY_SHOCK"
+        }
+        if any(hmm_regime.startswith(s) for s in STRESS_REGIMES):
+            nvda_kelly = 0.0
+            tsla_kelly = 0.0
+            dell_kelly = 0.0
+            spce_kelly = 0.0
+            logger.warning(f"HMM Coherence Gate: {hmm_regime}. Single-name equity zeroed.")
+
+        # Capital Rotation Engine (runs AFTER regime gate so it never re-amplifies zeroed names)
+        if spx_kelly > 0.05 and dominant_state != "risk_off" and not is_black_swan:
+            if not any(hmm_regime.startswith(s) for s in STRESS_REGIMES):
+                nvda_kelly = max(nvda_kelly, round(spx_kelly * 0.35, 3))
+                btc_kelly  = max(btc_kelly,  round(spx_kelly * 0.25, 3))
+                tsla_kelly = max(tsla_kelly, round(spx_kelly * 0.20, 3))
 
         # Global Portfolio Balancer (Normalize exposure)
         total_exposure = spx_kelly + short_kelly + btc_kelly + gld_kelly + wti_kelly + nvda_kelly + tsla_kelly + dell_kelly + spce_kelly

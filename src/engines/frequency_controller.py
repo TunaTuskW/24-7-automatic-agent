@@ -35,6 +35,17 @@ class FrequencyController:
           reason: str
           metrics: dict for logging
         """
+        # Guard against NaN/Inf inputs from upstream computation errors
+        import numpy as np
+        if not np.isfinite(shannon_entropy):
+            shannon_entropy = 1.58   # maximum entropy for 3-state system = log2(3)
+        if not np.isfinite(vix_zscore):
+            vix_zscore = 0.0
+        if not np.isfinite(brier_score):
+            brier_score = 0.25
+        if not np.isfinite(duration_days):
+            duration_days = 0.0
+
         reason_parts = []
         score = 0  # higher = more confident = higher frequency allowed
 

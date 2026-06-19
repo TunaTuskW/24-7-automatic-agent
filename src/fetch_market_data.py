@@ -78,7 +78,7 @@ class Conductor:
         self.frequency_state_path = os.path.join(os.path.dirname(__file__), "..", "data", "state", "frequency_state.json")
         
         # RL Agent sizing option
-        self.use_rl_agent = True
+        self.use_rl_agent = False
         from src.engines.rl_agent import RLAgent
         self.rl_agent = RLAgent(interval=self.interval) if self.use_rl_agent else None
         
@@ -92,29 +92,30 @@ class Conductor:
         self.last_rebalance_bar = -1
         self.bar_count = 0
         self.MIN_HOLD_BARS = 1
+        self.dynamic_rolling_window = 20   # 20-bar rolling window for VIX z-score
         self._spx_raw_series = None
         self.feature_metadata = {}
         self.ordered_feature_keys = [
-            ("spx_ret", "SPX", "z_score"),
-            ("dxy_ret", "DXY", "z_score"),
+            ("spx_ret", "SPX", "delta_pct"),
+            ("dxy_ret", "DXY", "delta_pct"),
             ("vix_zscore", "VIX", "z_score"),
             ("Inst_Heat_Index", "volume_activity_heat", "institutional_heat_index"),
-            ("wti_ret", "WTI", "z_score"),
-            ("gsr_ret", "gold_to_silver_ratio", "z_score"),
+            ("wti_ret", "WTI", "delta_pct"),
+            ("gsr_ret", "gold_to_silver_ratio", "delta_pct"),
             ("us10y_delta", "bonds", "delta"),
             ("spread_level", "bonds", "spread_2s10s"),
-            ("btc_ret", "BTC", "z_score"),
-            ("es_ret", "ES", "z_score"),
-            ("nq_ret", "NQ", "z_score"),
-            ("rty_ret", "RTY", "z_score"),
-            ("nvda_ret", "NVDA", "z_score"),
-            ("tsla_ret", "TSLA", "z_score"),
-            ("dell_ret", "DELL", "z_score"),
-            ("spce_ret", "SPCE", "z_score"),
+            ("btc_ret", "BTC", "delta_pct"),
+            ("es_ret", "ES", "delta_pct"),
+            ("nq_ret", "NQ", "delta_pct"),
+            ("rty_ret", "RTY", "delta_pct"),
+            ("nvda_ret", "NVDA", "delta_pct"),
+            ("tsla_ret", "TSLA", "delta_pct"),
+            ("dell_ret", "DELL", "delta_pct"),
+            ("spce_ret", "SPCE", "delta_pct"),
             ("spx_rsi_14", "SPX_Alpha", "rsi_14"),
             ("spx_macd_hist", "SPX_Alpha", "macd_hist"),
             ("spx_bbw", "SPX_Alpha", "bbw_20"),
-            ("spx_vix_corr", "SPX_Alpha", "vix_corr_10")
+            ("vix_corr", "SPX_Alpha", "vix_corr_10"),
         ]
         
         # Register Event Callbacks
@@ -205,6 +206,7 @@ class Conductor:
         
         self.clean_daily = clean_daily
         self.bonds = bonds
+        self.snapshot.bonds = bonds
         
         # GARCH & Extremes
         garch_layer = {}
@@ -371,8 +373,17 @@ class Conductor:
                 self.features_vector, 
                 features_window=list(self.features_window)
             )
-            hmm_alpha_probs = hmm_beta_probs
-            hmm_alpha_dom = hmm_beta_dom
+            if hmm_beta_probs is None:
+                logger.error(f"HMM model returned None. Check that models/hmm_model_{self.interval}.pkl exists. "
+                             "Run: PYTHONPATH=. python3 src/train_models.py --interval 1d")
+                hmm_beta_probs = {}
+                hmm_beta_dom = "NEUTRAL_TRANSITIONAL"
+                tr_risk = 0.0
+                hmm_alpha_probs = {}
+                hmm_alpha_dom = "NEUTRAL_TRANSITIONAL"
+            else:
+                hmm_alpha_probs = hmm_beta_probs
+                hmm_alpha_dom = hmm_beta_dom
         
         current_regime = hmm_beta_dom if hmm_beta_dom else "NEUTRAL_TRANSITIONAL"
         
@@ -412,6 +423,8 @@ class Conductor:
         now_utc = datetime.now(timezone.utc)
         prior_start_str = prior.get("regime", {}).get("start_utc", now_utc.isoformat())
         prior_start = datetime.fromisoformat(prior_start_str)
+        if prior_start.tzinfo is None:
+            prior_start = prior_start.replace(tzinfo=timezone.utc)
         
         if regime_changed:
             duration_days = 0.0
@@ -660,8 +673,10 @@ class Conductor:
         current_kelly = self.snapshot.data_science_layer["epistemic_metrics"]["kelly_exposure_fraction"]
         if multiplier != 1.0:
             if isinstance(current_kelly, dict):
-                new_spx_kelly = round(min(1.2, current_kelly.get("SPX_Kelly", 0.0) * multiplier), 3)
-                self.snapshot.data_science_layer["epistemic_metrics"]["kelly_exposure_fraction"]["SPX_Kelly"] = new_spx_kelly
+                long_keys = ["SPX_Kelly", "BTC_Kelly", "NVDA_Kelly", "TSLA_Kelly", "DELL_Kelly", "SPCE_Kelly", "WTI_Kelly"]
+                for k in long_keys:
+                    if k in current_kelly:
+                        current_kelly[k] = round(current_kelly[k] * multiplier, 3)
             else:
                 new_kelly = round(min(1.2, current_kelly * multiplier), 3)
                 self.snapshot.data_science_layer["epistemic_metrics"]["kelly_exposure_fraction"] = new_kelly
@@ -728,24 +743,26 @@ class Conductor:
         try:
             if should_rebalance:
                 target_allocs = {
-                    "SPX":  kelly_obj.get("SPX_Kelly", 0.0),
-                    "Gold": kelly_obj.get("GLD_Kelly", 0.0),
-                    "BTC":  kelly_obj.get("BTC_Kelly", 0.0),
-                    "WTI":  kelly_obj.get("WTI_Kelly", 0.0),
-                    "NVDA": kelly_obj.get("NVDA_Kelly", 0.0),
-                    "TSLA": kelly_obj.get("TSLA_Kelly", 0.0),
-                    "DELL": kelly_obj.get("DELL_Kelly", 0.0),
-                    "SPCE": kelly_obj.get("SPCE_Kelly", 0.0)
+                    "SPX":   kelly_obj.get("SPX_Kelly", 0.0),
+                    "Short": kelly_obj.get("Short_Kelly", 0.0),
+                    "Gold":  kelly_obj.get("GLD_Kelly", 0.0),
+                    "BTC":   kelly_obj.get("BTC_Kelly", 0.0),
+                    "WTI":   kelly_obj.get("WTI_Kelly", 0.0),
+                    "NVDA":  kelly_obj.get("NVDA_Kelly", 0.0),
+                    "TSLA":  kelly_obj.get("TSLA_Kelly", 0.0),
+                    "DELL":  kelly_obj.get("DELL_Kelly", 0.0),
+                    "SPCE":  kelly_obj.get("SPCE_Kelly", 0.0)
                 }
                 current_prices = {
-                    "SPX":  self.clean_daily.get("SPX",  {}).get("current", 0.0),
-                    "Gold": self.clean_daily.get("Gold", {}).get("current", 0.0),
-                    "BTC":  self.clean_daily.get("BTC",  {}).get("current", 0.0),
-                    "WTI":  self.clean_daily.get("WTI",  {}).get("current", 0.0),
-                    "NVDA": self.clean_daily.get("NVDA", {}).get("current", 0.0),
-                    "TSLA": self.clean_daily.get("TSLA", {}).get("current", 0.0),
-                    "DELL": self.clean_daily.get("DELL", {}).get("current", 0.0),
-                    "SPCE": self.clean_daily.get("SPCE", {}).get("current", 0.0)
+                    "SPX":   self.clean_daily.get("SPX",   {}).get("current", 0.0),
+                    "Short": self.clean_daily.get("SH",    {}).get("current", 0.0),
+                    "Gold":  self.clean_daily.get("Gold",  {}).get("current", 0.0),
+                    "BTC":   self.clean_daily.get("BTC",   {}).get("current", 0.0),
+                    "WTI":   self.clean_daily.get("WTI",   {}).get("current", 0.0),
+                    "NVDA":  self.clean_daily.get("NVDA",  {}).get("current", 0.0),
+                    "TSLA":  self.clean_daily.get("TSLA",  {}).get("current", 0.0),
+                    "DELL":  self.clean_daily.get("DELL",  {}).get("current", 0.0),
+                    "SPCE":  self.clean_daily.get("SPCE",  {}).get("current", 0.0)
                 }
                 self.paper_broker.execute_rebalance(target_allocs, current_prices, vix_zscore=self.snapshot.market_extremes_insight.temperature_zscore, hmm_regime=self.snapshot.regime.current)
                 self.last_rebalance_bar = self.bar_count

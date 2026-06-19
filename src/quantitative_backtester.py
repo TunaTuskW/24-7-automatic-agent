@@ -32,6 +32,12 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
     # 90-day warmup window before start to allow rolling statistics to stabilise
     start_fetch_date = (q1_start - timedelta(days=90)).strftime("%Y-%m-%d")
     end_fetch_date = q1_end.strftime("%Y-%m-%d")
+
+    if q1_start >= q1_end:
+        raise ValueError(
+            f"start_date ({q1_start.strftime('%Y-%m-%d')}) must be before "
+            f"end_date ({q1_end.strftime('%Y-%m-%d')})"
+        )
     
     tickers_to_fetch = list(ALL_YF_TICKERS.values()) + ["^TNX", "^FVX"]
     
@@ -301,7 +307,7 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
         ordered_keys = [
             "spx_ret", "dxy_ret", "vix_zscore", "Inst_Heat_Index", "wti_ret",
             "gsr_ret", "us10y_delta", "spread_level", "btc_ret",
-            "es_ret", "nq_ret", "rty_ret", "nvda_ret", "tsla_ret", "dell_ret", "spce_ret",
+            "nvda_ret", "tsla_ret", "dell_ret", "spce_ret",
             "spx_rsi_14", "spx_macd_hist", "spx_bbw", "spx_vix_corr"
         ]
         features_vector = [float(features_dict.get(k, 0.0)) for k in ordered_keys]

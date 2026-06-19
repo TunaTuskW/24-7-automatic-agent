@@ -111,11 +111,10 @@ class PaperBroker:
         current_eq = self.portfolio.get("total_equity", self.starting_cash)
         peak_eq = self.portfolio.get("peak_equity", self.starting_cash)
         
-        # Update peak equity
+        # Update peak equity in-memory only (avoid race conditions & excessive IO)
         if current_eq > peak_eq:
             self.portfolio["peak_equity"] = current_eq
             peak_eq = current_eq
-            self._save_portfolio()
             
         if peak_eq > 0:
             return (peak_eq - current_eq) / peak_eq

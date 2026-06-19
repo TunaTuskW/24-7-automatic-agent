@@ -1,3 +1,5 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+
 pydantic>=2.0.0
 pandas
 numpy

@@ -31,6 +31,7 @@ ALL_YF_TICKERS = {
     "VIX": "^VIX",
     "VIX3M": "^VIX3M",
     "VVIX": "^VVIX",
+    "SH": "SH",
     # Institutional Digital Asset Flow & Spot
     "BTC": "BTC-USD",
     "IBIT": "IBIT",      
@@ -282,15 +283,15 @@ def run_mlp_inference(features_vector, mlp_package, current_regime: str, asset="
         prob_down_list = []
         prob_neutral_list = []
         for m in valid_models:
-            p = m.predict_proba(obs_scaled)[0]
-            if len(p) >= 3:
-                # Class 0 = bear, 1 = bull, 2 = transitional
-                prob_up_list.append(float(p[1]))
-                prob_down_list.append(float(p[0]))
-                prob_neutral_list.append(float(p[2]))
-            elif len(p) >= 2:
-                prob_up_list.append(float(p[1]))
-                prob_down_list.append(float(p[0]))
+            probs = m.predict_proba(obs_scaled)[0]
+            if len(m.classes_) == 3:
+                # 3 classes: [down, up, neutral] based on y encoding
+                prob_up_list.append(probs[1])
+                prob_down_list.append(probs[0])
+                prob_neutral_list.append(probs[2])
+            else:
+                prob_up_list.append(probs[1])
+                prob_down_list.append(probs[0])
                 prob_neutral_list.append(0.0)
                 
         if not prob_up_list:
@@ -303,8 +304,9 @@ def run_mlp_inference(features_vector, mlp_package, current_regime: str, asset="
         # High consensus if standard deviation is low (models agree)
         consensus_score = 1.0 if std_prob_up < 0.15 else 0.0
         
-        prob_down = round(float(np.mean(prob_down_list)), 3)
-        prob_up = round(float(mean_prob_up), 3)
+        # Extract Maximum Conviction to prevent ensemble suppression
+        prob_down = round(float(np.max(prob_down_list)), 3)
+        prob_up = round(float(np.max(prob_up_list)), 3)
         prob_neutral = round(float(np.mean(prob_neutral_list)), 3)
         predicted_class = 1 if prob_up > 0.5 else 0
         

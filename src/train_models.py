@@ -60,7 +60,7 @@ def fetch_training_data(years=TRAINING_YEARS, interval="1d"):
         ultra_short = int(10 * bars)
         
     fred_key = get_fred_key()
-    tickers = ["^GSPC", "CL=F", "DX-Y.NYB", "SI=F", "USDCAD=X", "GC=F", "BTC-USD", "^VIX", "ES=F", "NQ=F", "YM=F", "RTY=F", "NVDA", "TSLA", "DELL", "SPCE"]
+    tickers = ["^GSPC", "CL=F", "DX-Y.NYB", "SI=F", "USDCAD=X", "GC=F", "BTC-USD", "^VIX", "NVDA", "TSLA", "DELL", "SPCE"]
     data = yf.download(tickers, period=period, interval=interval, progress=False)
     
     spx = data["Close"]["^GSPC"].dropna()
@@ -103,12 +103,7 @@ def fetch_training_data(years=TRAINING_YEARS, interval="1d"):
     btc = btc[~btc.index.duplicated(keep='last')]
     btc_ret = btc.pct_change() * 100
     
-    es = data["Close"]["ES=F"].dropna()
-    es.index = pd.to_datetime(es.index).tz_localize(None)
-    nq = data["Close"]["NQ=F"].dropna()
-    nq.index = pd.to_datetime(nq.index).tz_localize(None)
-    rty = data["Close"]["RTY=F"].dropna()
-    rty.index = pd.to_datetime(rty.index).tz_localize(None)
+
     
     nvda = data["Close"]["NVDA"].dropna()
     nvda.index = pd.to_datetime(nvda.index).tz_localize(None)
@@ -120,20 +115,12 @@ def fetch_training_data(years=TRAINING_YEARS, interval="1d"):
     spce.index = pd.to_datetime(spce.index).tz_localize(None)
     
     if interval == "1d":
-        es.index = es.index.normalize()
-        nq.index = nq.index.normalize()
-        rty.index = rty.index.normalize()
         nvda.index = nvda.index.normalize()
         tsla.index = tsla.index.normalize()
         dell.index = dell.index.normalize()
         spce.index = spce.index.normalize()
         
-    es = es[~es.index.duplicated(keep='last')]
-    es_ret = es.pct_change() * 100
-    nq = nq[~nq.index.duplicated(keep='last')]
-    nq_ret = nq.pct_change() * 100
-    rty = rty[~rty.index.duplicated(keep='last')]
-    rty_ret = rty.pct_change() * 100
+
     nvda = nvda[~nvda.index.duplicated(keep='last')]
     nvda_ret = nvda.pct_change() * 100
     tsla = tsla[~tsla.index.duplicated(keep='last')]
@@ -178,10 +165,6 @@ def fetch_training_data(years=TRAINING_YEARS, interval="1d"):
         "vix":           vix.reindex(spx_ret.index, method="ffill"),
         "gsr_ret":       gsr_ret.reindex(spx_ret.index, method="ffill"),
         "usdcad_ret":    usdcad_ret.reindex(spx_ret.index, method="ffill"),
-        "es_ret":        es_ret.reindex(spx_ret.index, method="ffill"),
-        "nq_ret":        nq_ret.reindex(spx_ret.index, method="ffill"),
-        "ym_ret":        ym_ret.reindex(spx_ret.index, method="ffill"),
-        "rty_ret":       rty_ret.reindex(spx_ret.index, method="ffill"),
         "nvda_ret":      nvda_ret.reindex(spx_ret.index, method="ffill"),
         "tsla_ret":      tsla_ret.reindex(spx_ret.index, method="ffill"),
         "dell_ret":      dell_ret.reindex(spx_ret.index, method="ffill"),
@@ -317,7 +300,7 @@ def train_ensemble_classifier(df, feature_names, output_path, interval="1d", tar
         solver="adam",
         max_iter=1000,
         random_state=42,
-        early_stopping=True
+        
     )
     mlp.fit(X_scaled, y)
     
@@ -356,7 +339,7 @@ def train_hmm(interval="1d"):
     feature_names = [
         "spx_ret", "dxy_ret", "vix_zscore", "Inst_Heat_Index", "wti_ret", 
         "gsr_ret", "us10y_delta", "spread_level", "btc_ret",
-        "es_ret", "nq_ret", "rty_ret", "nvda_ret", "tsla_ret", "dell_ret", "spce_ret",
+        "nvda_ret", "tsla_ret", "dell_ret", "spce_ret",
         "spx_rsi_14", "spx_macd_hist", "spx_bbw", "spx_vix_corr"
     ]
     

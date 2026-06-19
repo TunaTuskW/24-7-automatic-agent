@@ -1,0 +1,13 @@
+.git
+.gitignore
+.DS_Store
+models/
+data/
+logs/
+reports/
+scratch/
+frontend/
+docs/
+README.md
+__pycache__/
+*.pyc

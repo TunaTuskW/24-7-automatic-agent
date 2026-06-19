@@ -68,6 +68,13 @@ class MarketEventDetector:
         Each event: {"type": str, "severity": "CRITICAL"|"ELEVATED"|"ROUTINE", "detail": str}
         """
         events = []
+        
+        # If no live prices were fetched (network failure), skip all event detection.
+        # Prevents stale snapshot vix_zscore from spamming REGIME_STRESS triggers.
+        if not prices:
+            logger.warning("detect() called with empty prices dict. Skipping all event detection.")
+            return []
+            
         spx_now      = prices.get("spx_now")
         spx_30m_ago  = prices.get("spx_30m_ago")
         vix_now      = prices.get("vix_now")
@@ -114,20 +121,20 @@ class MarketEventDetector:
             logger.info(f"ENTRY_FLIP detected: score {self._last_entry_score:.2f} -> {current_entry_score:.2f}")
         self._last_entry_score = current_entry_score
 
-        # 5. Stop Approach
-        if spx_now and portfolio_positions and portfolio_position_details:
-            for ticker, shares in portfolio_positions.items():
-                if shares > 0 and ticker in portfolio_position_details:
-                    peak = portfolio_position_details[ticker].get("peak_price", spx_now)
-                    if peak > 0 and spx_now > 0:
-                        drawdown = (peak - spx_now) / peak
-                        stop_threshold = 0.05
-                        if drawdown >= (stop_threshold - self.STOP_APPROACH_BUFFER):
-                            events.append({
-                                "type": "STOP_APPROACH",
-                                "severity": "ELEVATED",
-                                "detail": f"{ticker} within {self.STOP_APPROACH_BUFFER:.1%} of trailing stop (drawdown: {drawdown:.2%})"
-                            })
+        # 5. Stop Approach — only valid for SPX position, not individual stocks
+        # Individual stock stops are handled correctly in paper_broker.py
+        # This detector only has spx_now available; using it for DELL/SPCE stops is wrong.
+        if "SPX" in portfolio_positions and portfolio_positions["SPX"] > 0 and spx_now:
+            peak = portfolio_position_details.get("SPX", {}).get("peak_price", spx_now)
+            if peak > 0:
+                drawdown = (peak - spx_now) / peak
+                stop_threshold = 0.05
+                if drawdown >= (stop_threshold - self.STOP_APPROACH_BUFFER):
+                    events.append({
+                        "type": "STOP_APPROACH",
+                        "severity": "ELEVATED",
+                        "detail": f"SPX within {self.STOP_APPROACH_BUFFER:.1%} of trailing stop (drawdown: {drawdown:.2%})"
+                    })
 
         return events
 
