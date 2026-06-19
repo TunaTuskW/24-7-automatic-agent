@@ -6,6 +6,11 @@ logger = get_logger("consensus-engine")
 
 class ConsensusEngine:
     def synthesize(self, llm_res: Dict[str, Any], current_regime: str) -> NewsSignal:
+        if not llm_res or not isinstance(llm_res, dict):
+            logger.warning("LLM result is None or invalid. Returning flat neutral signal.")
+            return NewsSignal(signal="FLAT", conviction=0.5, impact="LLM_UNAVAILABLE",
+                              reasoning="LLM call failed or timed out.", 
+                              quantitative_divergence_flag=False)
         try:
             hawkish_prob = llm_res.get("fed_policy_hawkishness_prob", 0.5)
             fear_greed = llm_res.get("fear_greed_sentiment_score", 0.5)

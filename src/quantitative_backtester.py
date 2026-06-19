@@ -153,6 +153,7 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
         # US10Y and US2Y
         us10y_yield = 0.0
         us2y_yield = 0.0
+        tnx_slice = pd.Series(dtype=float)
         if "^TNX" in historical_slice.columns.levels[0]:
             tnx_slice = historical_slice["^TNX"]["Close"].dropna()
             if len(tnx_slice) > 0:

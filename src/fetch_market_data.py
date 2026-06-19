@@ -666,6 +666,9 @@ class Conductor:
             multiplier = min(multiplier, 0.5)
         elif signal == "SHORT":
             multiplier = min(multiplier, 0.5)
+        elif signal == "MIXED":
+            multiplier = min(multiplier, 0.75)
+            logger.info("Mixed macro signals detected. Applying 0.75x Kelly discount.")
             
         current_kelly = self.snapshot.data_science_layer["epistemic_metrics"]["kelly_exposure_fraction"]
         if multiplier != 1.0:

@@ -1,10 +1,10 @@
-# Macro Briefing Agent Setup Guide (v6.3.0)
+# Macro Briefing Agent Setup Guide (v6.4.0)
 
-Welcome to the **Macro Briefing Agent (v6.3.0)**—a 24/7 autonomous containerized **Multi-Asset Trading Terminal & Dynamic Conviction Edge OS**. This project decouples data ingestion, economic calendars, LLM synthesis, consensus scaling, and pub-sub event dispatching into an enterprise-grade framework.
+Welcome to the **Macro Briefing Agent (v6.4.0)**—a 24/7 autonomous containerized **Multi-Asset Trading Terminal & Dynamic Conviction Edge OS**. This project decouples data ingestion, economic calendars, LLM synthesis, consensus scaling, and pub-sub event dispatching into an enterprise-grade framework.
 
 
 ## Project Structure Overview
-Following the v6.3.0 update and audit fixes, the project is organized into a highly decoupled, professional modular pipeline:
+Following the v6.4.0 update and audit fixes, the project is organized into a highly decoupled, professional modular pipeline:
 - **`config/`**: Contains your API keys and webhook configurations (`fred_api_key.txt`, `webhook_config.txt`, `api_keys.json`, `tuning_configs.json`, etc.).
 - **`src/`**: Houses the core Python code organized as modular packages:
   - **`interfaces/`**: Standardized OOP interfaces (`data_broker.py`, `llm_provider.py`) defining loose-coupling contracts.
@@ -59,7 +59,7 @@ docker logs -f quant_backend
 
 ---
 
-## v6.3.0 Multi-Asset Trading Terminal & Dynamic Conviction Edge OS
+## v6.4.0 Multi-Asset Trading Terminal & Dynamic Conviction Edge OS
 
 The data pipeline operates as an enterprise-grade containerized event-driven OS featuring parallel LLM experts, step-by-step Chain-of-Thought (CoT) verification, and quantitative divergence protection filters:
 ```mermaid
@@ -132,7 +132,7 @@ graph TD
     end
 
     %% 5. Sizing Overrides & Sizing Allocations
-    subgraph Consensus["5. Sizing Overrides & Sizing Allocations (v6.3.0)"]
+    subgraph Consensus["5. Sizing Overrides & Sizing Allocations (v6.4.0)"]
         ConsensusEng["ConsensusEngine (engines/consensus_engine.py)"]
         DivergeCheck{"VIX z-score > 1.5<br>& Bullish Headlines?"}
         DivergeSlash["Apply 0.5x Divergence Slash<br>(All Longs except GLD)"]
@@ -162,7 +162,7 @@ graph TD
         ExcelDash["Reports (paper_trading_performance.png & .xlsx)"]
         VM["generate_visual_map.py"]
         VisMap["visualize_map.png (Stacked allocation charts)"]
-        BR["build_report.py (v6.3.0 presenter)"]
+        BR["build_report.py (v6.4.0 presenter)"]
         PD["push_to_discord.py"]
         Discord["Discord Channels"]
         
@@ -318,7 +318,7 @@ To configure operational parameters, API keys, and configurations:
 
 ## 2. System Architecture & Technical Manual
 
-The agent is now structured under the **v6.3.0 Multi-Asset Trading Terminal & Dynamic Conviction Edge OS**, featuring centralized LLM synthesis, type-safe validations, in-memory `EventBus` pub-sub, paper broker execution engines, short ETF mapping, and Docker container support.
+The agent is now structured under the **v6.4.0 Multi-Asset Trading Terminal & Dynamic Conviction Edge OS**, featuring centralized LLM synthesis, type-safe validations, in-memory `EventBus` pub-sub, paper broker execution engines, short ETF mapping, and Docker container support.
 
 For a full breakdown of the mathematical engines, data ingestion layers, GARCH penalty filters, consensus logic, and paper trading ledgers, please refer to the **Technical Developer Manual** located at:
 `docs/concept_and_model.md`
@@ -409,6 +409,14 @@ Whenever changes are made to the system architecture, automatically update the v
 - **Big change** (e.g., major feature additions): Increment minor version (x.1 to 9). Example: v1.3.x -> v1.4.0
 - **Small change** (e.g., prompt tweak, new section): Increment patch version (x.x.1 to 9). Example: v1.3.1 -> v1.3.2
 - **Tiny change** (e.g., typo fix, formatting): Increment sub-patch version (x.x.x.1 to 9). Example: v1.3.1 -> v1.3.1.1
+
+- **v6.4.0** (Round 2 Remediation & Inference Hardening):
+  - Added robust checks in Consensus Engine to guard against `None` outputs when LLM APIs fail.
+  - Corrected feature engineering consensus scoring to default to neutral (0.5) when only a single model is loaded.
+  - Added missing `MIXED` signal handler to Conductor to properly slash Kelly multipliers by 0.75x.
+  - Secured HMM Engine inference from mutating cached start probabilities during sliding window evaluations.
+  - Guarded against zero division errors in VIX ratio logic and Pydantic crashes during empty fallback states.
+  - Cleaned up Docker disk space and pruned old build cache images.
 
 - **v6.3.0** (Post-Fix Codebase Audit & System Alignment):
   - Disabled experimental reinforcement learning agent policy evaluation (`self.use_rl_agent = False`) in favor of refined, robust Kelly sizing metrics.

@@ -38,7 +38,9 @@ class HMMEngine:
             scaler = self.hmm_package["scaler"]
             state_labels = self.hmm_package["state_labels"]
             
-            # Force uniform start probabilities to prevent degenerate single-bar inference
+            import copy
+            # Force uniform start probabilities to prevent degenerate single-bar inference without mutating original
+            hmm = copy.copy(hmm)
             hmm.startprob_ = np.full(hmm.n_components, 1.0 / hmm.n_components)
             
             # Build observation sequence: use rolling window if provided, else single bar

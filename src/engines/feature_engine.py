@@ -185,7 +185,7 @@ def compute_market_extremes(spx_series, vix_series, vvix_series=None, dxy_series
         vvix_ratio = 0.0
         cross_corr = 0.0
         
-        if vvix_series is not None and not vvix_series.empty:
+        if vvix_series is not None and not vvix_series.empty and float(vix_series.iloc[-1]) > 0:
             vvix_ratio = vvix_series.iloc[-1] / vix_series.iloc[-1]
             if vvix_ratio > 6.0:  # VVIX expanding much faster than VIX
                 fragility_score += 0.4
@@ -210,7 +210,13 @@ def compute_market_extremes(spx_series, vix_series, vvix_series=None, dxy_series
             "vvix_vix_ratio": round(vvix_ratio, 2)
         }
     except Exception:
-        return {}
+        return {
+            "temperature_zscore": 0.0,
+            "temperature_state": "NORMAL",
+            "crowded_state": "BALANCED",
+            "fragility_score": 0.0,
+            "vvix_vix_ratio": 0.0
+        }
 def compute_garch_volatility(ticker_symbol, lookback_days=250):
     try:
         from arch import arch_model
@@ -299,10 +305,12 @@ def run_mlp_inference(features_vector, mlp_package, current_regime: str, asset="
             
         # Consensus Score calculation
         mean_prob_up = np.mean(prob_up_list)
-        std_prob_up = np.std(prob_up_list) if len(prob_up_list) > 1 else 0.0
-        
-        # High consensus if standard deviation is low (models agree)
-        consensus_score = 1.0 if std_prob_up < 0.15 else 0.0
+        if len(prob_up_list) <= 1:
+            consensus_score = 0.5   # single model = no ensemble agreement possible
+        else:
+            std_prob_up = np.std(prob_up_list)
+            # High consensus if standard deviation is low (models agree)
+            consensus_score = 1.0 if std_prob_up < 0.15 else 0.0
         
         # Extract Maximum Conviction to prevent ensemble suppression
         prob_down = round(float(np.max(prob_down_list)), 3)
