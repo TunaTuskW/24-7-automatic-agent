@@ -105,9 +105,6 @@ class Conductor:
             ("us10y_delta", "bonds", "delta"),
             ("spread_level", "bonds", "spread_2s10s"),
             ("btc_ret", "BTC", "delta_pct"),
-            ("es_ret", "ES", "delta_pct"),
-            ("nq_ret", "NQ", "delta_pct"),
-            ("rty_ret", "RTY", "delta_pct"),
             ("nvda_ret", "NVDA", "delta_pct"),
             ("tsla_ret", "TSLA", "delta_pct"),
             ("dell_ret", "DELL", "delta_pct"),
@@ -131,7 +128,7 @@ class Conductor:
     def handle_system_start(self, payload):
         logger.info(f"Starting Data Ingestion Phase via Event Bus for {self.interval}")
         tickers = list(ALL_YF_TICKERS.values())
-        raw_daily_data = self.data_broker.fetch_ohlcv_daily(tickers, period="90d", interval=self.interval)
+        raw_daily_data = self.data_broker.fetch_ohlcv_daily(tickers, period="180d", interval=self.interval)
         raw_hourly_data = self.data_broker.fetch_ohlcv_hourly(tickers, period="5d")
         
         calendar_data = self.ff_adapter.fetch_calendar()

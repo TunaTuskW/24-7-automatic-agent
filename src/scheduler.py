@@ -58,7 +58,7 @@ def _apply_adaptive_frequency():
                     elif current_frequency == "4h":
                         scheduler.add_job(run_4h, 'cron', hour='0,4,8,12,16,20', minute=5, id='main_execution')
                     else:
-                        scheduler.add_job(run_1d, 'cron', day_of_week='mon-fri', hour=0, minute=0, id='main_execution')
+                        scheduler.add_job(run_1d, 'cron', hour=0, minute=0, id='main_execution')
     except Exception as e:
         logger.error(f"Failed to apply adaptive frequency: {e}")
 

@@ -420,6 +420,14 @@ Whenever changes are made to the system architecture, automatically update the v
   - Resolved timezone comparison failures in Python 3.9 under the backtester and Conductor by enforcing explicit UTC tzinfo mapping.
   - Fixed feature engineering alignment by mapping `spx_macd` to `spx_macd_hist` and setting `self.dynamic_rolling_window = 20`.
 
+- **v6.3.0** (Bug Fixes, Ingestion Expansion, and Automation Scheduler):
+  - Fixed `.dockerignore` to include trained HMM/MLP models in the Docker image, resolving the silent 0 trades issue.
+  - Aligned features list schema (17 features) between the Conductor and the trained StandardScaler/HMM models, resolving shape mismatch errors.
+  - Extended daily ingestion period from 90 days to 180 days (6 months) in `fetch_market_data.py` to enable 6-month simulation data.
+  - Omitted `day_of_week='mon-fri'` trigger in `scheduler.py` to allow the automated scheduler to run every single day, including weekends, for cryptocurrency and continuous updates.
+  - Updated default backtest end date in `quantitative_backtester.py` to `_today` to include the latest 9 days of data.
+  - Cleaned up Docker build cache, volumes, and unused container artifacts.
+
 - **v6.2.0** (RL Agent Integration & Trading Tuning):
   - Transitioned from standard Kelly rules to a trained Proximal Policy Optimization (PPO) Reinforcement Learning Agent for dynamic 8-asset portfolio sizing.
   - Reduced rigid holding periods to enable rapid momentum-driven rebalancing on volatile green days.

@@ -27,7 +27,7 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
     if end_date:
         q1_end = datetime.strptime(end_date, "%Y-%m-%d")
     else:
-        q1_end = _today - timedelta(days=5)
+        q1_end = _today
 
     # 90-day warmup window before start to allow rolling statistics to stabilise
     start_fetch_date = (q1_start - timedelta(days=90)).strftime("%Y-%m-%d")
