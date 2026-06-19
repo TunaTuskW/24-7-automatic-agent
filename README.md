@@ -1,10 +1,10 @@
-# Macro Briefing Agent Setup Guide (v6.2.0)
+# Macro Briefing Agent Setup Guide (v6.3.0)
 
-Welcome to the **Macro Briefing Agent (v6.2.0)**—a 24/7 autonomous containerized **Multi-Asset Trading Terminal & Dynamic Conviction Edge OS**. This project decouples data ingestion, economic calendars, LLM synthesis, consensus scaling, and pub-sub event dispatching into an enterprise-grade framework.
+Welcome to the **Macro Briefing Agent (v6.3.0)**—a 24/7 autonomous containerized **Multi-Asset Trading Terminal & Dynamic Conviction Edge OS**. This project decouples data ingestion, economic calendars, LLM synthesis, consensus scaling, and pub-sub event dispatching into an enterprise-grade framework.
 
 
 ## Project Structure Overview
-Following the v6.2.0 RL Agent upgrade, the project is organized into a highly decoupled, professional modular pipeline:
+Following the v6.3.0 update and audit fixes, the project is organized into a highly decoupled, professional modular pipeline:
 - **`config/`**: Contains your API keys and webhook configurations (`fred_api_key.txt`, `webhook_config.txt`, `api_keys.json`, `tuning_configs.json`, etc.).
 - **`src/`**: Houses the core Python code organized as modular packages:
   - **`interfaces/`**: Standardized OOP interfaces (`data_broker.py`, `llm_provider.py`) defining loose-coupling contracts.
@@ -37,7 +37,7 @@ Following the v6.2.0 RL Agent upgrade, the project is organized into a highly de
 
 This system is fully containerized for seamless, reproducible deployment. The architecture utilizes two main containers:
 - **`quant_backend`**: A headless Python container that runs the internal `APScheduler` and the FastAPI server. It handles data ingestion, ML inference, paper trading execution, and JSON state management.
-- **`quant_frontend`**: An NGINX Alpine container serving the compiled React/Vite Glassmorphism dashboard on Port 80.
+- **`quant_frontend`**: Serving the compiled React/Vite Glassmorphism dashboard on Port 80.
 
 ### Where is the container data stored?
 Docker containers are managed internally by the Docker Engine, but **all of your actual data and configurations are securely stored inside your `agent` folder**.
@@ -59,7 +59,7 @@ docker logs -f quant_backend
 
 ---
 
-## v6.2.0 Single LLM & Multi-Asset Ensemble OS
+## v6.3.0 Multi-Asset Trading Terminal & Dynamic Conviction Edge OS
 
 The data pipeline operates as an enterprise-grade containerized event-driven OS featuring parallel LLM experts, step-by-step Chain-of-Thought (CoT) verification, and quantitative divergence protection filters:
 ```mermaid
@@ -131,16 +131,16 @@ graph TD
         Schema3 -->|"Quant Context Ingestion"| MacroEx
     end
 
-    %% 5. Sizing Overrides & Multi-Asset Allocation
-    subgraph Consensus["5. Sizing Overrides & RL-Driven Allocation"]
+    %% 5. Sizing Overrides & Sizing Allocations
+    subgraph Consensus["5. Sizing Overrides & Sizing Allocations (v6.3.0)"]
         ConsensusEng["ConsensusEngine (engines/consensus_engine.py)"]
         DivergeCheck{"VIX z-score > 1.5<br>& Bullish Headlines?"}
-        DivergeSlash["Apply 0.5x Divergence Slash"]
+        DivergeSlash["Apply 0.5x Divergence Slash<br>(All Longs except GLD)"]
         
-        Overrides["System Sizing Overrides & Safety Circuit Breakers:<br>• Dynamic Asset Conviction Edge (e.g. SPX > 58%, BTC > 62%, GLD > 55%)<br>• Black Swan Circuit Breaker (SPX return z < -3.5): Force SPX Kelly = 0.0<br>• Macro Trend Override (SPX below 20 EMA): Force Long SPX Kelly = 0.0<br>• Capitulation Override: 0.9x contrarian Kelly<br>• Multi-Timeframe (MTF) Entry Gate: Modulates sizing based on higher timeframe confirmation"]
+        Overrides["System Sizing Overrides & Safety Circuit Breakers:<br>• Dynamic Asset Conviction Edge (SPX > 50%, BTC/GLD > 52%, NVDA > 53%, WTI/DELL > 54-55%, TSLA > 56%, SPCE > 72%)<br>• Black Swan Circuit Breaker (SPX return z < -3.5): Force SPX Kelly = 0.0<br>• Capitulation Override: 0.9x contrarian Kelly<br>• Auto-Inversion Calibration: 1 - prob if Brier Score > 0.60"]
         
-        RLAgent["RLAgent (engines/rl_agent.py):<br>PPO Reinforcement Learning Policy sizing 8 distinct assets"]
-        AssetAlloc["compute_multi_asset_kelly (Fallback Option)"]
+        RLAgent["RLAgent (engines/rl_agent.py)<br>[Disabled/Bypass]"]
+        AssetAlloc["compute_multi_asset_kelly (Primary Allocator)<br>• Runs AFTER Regime & HMM Coherence Gates<br>• Maps Short_Kelly to SH Inverse ETF"]
         Balancer["Global Portfolio Balancer (Normalize to 1.2 leverage ceiling)"]
         
         MacroEx -->|"CoT reasoning contract"| ConsensusEng
@@ -148,8 +148,8 @@ graph TD
         DivergeCheck -->|Yes| DivergeSlash
         DivergeCheck -->|No| Overrides
         DivergeSlash --> Overrides
-        Overrides --> RLAgent
-        RLAgent --> Balancer
+        Overrides --> AssetAlloc
+        AssetAlloc --> Balancer
     end
 
     %% 6. Snapshot, Reporting & Telemetry
@@ -162,14 +162,14 @@ graph TD
         ExcelDash["Reports (paper_trading_performance.png & .xlsx)"]
         VM["generate_visual_map.py"]
         VisMap["visualize_map.png (Stacked allocation charts)"]
-        BR["build_report.py (v6.2.0 presenter)"]
+        BR["build_report.py (v6.3.0 presenter)"]
         PD["push_to_discord.py"]
         Discord["Discord Channels"]
         
         Balancer -->|"SPX Long & Short / BTC / GLD / WTI / Cash"| Snap
         Balancer -->|"Live Telemetry Output"| Telem
         Balancer -->|"Kelly Target Allocations"| PB
-        PB -->|"Log execution (5 bps slippage, 2.5% drift gate)"| Ledger
+        PB -->|"Log execution (5 bps slippage, SH Inverse ETF mapping)"| Ledger
         Ledger --> VPT
         VPT -->|"Performance plots & spreadsheets"| ExcelDash
         Snap -->|"Retrieve from events.jsonl"| BR
@@ -318,7 +318,7 @@ To configure operational parameters, API keys, and configurations:
 
 ## 2. System Architecture & Technical Manual
 
-The agent is now structured under the **v6.2.0 Single LLM & Multi-Asset Ensemble OS**, featuring centralized LLM synthesis, type-safe validations, in-memory `EventBus` pub-sub, paper broker engines, Docker container support, and RL-agent integration.
+The agent is now structured under the **v6.3.0 Multi-Asset Trading Terminal & Dynamic Conviction Edge OS**, featuring centralized LLM synthesis, type-safe validations, in-memory `EventBus` pub-sub, paper broker execution engines, short ETF mapping, and Docker container support.
 
 For a full breakdown of the mathematical engines, data ingestion layers, GARCH penalty filters, consensus logic, and paper trading ledgers, please refer to the **Technical Developer Manual** located at:
 `docs/concept_and_model.md`
@@ -409,6 +409,16 @@ Whenever changes are made to the system architecture, automatically update the v
 - **Big change** (e.g., major feature additions): Increment minor version (x.1 to 9). Example: v1.3.x -> v1.4.0
 - **Small change** (e.g., prompt tweak, new section): Increment patch version (x.x.1 to 9). Example: v1.3.1 -> v1.3.2
 - **Tiny change** (e.g., typo fix, formatting): Increment sub-patch version (x.x.x.1 to 9). Example: v1.3.1 -> v1.3.1.1
+
+- **v6.3.0** (Post-Fix Codebase Audit & System Alignment):
+  - Disabled experimental reinforcement learning agent policy evaluation (`self.use_rl_agent = False`) in favor of refined, robust Kelly sizing metrics.
+  - Standardized per-asset conviction win probability thresholds: S&P500 (`spx > 50%`), Bitcoin/Gold (`btc/gld > 52%`), Oil (`wti > 54%`), Nvidia/Tesla/Dell (`nvda > 53%`, `tsla > 56%`, `dell > 55%`), and Space/Virgin Galactic (`spce > 72%`).
+  - Implemented Short Leg Execution in simulated paper trading, mapping negative SPX edges to active `SH` (ProShares Short S&P500 ETF) rebalances.
+  - Reordered execution logic to run the Capital Rotation Engine after regime gates and HMM locks, and guarded it to block rotation boosts in stress periods or `dominant_state == 'risk_off'`.
+  - Configured the narrative-reality divergence slasher (VIX z-score > 1.5 during bullish headline news) to slash all long positions by half (0.5x multiplier) *except* for the defensive Gold proxy (`GLD_Kelly`).
+  - Restrained stop-loss event checks to S&P 500 positions exclusively, avoiding stock-drawdown logic conflicts.
+  - Resolved timezone comparison failures in Python 3.9 under the backtester and Conductor by enforcing explicit UTC tzinfo mapping.
+  - Fixed feature engineering alignment by mapping `spx_macd` to `spx_macd_hist` and setting `self.dynamic_rolling_window = 20`.
 
 - **v6.2.0** (RL Agent Integration & Trading Tuning):
   - Transitioned from standard Kelly rules to a trained Proximal Policy Optimization (PPO) Reinforcement Learning Agent for dynamic 8-asset portfolio sizing.
