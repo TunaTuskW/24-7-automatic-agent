@@ -23,7 +23,7 @@ app.add_middleware(
 QUANTOS_SECRET = os.environ.get("QUANTOS_API_SECRET", "")
 
 def require_auth(x_api_key: str = Header(None)):
-    if not QUANTOS_SECRET or x_api_key != QUANTOS_SECRET:
+    if QUANTOS_SECRET and x_api_key != QUANTOS_SECRET:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
 @app.websocket("/api/ws/pipeline")

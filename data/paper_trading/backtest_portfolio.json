@@ -1,14 +1,10 @@
 {
-    "cash": 5430.490201940033,
-    "positions": {
-        "SPX": 46.72426848877339,
-        "BTC": 3.583572214478194,
-        "GLD": 33.21695783420173
-    },
+    "cash": 10000.0,
+    "positions": {},
     "position_details": {},
-    "total_equity": 13782.970055685364,
-    "peak_equity": 13782.970055685364,
-    "last_update": "2026-06-18T20:15:19.564303",
-    "total_fees_paid": 316.2136547600779,
-    "win_rate": 43.20987654320987
+    "total_equity": 10000.0,
+    "peak_equity": 10000.0,
+    "last_update": "2026-06-19T17:40:10.264294",
+    "total_fees_paid": 0.0,
+    "win_rate": 100.0
 }
