@@ -152,6 +152,8 @@ class RiskEngine:
         return final_fraction
 
     def compute_multi_asset_kelly(self, mlp_predictions, dominant_state, brier_score, duration_days=0, is_capitulation_override=False, is_momentum_override=False, is_black_swan=False, is_bull_trap=False, hmm_regime="NEUTRAL_TRANSITIONAL", current_ihi=0.0, is_downtrend=False, max_kelly_cap: float = 0.40, equity_drawdown: float = 0.0):
+        if not hmm_regime:
+            hmm_regime = "UNKNOWN"
         # Calculate raw kelly for each asset
         raw_allocations = {}
         for asset, preds in mlp_predictions.items():

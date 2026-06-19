@@ -43,6 +43,8 @@ export default function PaperTradingTab() {
       if (res.ok) {
         setTriggerStatus('Backtest triggered. Please wait ~30s.');
         setTimeout(() => setTriggerStatus(''), 10000);
+      } else {
+        setTriggerStatus('Failed to trigger backtest (Unauthorized)');
       }
     } catch (e) {
       setTriggerStatus('Error triggering backtest');
