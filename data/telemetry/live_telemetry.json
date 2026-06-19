@@ -1,7 +1,7 @@
 {
-    "timestamp_utc": "2026-06-19T18:00:46.516379+00:00",
+    "timestamp_utc": "2026-06-19T21:02:13.906810+00:00",
     "dominant_regime": "NEUTRAL_TRANSITIONAL",
-    "spx_kelly_fraction": 0.0,
+    "spx_kelly_fraction": 0.254,
     "safe_haven_kelly_fraction": 0.0,
     "is_capitulation_override_active": false,
     "institutional_heat_index": 0.984,

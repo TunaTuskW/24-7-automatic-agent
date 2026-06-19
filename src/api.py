@@ -97,7 +97,7 @@ def get_snapshot():
         "kelly": spx_kelly,
         "safeHaven": safe_haven,
         "allocations": allocations,
-        "vix": ds_layer.get("features_vector", [0,0,0])[2],
+        "vix": data.get("raw_indicators", {}).get("VIX", {}).get("current", 0.0),
         "spread": ds_layer.get("features_vector", [0,0,0,0,0,0,0,0])[7],
         "lastUpdate": data.get("timestamp_utc", datetime.utcnow().isoformat())
     }

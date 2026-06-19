@@ -43,8 +43,10 @@ def get_fred_key():
     return None
 def fetch_training_data(years=TRAINING_YEARS, interval="1d"):
     period = f"{years * 365}d"
-    if interval != "1d":
-        period = "730d" # Max allowed for intraday in Yahoo Finance
+    if interval == "1h":
+        period = "1y"
+    elif interval != "1d":
+        period = "729d" # Max allowed for intraday in Yahoo Finance
     logging.info(f"Fetching {period} of training data with interval {interval}...")
     
     # Calculate dynamic rolling windows based on interval

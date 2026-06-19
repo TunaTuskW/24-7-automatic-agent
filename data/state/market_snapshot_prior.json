@@ -1,5 +1,5 @@
 {
-    "generated_utc": "2026-06-19T18:00:46.516379+00:00",
+    "generated_utc": "2026-06-19T21:02:13.906810+00:00",
     "raw_indicators": {
         "SPX": {
             "current": 7497.8599,
@@ -93,13 +93,13 @@
             "momentum": "up"
         },
         "DFM": {
-            "current": 6163.5,
-            "prev": 6269.5098,
-            "delta": -106.0098,
-            "delta_pct": -1.691,
-            "mean_60d": 5847.5903,
-            "std_60d": 174.5372,
-            "z_score": -1.987,
+            "current": 6269.5098,
+            "prev": 6232.4102,
+            "delta": 37.0996,
+            "delta_pct": 0.595,
+            "mean_60d": 5842.0315,
+            "std_60d": 169.5452,
+            "z_score": 0.446,
             "momentum": "up"
         },
         "ES": {
@@ -253,53 +253,33 @@
             "momentum": "up"
         },
         "EURUSD": {
-            "current": 1.1478,
-            "prev": 1.1473,
-            "delta": 0.0005,
-            "delta_pct": 0.046,
-            "mean_60d": 1.1504,
-            "std_60d": 0.0055,
-            "z_score": 0.611,
-            "momentum": "down"
-        },
-        "GBPUSD": {
-            "current": 1.3231,
-            "prev": 1.3229,
-            "delta": 0.0002,
-            "delta_pct": 0.017,
-            "mean_60d": 1.3276,
-            "std_60d": 0.0077,
-            "z_score": 0.337,
-            "momentum": "down"
-        },
-        "JPYUSD": {
-            "current": 0.0062,
-            "prev": 0.0062,
-            "delta": 0.0,
-            "delta_pct": 0.006,
-            "mean_60d": 0.0062,
-            "std_60d": 0.0,
-            "z_score": 0.229,
+            "current": 1.1473,
+            "prev": 1.1481,
+            "delta": -0.0008,
+            "delta_pct": -0.069,
+            "mean_60d": 1.1498,
+            "std_60d": 0.0049,
+            "z_score": -0.463,
             "momentum": "down"
         },
         "CHFUSD": {
-            "current": 1.2392,
-            "prev": 1.2391,
-            "delta": 0.0,
-            "delta_pct": 0.004,
-            "mean_60d": 1.2476,
-            "std_60d": 0.0083,
-            "z_score": 0.261,
+            "current": 1.2401,
+            "prev": 1.2399,
+            "delta": 0.0002,
+            "delta_pct": 0.012,
+            "mean_60d": 1.2464,
+            "std_60d": 0.0076,
+            "z_score": 0.32,
             "momentum": "down"
         },
         "USDCAD": {
-            "current": 1.4172,
-            "prev": 1.4174,
-            "delta": -0.0001,
-            "delta_pct": -0.011,
-            "mean_60d": 1.4109,
-            "std_60d": 0.0051,
-            "z_score": -0.403,
+            "current": 1.4152,
+            "prev": 1.4156,
+            "delta": -0.0004,
+            "delta_pct": -0.026,
+            "mean_60d": 1.4118,
+            "std_60d": 0.0046,
+            "z_score": -0.576,
             "momentum": "up"
         },
         "VIX9D": {
@@ -353,13 +333,13 @@
             "momentum": "down"
         },
         "BTC": {
-            "current": 63143.6211,
-            "prev": 62911.5391,
-            "delta": 232.082,
-            "delta_pct": 0.369,
-            "mean_60d": 63780.9377,
-            "std_60d": 1050.0429,
-            "z_score": 0.824,
+            "current": 63188.75,
+            "prev": 63190.2383,
+            "delta": -1.4883,
+            "delta_pct": -0.002,
+            "mean_60d": 63641.9196,
+            "std_60d": 986.9491,
+            "z_score": 0.076,
             "momentum": "down"
         },
         "IBIT": {
@@ -463,42 +443,99 @@
         "tactical_alpha_probabilities": {},
         "transition_risk": 0.0,
         "start_utc": "2026-06-19T18:00:44.814742+00:00",
-        "duration_days": 0.0
+        "duration_days": 0.12601076533564814
     },
     "kalman_state": {
-        "dominant_prob": 0.797,
+        "dominant_prob": 0.891,
         "dominant_state": "transitional",
         "tvd": 0.0,
-        "brier_score_calibration": 0.2227,
+        "brier_score_calibration": 0.2189,
         "structural_ambiguity_index": 0.0,
         "probabilities": [
-            0.1540115368401826,
-            0.049456932073629126,
-            0.7965315310861882
+            0.061453068162101415,
+            0.04758737311313013,
+            0.8909595587247685
         ],
         "covariance_matrix": [
             [
-                0.021738895449799456,
-                0.0007136762268804353,
-                0.0007136762268804353
+                0.021738895449797072,
+                0.0007136762268785387,
+                0.0007136762268785387
             ],
             [
-                0.0007136762268804353,
-                0.021738895449799456,
-                0.000713676226880435
+                0.0007136762268785387,
+                0.021738895449797072,
+                0.0007136762268785387
             ],
             [
-                0.000713676226880435,
-                0.0007136762268804349,
-                0.02173889544979945
+                0.0007136762268785382,
+                0.0007136762268785385,
+                0.02173889544979707
             ]
         ],
         "is_ambiguous": false,
-        "risk_on": 0.154,
-        "risk_off": 0.049,
-        "transitional": 0.797
+        "risk_on": 0.061,
+        "risk_off": 0.048,
+        "transitional": 0.891
     },
-    "mlp_deep_state": {},
+    "mlp_deep_state": {
+        "spx": {
+            "bull_probability": 0.908,
+            "bear_probability": 0.838,
+            "neutral_probability": 0.213,
+            "predicted_class": 1,
+            "consensus_score": 0.0
+        },
+        "gld": {
+            "bull_probability": 0.233,
+            "bear_probability": 0.141,
+            "neutral_probability": 0.862,
+            "predicted_class": 0,
+            "consensus_score": 1.0
+        },
+        "wti": {
+            "bull_probability": 0.108,
+            "bear_probability": 0.085,
+            "neutral_probability": 0.936,
+            "predicted_class": 0,
+            "consensus_score": 1.0
+        },
+        "nvda": {
+            "bull_probability": 0.253,
+            "bear_probability": 0.234,
+            "neutral_probability": 0.769,
+            "predicted_class": 0,
+            "consensus_score": 1.0
+        },
+        "tsla": {
+            "bull_probability": 0.165,
+            "bear_probability": 0.244,
+            "neutral_probability": 0.818,
+            "predicted_class": 0,
+            "consensus_score": 1.0
+        },
+        "dell": {
+            "bull_probability": 0.129,
+            "bear_probability": 0.111,
+            "neutral_probability": 0.919,
+            "predicted_class": 0,
+            "consensus_score": 1.0
+        },
+        "spce": {
+            "bull_probability": 1.0,
+            "bear_probability": 0.377,
+            "neutral_probability": 0.104,
+            "predicted_class": 1,
+            "consensus_score": 0.0
+        },
+        "btc": {
+            "bull_probability": 0.13,
+            "bear_probability": 0.128,
+            "neutral_probability": 0.911,
+            "predicted_class": 0,
+            "consensus_score": 1.0
+        }
+    },
     "data_science_layer": {
         "ordered_features_list": [
             "spx_ret",
@@ -528,7 +565,7 @@
             0.254,
             0.06,
             0.29,
-            0.369,
+            -0.002,
             0.179,
             1.152,
             -1.519,
@@ -547,7 +584,7 @@
             "gsr_ret": 0.254,
             "us10y_delta": 0.06,
             "spread_level": 0.29,
-            "btc_ret": 0.369,
+            "btc_ret": -0.002,
             "nvda_ret": 0.179,
             "tsla_ret": 1.152,
             "dell_ret": -1.519,
@@ -560,26 +597,26 @@
         "epistemic_metrics": {
             "shannon_entropy": -0.0,
             "kelly_exposure_fraction": {
-                "SPX_Kelly": 0.0,
+                "SPX_Kelly": 0.254,
                 "Short_Kelly": 0.0,
-                "BTC_Kelly": 0.0,
+                "BTC_Kelly": 0.064,
                 "GLD_Kelly": 0.0,
                 "WTI_Kelly": 0.0,
-                "NVDA_Kelly": 0.0,
-                "TSLA_Kelly": 0.0,
+                "NVDA_Kelly": 0.088,
+                "TSLA_Kelly": 0.051,
                 "DELL_Kelly": 0.0,
-                "SPCE_Kelly": 0.0,
-                "Cash": 1.0
+                "SPCE_Kelly": 0.444,
+                "Cash": 0.0
             },
             "is_high_risk_edge": true,
             "is_capitulation_override_active": false
         }
     },
     "mcs": {
-        "score": 24.06,
+        "score": 25.28,
         "label": "NEUTRAL",
         "components": {
-            "equity_momentum": -0.627,
+            "equity_momentum": 0.387,
             "rate_pressure": -5.125,
             "energy_stress": 6.171,
             "cross_asset_coherence": 25.0
@@ -653,5 +690,5 @@
             }
         ]
     },
-    "timestamp": "2026-06-19T18:00:46.520127+00:00"
+    "timestamp": "2026-06-19T21:02:13.910078+00:00"
 }

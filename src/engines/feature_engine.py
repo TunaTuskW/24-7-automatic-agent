@@ -243,7 +243,7 @@ def load_mlp_models(interval="1d", assets=None):
     models = {}
     for asset in assets:
         model_path = os.path.join(os.path.dirname(__file__), '..', '..', 'models', f'mlp_model_{asset}_{interval}.pkl')
-        if not os.path.exists(model_path) and interval == "1d":
+        if not os.path.exists(model_path):
             model_path = os.path.join(os.path.dirname(__file__), '..', '..', 'models', f'mlp_model_{asset}.pkl')
         try:
             if os.path.exists(model_path):
