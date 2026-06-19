@@ -32,30 +32,31 @@ export default function DiagnosticsTab() {
 
   const getLogColor = (level) => {
     switch (level) {
-      case 'ERROR': return 'var(--warning)';
-      case 'WARNING': return '#f39c12';
-      case 'INFO': return 'var(--accent-blue)';
+      case 'ERROR': return 'var(--plasma-red)';
+      case 'WARNING': return 'var(--plasma-amber)';
+      case 'INFO': return 'var(--plasma-cyan)';
       default: return 'var(--text-muted)';
     }
   };
 
   return (
     <div className="grid-layout">
-      <div className="glass-panel col-span-12 animate-fade-in delay-1" style={{ display: 'flex', flexDirection: 'column', height: '70vh' }}>
+      <div className="data-panel col-span-12 animate-fade-in delay-1" style={{ display: 'flex', flexDirection: 'column', height: '70vh' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Terminal size={20} className="text-muted" /> System Diagnostics Console
+          <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+            <Terminal size={20} className="text-plasma-cyan" /> System Diagnostics Console
           </h2>
-          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', cursor: 'pointer' }}>
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center', fontFamily: 'JetBrains Mono' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', cursor: 'pointer', color: 'var(--plasma-cyan)' }}>
               <input 
                 type="checkbox" 
                 checked={isAutoScroll} 
                 onChange={(e) => setIsAutoScroll(e.target.checked)} 
+                style={{ accentColor: 'var(--plasma-cyan)' }}
               />
               Auto-scroll
             </label>
-            <button onClick={fetchLogs} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+            <button onClick={fetchLogs} style={{ background: 'transparent', border: 'none', color: 'var(--plasma-cyan)', cursor: 'pointer' }}>
               <RefreshCw size={16} />
             </button>
           </div>
@@ -63,20 +64,20 @@ export default function DiagnosticsTab() {
 
         <div style={{ 
           flex: 1, 
-          backgroundColor: '#000', 
+          backgroundColor: 'var(--void)', 
           borderRadius: '8px', 
           padding: '16px', 
           overflowY: 'auto', 
-          fontFamily: 'monospace', 
+          fontFamily: 'JetBrains Mono, monospace', 
           fontSize: '0.85rem',
-          border: '1px solid rgba(255,255,255,0.1)',
-          boxShadow: 'inset 0 0 20px rgba(0,0,0,0.8)'
+          border: '1px solid var(--glass-border)',
+          boxShadow: 'inset 0 0 20px rgba(0,255,224,0.02)'
         }}>
           {logs.length === 0 ? (
             <div style={{ color: 'var(--text-muted)' }}>Awaiting system events...</div>
           ) : (
             logs.map((log, i) => (
-              <div key={i} style={{ marginBottom: '6px', lineHeight: '1.4', display: 'flex', gap: '12px' }}>
+              <div key={i} className="terminal-log" style={{ display: 'flex', gap: '12px' }}>
                 <span style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                   {new Date(log.timestamp).toLocaleTimeString([], {hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit'})}
                 </span>

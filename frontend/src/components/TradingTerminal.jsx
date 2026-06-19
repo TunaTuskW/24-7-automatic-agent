@@ -19,7 +19,6 @@ const TradingTerminal = () => {
     const [viewType, setViewType] = useState('backtest');
 
     useEffect(() => {
-        // Fetch trading settings
         fetch('/api/trading_settings')
             .then(r => r.json())
             .then(data => {
@@ -65,10 +64,11 @@ const TradingTerminal = () => {
             layout: {
                 background: { color: 'transparent' },
                 textColor: 'rgba(255, 255, 255, 0.9)',
+                fontFamily: 'JetBrains Mono, monospace',
             },
             grid: {
-                vertLines: { color: 'rgba(255, 255, 255, 0.05)' },
-                horzLines: { color: 'rgba(255, 255, 255, 0.05)' },
+                vertLines: { color: 'rgba(0, 255, 224, 0.05)' },
+                horzLines: { color: 'rgba(0, 255, 224, 0.05)' },
             },
             timeScale: {
                 timeVisible: true,
@@ -79,11 +79,11 @@ const TradingTerminal = () => {
         });
 
         const candleSeries = chart.addCandlestickSeries({
-            upColor: '#4CAF50',
-            downColor: '#FF5252',
+            upColor: '#00ff88',
+            downColor: '#ff2d55',
             borderVisible: false,
-            wickUpColor: '#4CAF50',
-            wickDownColor: '#FF5252',
+            wickUpColor: '#00ff88',
+            wickDownColor: '#ff2d55',
         });
 
         chartRef.current = chart;
@@ -107,7 +107,6 @@ const TradingTerminal = () => {
         if (seriesRef.current && chartData.length > 0) {
             seriesRef.current.setData(chartData);
             
-            // Mocking markers for buy/sell based on backtest ledger
             fetch(`/api/portfolio?type=${viewType}`)
                 .then(r => r.json())
                 .then(data => {
@@ -129,7 +128,7 @@ const TradingTerminal = () => {
                                         markers.push({
                                             time: timeMatch.time,
                                             position: row.action === 'BUY' ? 'belowBar' : 'aboveBar',
-                                            color: row.action === 'BUY' ? '#4CAF50' : '#FF5252',
+                                            color: row.action === 'BUY' ? '#00ff88' : '#ff2d55',
                                             shape: row.action === 'BUY' ? 'arrowUp' : 'arrowDown',
                                             text: row.action
                                         });
@@ -157,19 +156,19 @@ const TradingTerminal = () => {
     }, [chartData, selectedTicker]);
 
     return (
-        <div className="terminal-container" style={{ display: 'flex', gap: '24px', animation: 'fadeIn 0.4s ease-out' }}>
-            {/* Sidebar Controls */}
-            <div className="terminal-sidebar" style={{ width: '250px', background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <h3 style={{ margin: '0 0 20px 0', fontSize: '1rem', color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Activity size={18} /> Active Assets
-                </h3>
+        <div className="terminal-container" style={{ display: 'flex', gap: '24px' }}>
+            {/* Sidebar Controls (Tier 2) */}
+            <div className="data-panel terminal-sidebar" style={{ width: '250px' }}>
+                <h2 style={{ margin: '0 0 20px 0', fontSize: '1rem', color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Activity size={18} className="text-plasma-cyan" /> Active Assets
+                </h2>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     {ALL_TICKERS.map(ticker => {
                         const isActive = activeTickers.includes(ticker);
                         return (
-                            <div key={ticker} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: selectedTicker === ticker ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)', borderRadius: '8px', cursor: 'pointer', border: selectedTicker === ticker ? '1px solid var(--accent-blue)' : '1px solid transparent', transition: 'all 0.2s' }} onClick={() => setSelectedTicker(ticker)}>
-                                <span style={{ fontWeight: '600', color: selectedTicker === ticker ? '#fff' : 'var(--text-muted)' }}>{ticker}</span>
+                            <div key={ticker} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: selectedTicker === ticker ? 'rgba(0,255,224,0.08)' : 'rgba(255,255,255,0.03)', borderRadius: '8px', cursor: 'pointer', border: selectedTicker === ticker ? '1px solid var(--plasma-cyan)' : '1px solid transparent', transition: 'all 0.2s' }} onClick={() => setSelectedTicker(ticker)}>
+                                <span style={{ fontWeight: '600', color: selectedTicker === ticker ? '#fff' : 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>{ticker}</span>
                                 
                                 <label className="switch" style={{ position: 'relative', display: 'inline-block', width: '34px', height: '20px' }}>
                                     <input 
@@ -183,12 +182,12 @@ const TradingTerminal = () => {
                                     />
                                     <span style={{ 
                                         position: 'absolute', cursor: 'pointer', top: 0, left: 0, right: 0, bottom: 0, 
-                                        backgroundColor: isActive ? 'var(--accent-blue)' : '#333', 
+                                        backgroundColor: isActive ? 'var(--plasma-cyan)' : '#333', 
                                         transition: '.4s', borderRadius: '34px' 
                                     }}>
                                         <span style={{
                                             position: 'absolute', content: '""', height: '14px', width: '14px', left: '3px', bottom: '3px',
-                                            backgroundColor: 'white', transition: '.4s', borderRadius: '50%',
+                                            backgroundColor: 'var(--void)', transition: '.4s', borderRadius: '50%',
                                             transform: isActive ? 'translateX(14px)' : 'translateX(0)'
                                         }}></span>
                                     </span>
@@ -199,48 +198,48 @@ const TradingTerminal = () => {
                 </div>
             </div>
 
-            {/* Main Chart Area */}
-            <div className="terminal-main" style={{ flex: 1, background: 'rgba(0,0,0,0.2)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', padding: '20px', display: 'flex', flexDirection: 'column' }}>
+            {/* Main Chart Area (Tier 3) */}
+            <div className="chart-panel terminal-main" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                         <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 'bold' }}>{selectedTicker} / USD</h2>
-                        <span style={{ padding: '4px 8px', borderRadius: '4px', background: 'rgba(255,255,255,0.1)', fontSize: '0.85rem' }}>1D</span>
+                        <span style={{ padding: '4px 8px', borderRadius: '4px', background: 'rgba(0,255,224,0.1)', fontSize: '0.85rem', color: 'var(--plasma-cyan)', fontFamily: 'JetBrains Mono' }}>1D</span>
                     </div>
-                    {loading && <div style={{ color: 'var(--accent-blue)', fontSize: '0.9rem' }}>Loading Chart Data...</div>}
+                    {loading && <div style={{ color: 'var(--plasma-cyan)', fontSize: '0.9rem', fontFamily: 'JetBrains Mono' }}>Loading Telemetry...</div>}
                 </div>
                 
                 {/* Lightweight Charts Container */}
-                <div ref={chartContainerRef} style={{ flex: 1, minHeight: '500px', borderRadius: '8px', overflow: 'hidden', marginBottom: '20px' }} />
+                <div ref={chartContainerRef} style={{ flex: 1, minHeight: '500px', overflow: 'hidden', marginBottom: '20px' }} />
 
                 {/* Positions & Ledger Section */}
-                <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '16px' }}>
+                <div className="data-panel" style={{ padding: '16px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                        <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '600' }}>Active Positions & Stats</h3>
-                        <div style={{ display: 'flex', gap: '16px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-                            <span>Equity: <b style={{color: '#fff'}}>${portfolio.equity.toLocaleString(undefined, {minimumFractionDigits: 2})}</b></span>
-                            <span>Win Rate: <b style={{color: '#fff'}}>{(portfolio.win_rate * 100).toFixed(1)}%</b></span>
+                        <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Active Positions & Stats</h3>
+                        <div style={{ display: 'flex', gap: '24px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                            <span style={{ fontFamily: 'JetBrains Mono' }}>Equity: <b className="text-plasma-cyan">${portfolio.equity.toLocaleString(undefined, {minimumFractionDigits: 2})}</b></span>
+                            <span style={{ fontFamily: 'JetBrains Mono' }}>Win Rate: <b className="text-plasma-cyan">{(portfolio.win_rate * 100).toFixed(1)}%</b></span>
                         </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px', marginBottom: '24px' }}>
                         {Object.keys(portfolio.positions || {}).map(pos => {
                             if (pos === "cash") return null;
                             const amt = portfolio.positions[pos];
                             if (amt === 0) return null;
                             return (
-                                <div key={pos} style={{ background: 'rgba(255,255,255,0.05)', padding: '12px', borderRadius: '8px' }}>
-                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>{pos} Position</div>
-                                    <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: amt > 0 ? '#4CAF50' : '#FF5252' }}>{amt.toFixed(4)}</div>
+                                <div key={pos} style={{ background: 'rgba(0,255,224,0.05)', padding: '12px', borderLeft: '2px solid var(--plasma-cyan)' }}>
+                                    <div className="stat-label">{pos} Position</div>
+                                    <div className="stat-value" style={{ fontSize: '1.5rem', color: amt > 0 ? 'var(--plasma-green)' : 'var(--plasma-red)' }}>{amt.toFixed(4)}</div>
                                 </div>
                             );
                         })}
                     </div>
 
-                    <h4 style={{ margin: '0 0 12px 0', fontSize: '1rem', color: 'var(--text-muted)' }}>Mock Execution Ledger</h4>
+                    <h4 style={{ margin: '0 0 12px 0', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)' }}>Mock Execution Ledger</h4>
                     <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                        <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                        <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', fontSize: '0.9rem', fontFamily: 'JetBrains Mono' }}>
                             <thead>
-                                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                                <tr style={{ borderBottom: '1px solid rgba(0,255,224,0.1)' }}>
                                     <th style={{ padding: '8px', color: 'var(--text-muted)' }}>Time</th>
                                     <th style={{ padding: '8px', color: 'var(--text-muted)' }}>Action</th>
                                     <th style={{ padding: '8px', color: 'var(--text-muted)' }}>Ticker</th>
@@ -251,9 +250,9 @@ const TradingTerminal = () => {
                             </thead>
                             <tbody>
                                 {ledger.slice(0, 50).map((row, i) => (
-                                    <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                    <tr key={i} className="data-item">
                                         <td style={{ padding: '8px' }}>{row.timestamp}</td>
-                                        <td style={{ padding: '8px', color: row.action === 'BUY' ? '#4CAF50' : '#FF5252', fontWeight: 'bold' }}>{row.action}</td>
+                                        <td style={{ padding: '8px', color: row.action === 'BUY' ? 'var(--plasma-green)' : 'var(--plasma-red)', fontWeight: 'bold' }}>{row.action}</td>
                                         <td style={{ padding: '8px' }}>{row.ticker}</td>
                                         <td style={{ padding: '8px' }}>${row.price}</td>
                                         <td style={{ padding: '8px' }}>${row.value}</td>

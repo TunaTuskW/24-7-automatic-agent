@@ -12,9 +12,14 @@ import logging
 
 app = FastAPI(title="QuantOS API")
 
+ALLOWED_ORIGINS = os.environ.get(
+    "ALLOWED_ORIGINS",
+    "http://localhost,http://localhost:80,http://localhost:5173"
+).split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:8000"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -25,6 +30,10 @@ QUANTOS_SECRET = os.environ.get("QUANTOS_API_SECRET", "")
 def require_auth(x_api_key: str = Header(None)):
     if QUANTOS_SECRET and x_api_key != QUANTOS_SECRET:
         raise HTTPException(status_code=401, detail="Unauthorized")
+
+@app.get("/api/health")
+def health_check():
+    return {"status": "ok"}
 
 @app.websocket("/api/ws/pipeline")
 async def websocket_pipeline(websocket: WebSocket):
@@ -44,6 +53,10 @@ async def websocket_pipeline(websocket: WebSocket):
                 line = await f.readline()
                 if not line:
                     await asyncio.sleep(0.1)
+                    try:
+                        await websocket.send_json({"type": "heartbeat", "ts": datetime.utcnow().isoformat()})
+                    except Exception:
+                        break
                     continue
                 
                 try:
@@ -57,13 +70,17 @@ async def websocket_pipeline(websocket: WebSocket):
         print(f"WebSocket Error: {e}")
 
 def get_latest_snapshot():
-    state_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'state', 'market_snapshot_prior.json')
-    if os.path.exists(state_path):
-        try:
-            with open(state_path, 'r') as f:
-                return json.load(f)
-        except Exception as e:
-            return {"error": str(e)}
+    state_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'state', 'market_snapshot.json')
+    prior_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'state', 'market_snapshot_prior.json')
+    
+    for path in [state_path, prior_path]:
+        if os.path.exists(path):
+            try:
+                with open(path, 'r') as f:
+                    return json.load(f)
+            except Exception as e:
+                pass
+    return {"error": "Snapshot not found"}
     return {"error": "Snapshot not found"}
 
 @app.get("/api/snapshot")

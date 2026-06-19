@@ -1,5 +1,5 @@
 {
-    "generated_utc": "2026-06-19T21:02:13.906810+00:00",
+    "generated_utc": "2026-06-19T23:00:38.368721+00:00",
     "raw_indicators": {
         "SPX": {
             "current": 7497.8599,
@@ -253,13 +253,33 @@
             "momentum": "up"
         },
         "EURUSD": {
-            "current": 1.1473,
-            "prev": 1.1481,
-            "delta": -0.0008,
-            "delta_pct": -0.069,
-            "mean_60d": 1.1498,
-            "std_60d": 0.0049,
-            "z_score": -0.463,
+            "current": 1.1469,
+            "prev": 1.1473,
+            "delta": -0.0004,
+            "delta_pct": -0.034,
+            "mean_60d": 1.1495,
+            "std_60d": 0.0047,
+            "z_score": -0.135,
+            "momentum": "down"
+        },
+        "GBPUSD": {
+            "current": 1.3237,
+            "prev": 1.3237,
+            "delta": 0.0,
+            "delta_pct": 0.0,
+            "mean_60d": 1.3264,
+            "std_60d": 0.0068,
+            "z_score": 0.182,
+            "momentum": "down"
+        },
+        "JPYUSD": {
+            "current": 0.0062,
+            "prev": 0.0062,
+            "delta": 0.0,
+            "delta_pct": 0.0,
+            "mean_60d": 0.0062,
+            "std_60d": 0.0,
+            "z_score": 0.157,
             "momentum": "down"
         },
         "CHFUSD": {
@@ -273,13 +293,13 @@
             "momentum": "down"
         },
         "USDCAD": {
-            "current": 1.4152,
+            "current": 1.4149,
             "prev": 1.4156,
-            "delta": -0.0004,
-            "delta_pct": -0.026,
-            "mean_60d": 1.4118,
+            "delta": -0.0007,
+            "delta_pct": -0.047,
+            "mean_60d": 1.4117,
             "std_60d": 0.0046,
-            "z_score": -0.576,
+            "z_score": -0.846,
             "momentum": "up"
         },
         "VIX9D": {
@@ -333,13 +353,13 @@
             "momentum": "down"
         },
         "BTC": {
-            "current": 63188.75,
-            "prev": 63190.2383,
-            "delta": -1.4883,
-            "delta_pct": -0.002,
-            "mean_60d": 63641.9196,
-            "std_60d": 986.9491,
-            "z_score": 0.076,
+            "current": 63260.9883,
+            "prev": 63256.9414,
+            "delta": 4.0469,
+            "delta_pct": 0.006,
+            "mean_60d": 63589.5071,
+            "std_60d": 968.6141,
+            "z_score": 0.084,
             "momentum": "down"
         },
         "IBIT": {
@@ -442,41 +462,41 @@
         "probabilities": {},
         "tactical_alpha_probabilities": {},
         "transition_risk": 0.0,
-        "start_utc": "2026-06-19T18:00:44.814742+00:00",
-        "duration_days": 0.12601076533564814
+        "start_utc": "2026-06-19T23:00:37.288978+00:00",
+        "duration_days": 0.0
     },
     "kalman_state": {
-        "dominant_prob": 0.891,
+        "dominant_prob": 0.793,
         "dominant_state": "transitional",
         "tvd": 0.0,
-        "brier_score_calibration": 0.2189,
+        "brier_score_calibration": 0.2191,
         "structural_ambiguity_index": 0.0,
         "probabilities": [
-            0.061453068162101415,
-            0.04758737311313013,
-            0.8909595587247685
+            0.157139637265175,
+            0.04949880959950579,
+            0.7933615531353192
         ],
         "covariance_matrix": [
             [
-                0.021738895449797072,
-                0.0007136762268785387,
-                0.0007136762268785387
+                0.021738895449797017,
+                0.0007136762268784948,
+                0.0007136762268784948
             ],
             [
-                0.0007136762268785387,
-                0.021738895449797072,
-                0.0007136762268785387
+                0.0007136762268784945,
+                0.02173889544979702,
+                0.000713676226878495
             ],
             [
-                0.0007136762268785382,
-                0.0007136762268785385,
-                0.02173889544979707
+                0.0007136762268784949,
+                0.0007136762268784952,
+                0.021738895449797024
             ]
         ],
         "is_ambiguous": false,
-        "risk_on": 0.061,
-        "risk_off": 0.048,
-        "transitional": 0.891
+        "risk_on": 0.157,
+        "risk_off": 0.049,
+        "transitional": 0.793
     },
     "mlp_deep_state": {
         "spx": {
@@ -502,7 +522,7 @@
         },
         "nvda": {
             "bull_probability": 0.253,
-            "bear_probability": 0.234,
+            "bear_probability": 0.233,
             "neutral_probability": 0.769,
             "predicted_class": 0,
             "consensus_score": 1.0
@@ -529,8 +549,8 @@
             "consensus_score": 0.0
         },
         "btc": {
-            "bull_probability": 0.13,
-            "bear_probability": 0.128,
+            "bull_probability": 0.131,
+            "bear_probability": 0.129,
             "neutral_probability": 0.911,
             "predicted_class": 0,
             "consensus_score": 1.0
@@ -565,7 +585,7 @@
             0.254,
             0.06,
             0.29,
-            -0.002,
+            0.006,
             0.179,
             1.152,
             -1.519,
@@ -584,7 +604,7 @@
             "gsr_ret": 0.254,
             "us10y_delta": 0.06,
             "spread_level": 0.29,
-            "btc_ret": -0.002,
+            "btc_ret": 0.006,
             "nvda_ret": 0.179,
             "tsla_ret": 1.152,
             "dell_ret": -1.519,

@@ -8,13 +8,21 @@ services:
       - FRED_API_KEY=${FRED_API_KEY:-}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL:-}
+      - ALLOWED_ORIGINS=http://localhost,http://localhost:80
     volumes:
       - ./data:/app/data
       - ./config:/app/config
       - ./logs:/app/logs
       - ./reports:/app/reports
+      - ./models:/app/models
     ports:
       - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   frontend:
     build: ./frontend
@@ -22,4 +30,5 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
