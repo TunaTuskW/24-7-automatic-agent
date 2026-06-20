@@ -35,6 +35,14 @@ def require_auth(x_api_key: str = Header(None)):
 def health_check():
     return {"status": "ok"}
 
+@app.get("/api/decision")
+def get_decision():
+    path = os.path.join(os.path.dirname(__file__), "..", "data", "state", "trade_recommendation.json")
+    if os.path.exists(path):
+        with open(path) as f:
+            return json.load(f)
+    return {"recommended_action": "HOLD", "decision_rationale": "Pipeline not yet run."}
+
 @app.websocket("/api/ws/pipeline")
 async def websocket_pipeline(websocket: WebSocket):
     await websocket.accept()

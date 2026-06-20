@@ -151,7 +151,7 @@ class RiskEngine:
             
         return final_fraction
 
-    def compute_multi_asset_kelly(self, mlp_predictions, dominant_state, brier_score, duration_days=0, is_capitulation_override=False, is_momentum_override=False, is_black_swan=False, is_bull_trap=False, hmm_regime="NEUTRAL_TRANSITIONAL", current_ihi=0.0, is_downtrend=False, max_kelly_cap: float = 0.40, equity_drawdown: float = 0.0):
+    def compute_multi_asset_kelly(self, mlp_predictions, dominant_state, brier_score, duration_days=0, is_capitulation_override=False, is_momentum_override=False, is_black_swan=False, is_bull_trap=False, hmm_regime="NEUTRAL_TRANSITIONAL", current_ihi=0.0, is_downtrend=False, max_kelly_cap: float = 0.40, equity_drawdown: float = 0.0, entry_score: float = 1.0):
         if not hmm_regime:
             hmm_regime = "UNKNOWN"
         # Calculate raw kelly for each asset
@@ -235,13 +235,13 @@ class RiskEngine:
             spx_kelly = 0.0
             
         # Process other assets
-        btc_kelly = round(max(-1.0, min(1.0, raw_allocations.get("btc", 0.0))), 3)
-        gld_kelly = round(max(-1.0, min(1.0, raw_allocations.get("gld", 0.0))), 3)
-        wti_kelly = round(max(-1.0, min(1.0, raw_allocations.get("wti", 0.0))), 3)
-        nvda_kelly = round(max(-1.0, min(1.0, raw_allocations.get("nvda", 0.0))), 3)
-        tsla_kelly = round(max(-1.0, min(1.0, raw_allocations.get("tsla", 0.0))), 3)
-        dell_kelly = round(max(-1.0, min(1.0, raw_allocations.get("dell", 0.0))), 3)
-        spce_kelly = round(max(-1.0, min(1.0, raw_allocations.get("spce", 0.0))), 3)
+        btc_kelly = round(max(0.0, min(1.0, raw_allocations.get("btc", 0.0))), 3)
+        gld_kelly = round(max(0.0, min(1.0, raw_allocations.get("gld", 0.0))), 3)
+        wti_kelly = round(max(0.0, min(1.0, raw_allocations.get("wti", 0.0))), 3)
+        nvda_kelly = round(max(0.0, min(1.0, raw_allocations.get("nvda", 0.0))), 3)
+        tsla_kelly = round(max(0.0, min(1.0, raw_allocations.get("tsla", 0.0))), 3)
+        dell_kelly = round(max(0.0, min(1.0, raw_allocations.get("dell", 0.0))), 3)
+        spce_kelly = round(max(0.0, min(1.0, raw_allocations.get("spce", 0.0))), 3)
 
 
         # Capital Rotation Engine (Active Rotation & Diversity)
@@ -296,6 +296,20 @@ class RiskEngine:
                 btc_kelly  = max(btc_kelly,  round(spx_kelly * 0.25, 3))
                 tsla_kelly = max(tsla_kelly, round(spx_kelly * 0.20, 3))
 
+        # Scale by Entry Score Conviction
+        entry_score_multiplier = max(0.3, min(1.0, entry_score))
+        spx_kelly = round(spx_kelly * entry_score_multiplier, 3)
+        short_kelly = round(short_kelly * entry_score_multiplier, 3)
+        btc_kelly = round(btc_kelly * entry_score_multiplier, 3)
+        gld_kelly = round(gld_kelly * entry_score_multiplier, 3)
+        wti_kelly = round(wti_kelly * entry_score_multiplier, 3)
+        nvda_kelly = round(nvda_kelly * entry_score_multiplier, 3)
+        tsla_kelly = round(tsla_kelly * entry_score_multiplier, 3)
+        dell_kelly = round(dell_kelly * entry_score_multiplier, 3)
+        spce_kelly = round(spce_kelly * entry_score_multiplier, 3)
+        if entry_score_multiplier < 1.0:
+            logger.info(f"Entry Score Multiplier: {entry_score_multiplier:.2f} applied to Kellys.")
+
         # Global Portfolio Balancer (Normalize exposure)
         total_exposure = spx_kelly + short_kelly + abs(btc_kelly) + abs(gld_kelly) + abs(wti_kelly) + abs(nvda_kelly) + abs(tsla_kelly) + abs(dell_kelly) + abs(spce_kelly)
         if total_exposure > 1.0:
@@ -311,7 +325,7 @@ class RiskEngine:
             spce_kelly = round(spce_kelly * scale, 3)
             total_exposure = spx_kelly + short_kelly + abs(btc_kelly) + abs(gld_kelly) + abs(wti_kelly) + abs(nvda_kelly) + abs(tsla_kelly) + abs(dell_kelly) + abs(spce_kelly)
 
-        cash = round(max(0.0, 1.0 - total_exposure), 3)
+        cash = round(1.0 - (spx_kelly + short_kelly + btc_kelly + gld_kelly + wti_kelly + nvda_kelly + tsla_kelly + dell_kelly + spce_kelly), 3)
             
         return {
             "SPX_Kelly": spx_kelly,

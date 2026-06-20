@@ -35,7 +35,10 @@ class EntryEngine:
         spx_low_1h: pd.Series,
         vix_1h: pd.Series,
         dominant_regime: str,
-        kalman_dominant_state: str
+        kalman_dominant_state: str,
+        smc_bias: int = 0,
+        trend_state: str = "UNKNOWN",
+        trend_conviction: float = 0.5
     ) -> dict:
         
         components = {
@@ -44,7 +47,8 @@ class EntryEngine:
             "macd_momentum": 0.0,
             "vix_term_structure": 0.0,
             "price_vs_ema20": 0.0,
-            "pwh_pwl_proximity": 0.0
+            "pwh_pwl_proximity": 0.0,
+            "signal_conflict": 0.0
         }
         
         if len(spx_close_1h) < 26:
@@ -58,8 +62,16 @@ class EntryEngine:
             low_now = float(spx_low_1h.iloc[-1])
             vol_now = float(spx_vol_1h.iloc[-1])
             
-            # Determine base directional bias (naive based on last few bars momentum)
-            is_long_bias = spx_close_1h.iloc[-1] > spx_close_1h.iloc[-5]
+            # Determine base directional bias based on SMC + Trend
+            if smc_bias > 0 and trend_state == "UPTREND":
+                is_long_bias = True
+            elif smc_bias < 0 and trend_state == "DOWNTREND":
+                is_long_bias = False
+            elif smc_bias == 0 and trend_state in ("TRANSITIONAL", "FLAT"):
+                is_long_bias = spx_close_1h.iloc[-1] > spx_close_1h.iloc[-5]
+            else:
+                is_long_bias = spx_close_1h.iloc[-1] > spx_close_1h.iloc[-5]
+                components["signal_conflict"] = -0.20
             
             if kalman_dominant_state == "risk_off":
                 is_long_bias = False
@@ -149,8 +161,10 @@ class EntryEngine:
             components["macd_momentum"] * 0.20 +
             components["vix_term_structure"] * 0.15 +
             components["price_vs_ema20"] * 0.10 +
-            components["pwh_pwl_proximity"] * 0.10
+            components["pwh_pwl_proximity"] * 0.10 +
+            components["signal_conflict"]
         )
+        score = max(0.0, min(1.0, score))
         
         bias = "LONG" if is_long_bias else "SHORT"
         if kalman_dominant_state == "risk_off":

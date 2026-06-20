@@ -77,6 +77,43 @@ export default function OverviewTab({ data }) {
           </li>
         </ul>
       </div>
+
+      {data.decision && (
+        <div className="glass-panel col-span-12 animate-fade-in delay-4" style={{ marginTop: '24px', borderLeft: '4px solid ' + (data.decision.conviction_gate_passed ? 'var(--plasma-green)' : 'var(--plasma-amber)') }}>
+          <h2>⚖️ Unified Trade Decision: {data.decision.recommended_action}</h2>
+          <p className="stat-value" style={{ marginTop: '8px', fontSize: '1rem', color: 'var(--text-muted)' }}>
+            {data.decision.decision_rationale}
+          </p>
+          <div style={{ display: 'flex', gap: '40px', marginTop: '16px' }}>
+            <div>
+              <p className="stat-label">Conviction Gate</p>
+              <p className="stat-value" style={{ color: data.decision.conviction_gate_passed ? 'var(--plasma-green)' : 'var(--plasma-amber)' }}>
+                {data.decision.conviction_gate_passed ? "PASSED" : "BLOCKED"}
+              </p>
+            </div>
+            <div>
+              <p className="stat-label">Entry Score</p>
+              <p className="stat-value">{data.decision.entry_score.toFixed(2)}</p>
+            </div>
+            <div>
+              <p className="stat-label">Macro Conviction</p>
+              <p className="stat-value">{data.decision.macro_conviction.toFixed(2)}</p>
+            </div>
+          </div>
+          {data.decision.risk_flags && data.decision.risk_flags.length > 0 && (
+            <div style={{ marginTop: '16px' }}>
+              <p className="stat-label text-plasma-amber">Risk Flags</p>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
+                {data.decision.risk_flags.map(f => (
+                  <span key={f} style={{ padding: '4px 8px', background: 'rgba(234, 179, 8, 0.2)', borderRadius: '4px', fontSize: '0.8rem', color: 'var(--plasma-amber)' }}>
+                    {f.replace(/_/g, ' ')}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

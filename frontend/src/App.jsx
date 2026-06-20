@@ -50,6 +50,11 @@ function App() {
           const json = await res.json();
           setData(prev => ({ ...prev, ...json }));
         }
+        const decRes = await fetch('/api/decision');
+        if (decRes.ok) {
+          const decJson = await decRes.json();
+          setData(prev => ({ ...prev, decision: decJson }));
+        }
       } catch (e) {
         console.error("API not ready yet");
       }

@@ -26,7 +26,7 @@ from src.engines.risk_engine import RiskEngine
 from src.engines.consensus_engine import ConsensusEngine
 from src.engines.entry_engine import EntryEngine
 from src.engines.frequency_controller import FrequencyController
-from src.schemas.models import MarketSnapshot, RegimeState, MarketExtremes, NewsSignal, KalmanState, EconomicCalendar
+from src.schemas.models import MarketSnapshot, RegimeState, MarketExtremes, NewsSignal, KalmanState, EconomicCalendar, TradeRecommendation
 from src.engines.feature_engine import (
     ALL_YF_TICKERS, get_fred_key, get_signature_salt, sign_snapshot_payload,
     check_mathematical_consistency, append_to_immutable_chain,
@@ -553,6 +553,19 @@ class Conductor:
         if spx_ret_z > 2.0 and self.clean_daily.get("VIX", {}).get("current", 0) > 25:
             is_bull_trap = True
 
+        # Read Entry Score before calling Risk Engine
+        entry_score = 1.0
+        if os.path.exists(self.entry_quality_path):
+            try:
+                with open(self.entry_quality_path, "r") as f:
+                    eq = json.load(f)
+                    computed_at = datetime.fromisoformat(eq.get("computed_utc", "2000-01-01T00:00:00+00:00"))
+                    age_hours = (datetime.now(timezone.utc) - computed_at).total_seconds() / 3600.0
+                    if age_hours <= 5.0:
+                        entry_score = float(eq.get("entry_score", 1.0))
+            except Exception as e:
+                logger.error(f"Failed to read entry score for risk engine: {e}")
+
         # --- Sizing: RL Agent or Kelly (feature-flagged) ---
         kelly = None
         if self.use_rl_agent and self.rl_agent and self.rl_agent.is_loaded():
@@ -578,7 +591,8 @@ class Conductor:
                 current_ihi=current_ihi,
                 is_downtrend=is_downtrend,
                 max_kelly_cap=0.30 if self.interval == "4h" else 0.40,
-                equity_drawdown=self.paper_broker.get_equity_drawdown()
+                equity_drawdown=self.paper_broker.get_equity_drawdown(),
+                entry_score=entry_score
             )
 
         # --- Multi-Timeframe Entry Gating (4H and 1D only) ---
@@ -645,7 +659,10 @@ class Conductor:
                 spx_low_1h=spx_1h_low,
                 vix_1h=vix_1h,
                 dominant_regime=self.snapshot.regime.current,
-                kalman_dominant_state=self.snapshot.kalman_state.dominant_state
+                kalman_dominant_state=self.snapshot.kalman_state.dominant_state,
+                smc_bias=self.snapshot.smc_state.smc_bias,
+                trend_state=self.snapshot.trend_state.trend_state,
+                trend_conviction=self.snapshot.trend_state.trend_conviction
             )
             entry_result["computed_utc"] = datetime.now(timezone.utc).isoformat()
             entry_result["interval_used"] = "1h"
@@ -772,6 +789,86 @@ class Conductor:
             
         self.lake_manager.save_unstructured(snapshot_dict, "market_snapshot.jsonl")
         
+        # --- Synthesize Trade Decision & Conviction Gate ---
+        dominant_regime = self.snapshot.regime.dominant_regime
+        entry_score = entry_quality.get("entry_score", 0.5) if entry_quality else 0.5
+        entry_bias = entry_quality.get("entry_bias", "FLAT") if entry_quality else "FLAT"
+        news_signal = self.snapshot.news_signal
+        
+        CONVICTION_GATE = {
+            "RISK_ON_EXPANSION":      0.45,
+            "LIQUIDITY_DRIVEN_RALLY": 0.50,
+            "NEUTRAL_TRANSITIONAL":   0.65,
+            "DEFENSIVE_RISK_OFF":     0.75,
+            "VOLATILITY_EXPANSION":   0.80,
+        }
+        
+        entry_threshold = CONVICTION_GATE.get(dominant_regime, 0.60)
+        gate_passed = entry_score >= entry_threshold
+        
+        target_allocs = {
+            "SPX":   kelly_obj.get("SPX_Kelly", 0.0),
+            "Short": kelly_obj.get("Short_Kelly", 0.0),
+            "Gold":  kelly_obj.get("GLD_Kelly", 0.0),
+            "BTC":   kelly_obj.get("BTC_Kelly", 0.0),
+            "WTI":   kelly_obj.get("WTI_Kelly", 0.0),
+            "NVDA":  kelly_obj.get("NVDA_Kelly", 0.0),
+            "TSLA":  kelly_obj.get("TSLA_Kelly", 0.0),
+            "DELL":  kelly_obj.get("DELL_Kelly", 0.0),
+            "SPCE":  kelly_obj.get("SPCE_Kelly", 0.0)
+        }
+        
+        if not gate_passed:
+            logger.warning(f"Conviction gate blocked execution. Score {entry_score:.2f} < threshold {entry_threshold:.2f} for {dominant_regime}. Holding cash.")
+            target_allocs = {k: 0.0 for k in target_allocs}
+            recommended_action = "HOLD"
+        else:
+            recommended_action = "BUY" if entry_bias == "LONG" else ("SELL" if entry_bias == "SHORT" else "HOLD")
+
+        signal_conflict = (news_signal.signal == "LONG" and entry_bias == "SHORT") or \
+                          (news_signal.signal == "SHORT" and entry_bias == "LONG")
+        
+        conflict_detail = ""
+        if signal_conflict:
+            conflict_detail = f"LLM Macro signals {news_signal.signal} but Quant Entry signals {entry_bias}"
+            
+        risk_flags = []
+        vix_zscore = float(self.snapshot.market_extremes_insight.temperature_zscore)
+        spread = float(self.snapshot.bonds.get("spread_2s10s", 0.0))
+        choch_detected = self.snapshot.smc_state.choch_detected
+        transition_risk = float(self.snapshot.regime.transition_risk)
+        
+        if vix_zscore > 1.5:       risk_flags.append("HIGH_VIX")
+        if spread < -0.5:          risk_flags.append("INVERTED_YIELD_CURVE")
+        if choch_detected:         risk_flags.append("SMC_STRUCTURE_FLIP")
+        if transition_risk > 0.6:  risk_flags.append("REGIME_TRANSITION_RISK")
+        
+        rationale = f"Regime is {dominant_regime}. Entry score is {entry_score:.2f} ({entry_bias})."
+        if not gate_passed: rationale += f" Gate blocked (needed {entry_threshold:.2f})."
+        if signal_conflict: rationale += f" Warning: {conflict_detail}."
+        
+        recommendation = TradeRecommendation(
+            timestamp_utc=self.snapshot.generated_utc,
+            regime=dominant_regime,
+            regime_confidence=self.snapshot.regime.probabilities.get(dominant_regime, 0.0),
+            entry_score=entry_score,
+            entry_bias=entry_bias,
+            kelly_fraction=target_allocs.get("SPX", 0.0),
+            conviction_gate_passed=gate_passed,
+            macro_signal=news_signal.signal,
+            macro_conviction=news_signal.conviction,
+            signal_conflict=signal_conflict,
+            conflict_detail=conflict_detail,
+            recommended_action=recommended_action,
+            recommended_allocations=target_allocs,
+            decision_rationale=rationale,
+            risk_flags=risk_flags
+        )
+        
+        rec_path = os.path.join(os.path.dirname(__file__), "..", "data", "state", "trade_recommendation.json")
+        with open(rec_path, "w") as f:
+            json.dump(recommendation.model_dump(), f, indent=4)
+
         # Execute Rebalance in Paper Trading
         self.bar_count += 1
         bars_since_rebalance = self.bar_count - self.last_rebalance_bar
@@ -779,17 +876,6 @@ class Conductor:
         
         try:
             if should_rebalance:
-                target_allocs = {
-                    "SPX":   kelly_obj.get("SPX_Kelly", 0.0),
-                    "Short": kelly_obj.get("Short_Kelly", 0.0),
-                    "Gold":  kelly_obj.get("GLD_Kelly", 0.0),
-                    "BTC":   kelly_obj.get("BTC_Kelly", 0.0),
-                    "WTI":   kelly_obj.get("WTI_Kelly", 0.0),
-                    "NVDA":  kelly_obj.get("NVDA_Kelly", 0.0),
-                    "TSLA":  kelly_obj.get("TSLA_Kelly", 0.0),
-                    "DELL":  kelly_obj.get("DELL_Kelly", 0.0),
-                    "SPCE":  kelly_obj.get("SPCE_Kelly", 0.0)
-                }
                 current_prices = {
                     "SPX":   self.clean_daily.get("SPX",   {}).get("current", 0.0),
                     "Short": self.clean_daily.get("SH",    {}).get("current", 0.0),

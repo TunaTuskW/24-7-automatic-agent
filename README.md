@@ -101,7 +101,8 @@ graph TD
 4. **Predictive Ensembles:** A Multi-Layer Perceptron (MLP Neural Network) merges the statistical regimes and feature matrices to predict future cumulative returns. Brier scores ensure the model isn't overfitting—triggering active signal inversion if calibration degrades.
 5. **Risk Allocation:** The raw predictions enter the `RiskEngine`, filtering out noise through "Dynamic Conviction Edges" (e.g. SPCE needs >72% conviction to trade, while SPX only needs >50%). Target Kelly weights are formulated.
 6. **LLM Chain-of-Thought Validation:** Gemini 2.5 Flash analyzes parallel economic news and central bank statements. A Quantitative Divergence Slasher ensures that if the LLM detects "Bullish" narratives while the mathematical VIX signals extreme fear, capital is defensively slashed in half before executing.
-7. **Paper Broker & Dashboard:** Finally, the target portfolio weights are executed by the simulated `PaperBroker` and instantly dispatched via WebSockets to the React frontend UI.
+7. **Unified Trade Synthesis & Conviction Gate:** The system evaluates Smart Money Concepts (SMC), Trend States, and the LLM Macro sentiment to generate a unified `TradeRecommendation`. A Regime-based Conviction Gate blocks execution (holding cash) if the quantitative Entry Score falls below a dynamically required threshold.
+8. **Paper Broker & Dashboard:** Finally, the target portfolio weights are executed by the simulated `PaperBroker` and instantly dispatched via WebSockets to the React frontend UI.
 
 ---
 
