@@ -71,7 +71,7 @@ function App() {
       <header className="identity-header animate-fade-in">
         <div className="logotype">
           <FlaskConical size={20} color="var(--lime)" />
-          i made this for fund + patch
+          i made this for fund v6.4.0
         </div>
         
         <div className="header-center">

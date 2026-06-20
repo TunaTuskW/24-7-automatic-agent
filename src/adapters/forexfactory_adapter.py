@@ -8,7 +8,7 @@ logger = get_logger("forexfactory-adapter")
 class ForexFactoryAdapter:
     def __init__(self):
         self.url = "https://nfs.faireconomy.media/ff_calendar_thisweek.json"
-        self.target_currencies = {"USD", "EUR", "JPY"}
+        self.target_currencies = {"USD", "EUR", "JPY", "GBP", "CAD", "CHF", "AUD", "NZD", "CNY"}
 
     def fetch_calendar(self) -> EconomicCalendar:
         logger.info(f"Fetching Forex Factory calendar from {self.url}")
