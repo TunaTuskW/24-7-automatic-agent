@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ErrorBoundary from './ErrorBoundary';
 import { Database, Network, Cpu, AlertTriangle, TrendingUp, TrendingDown, Zap, BarChart2, GitBranch, Layers } from 'lucide-react';
 
 function FeatureBar({ label, value, max = 5 }) {
@@ -30,7 +31,7 @@ function RegimeBar({ label, value, color }) {
   );
 }
 
-export default function MathModelTab() {
+function MathModelTabContent() {
   const [modelData, setModelData] = useState(null);
   const [lastUpdate, setLastUpdate] = useState(null);
 
@@ -237,3 +238,12 @@ export default function MathModelTab() {
     </div>
   );
 }
+
+export default function MathModelTab() {
+  return (
+    <ErrorBoundary>
+      <MathModelTabContent />
+    </ErrorBoundary>
+  );
+}
+

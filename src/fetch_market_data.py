@@ -39,19 +39,28 @@ from src.engines.feature_engine import (
 
 logger = get_logger("conductor")
 
-def fetch_rss_headlines():
+def fetch_rss_headlines(timeout_sec: int = 8) -> list:
+    import concurrent.futures
     urls = [
         "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664",
         "https://feeds.a.dj.com/rss/RSSMarketsMain.xml"
     ]
-    headlines = []
-    for url in urls:
+    def fetch_one(url):
         try:
             feed = feedparser.parse(url)
-            for entry in feed.entries[:5]:
-                headlines.append(entry.title)
+            return [e.title for e in feed.entries[:5]]
         except Exception as e:
-            logger.error(f"RSS fetch failed: {e}")
+            logger.warning(f"RSS fetch failed {url}: {e}")
+            return []
+
+    headlines = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as ex:
+        futures = {ex.submit(fetch_one, u): u for u in urls}
+        for f in concurrent.futures.as_completed(futures, timeout=timeout_sec):
+            try:
+                headlines.extend(f.result())
+            except concurrent.futures.TimeoutError:
+                logger.warning(f"RSS timed out: {futures[f]}")
     return headlines
 
 class Conductor:

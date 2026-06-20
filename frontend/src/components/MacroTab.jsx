@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import ErrorBoundary from './ErrorBoundary';
 import { Newspaper, Calendar, BrainCircuit, ShieldAlert, RefreshCw, AlertCircle, Loader } from 'lucide-react';
 import { apiPost } from '../App';
 
-export default function MacroTab() {
+function MacroTabContent() {
   const [macroData, setMacroData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [lastFetch, setLastFetch] = useState(null);
@@ -214,3 +215,12 @@ export default function MacroTab() {
     </div>
   );
 }
+
+export default function MacroTab() {
+  return (
+    <ErrorBoundary>
+      <MacroTabContent />
+    </ErrorBoundary>
+  );
+}
+

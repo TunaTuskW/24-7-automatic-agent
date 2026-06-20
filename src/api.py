@@ -222,7 +222,7 @@ def get_model():
         "liquidity_state": data.get("liquidity_state", {})
     }
 
-@app.get("/api/macro")
+@app.get("/api/macro", dependencies=[Depends(require_auth)])
 def get_macro():
     data = get_latest_snapshot()
     if "error" in data:
@@ -282,7 +282,7 @@ def write_config_file(filename: str, content: str):
     with open(path, 'w') as f:
         f.write(content.strip())
 
-@app.get("/api/settings")
+@app.get("/api/settings", dependencies=[Depends(require_auth)])
 def get_settings():
     gemini = read_config_file('gemini_api_key.txt')
     fred = read_config_file('fred_api_key.txt')
@@ -410,7 +410,7 @@ def trigger_job(payload: TriggerPayload, background_tasks: BackgroundTasks):
         "end_date": payload.end_date
     }
 
-@app.get("/api/reports")
+@app.get("/api/reports", dependencies=[Depends(require_auth)])
 def get_reports_list():
     reports_dir = os.path.join(os.path.dirname(__file__), '..', 'reports')
     updates_dir = os.path.join(reports_dir, 'updates')

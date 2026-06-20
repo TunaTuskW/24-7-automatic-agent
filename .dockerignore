@@ -7,3 +7,4 @@ data/paper_trading/
 logs/
 scratch/
 *.DS_Store
+.codegraph/

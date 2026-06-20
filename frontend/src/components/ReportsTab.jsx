@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Play, FileText, DownloadCloud, Activity, CheckCircle, XCircle, Loader } from 'lucide-react';
 import PipelineVisualizer from './PipelineVisualizer';
+import ErrorBoundary from './ErrorBoundary';
 import { apiPost } from '../App';
 
 export default function ReportsTab() {
@@ -115,7 +116,9 @@ export default function ReportsTab() {
       </div>
 
       {/* Pipeline Visualizer */}
-      <PipelineVisualizer />
+      <ErrorBoundary>
+        <PipelineVisualizer />
+      </ErrorBoundary>
 
       {/* Split Pane */}
       <div style={{ display: 'flex', gap: '20px', flex: 1, minHeight: '600px' }}>
