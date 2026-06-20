@@ -10,6 +10,7 @@ export default function SettingsTab() {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [apiSecret, setApiSecret] = useState(() => localStorage.getItem('quantos_api_key') || '');
 
   const fetchSettings = async () => {
     try {
@@ -56,6 +57,8 @@ export default function SettingsTab() {
     } finally {
       setIsSaving(false);
     }
+    // Save API secret to localStorage
+    localStorage.setItem('quantos_api_key', apiSecret);
   };
 
   if (!settings) {

@@ -7,11 +7,30 @@ import MacroTab from './components/MacroTab';
 import DiagnosticsTab from './components/DiagnosticsTab';
 import SettingsTab from './components/SettingsTab';
 import ReportsTab from './components/ReportsTab';
-import { Settings, FileText, Satellite } from 'lucide-react';
+import { Settings, FileText, FlaskConical } from 'lucide-react';
 import './index.css';
+
+// Auth helper — reads stored key from localStorage (set in Settings tab)
+export function apiPost(path, body = {}) {
+  const key = localStorage.getItem('quantos_api_key') || '';
+  return fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Api-Key': key },
+    body: JSON.stringify(body)
+  });
+}
+
+function formatUtcClock(d) {
+  return [
+    String(d.getUTCHours()).padStart(2, '0'),
+    String(d.getUTCMinutes()).padStart(2, '0'),
+    String(d.getUTCSeconds()).padStart(2, '0')
+  ].join(':');
+}
 
 function App() {
   const [activeTab, setActiveTab] = useState('overview');
+  const [utcClock, setUtcClock] = useState(() => formatUtcClock(new Date()));
   const [data, setData] = useState({
     status: 'Syncing',
     regime: 'UNKNOWN',
@@ -41,13 +60,18 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const tick = setInterval(() => setUtcClock(formatUtcClock(new Date())), 1000);
+    return () => clearInterval(tick);
+  }, []);
+
   return (
     <div className="dashboard-container">
       {/* Signature Identity Bar */}
       <header className="identity-header animate-fade-in">
         <div className="logotype">
-          <Satellite size={24} color="var(--plasma-cyan)" />
-          QUANT/OS
+          <FlaskConical size={20} color="var(--lime)" />
+          i made this for fund + patch
         </div>
         
         <div className="header-center">
@@ -58,7 +82,7 @@ function App() {
         </div>
 
         <div className="header-right">
-          <span>UTC {new Date(data.lastUpdate).toISOString().split('T')[1]?.substring(0,8) || "00:00:00"}</span>
+          <span>UTC {utcClock}</span>
           <div className="status-beacon">
             <div className="status-dot"></div>
             {data.status.toUpperCase()}

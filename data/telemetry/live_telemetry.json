@@ -1,10 +1,10 @@
 {
-    "timestamp_utc": "2026-06-19T23:00:38.368721+00:00",
-    "dominant_regime": "NEUTRAL_TRANSITIONAL",
-    "spx_kelly_fraction": 0.254,
+    "timestamp_utc": "2026-06-20T00:08:15.931875+00:00",
+    "dominant_regime": "VOLATILITY_EXPANSION",
+    "spx_kelly_fraction": 0.3,
     "safe_haven_kelly_fraction": 0.0,
     "is_capitulation_override_active": false,
-    "institutional_heat_index": 0.984,
+    "institutional_heat_index": 1.011,
     "entry_quality_score": 0.55,
     "entry_bias": "LONG"
 }

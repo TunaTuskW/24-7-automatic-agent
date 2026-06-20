@@ -65,7 +65,7 @@ docker logs -f quant_backend
 The data pipeline operates as an enterprise-grade containerized event-driven OS featuring parallel LLM experts, step-by-step Chain-of-Thought (CoT) verification, and quantitative divergence protection filters:
 ```mermaid
 graph TD
-    %% Define Styles & Classes (Curated HSL tailored soft color scheme)
+    %% Define Styles & Classes (Neon Lime-Pink Night Canvas Scheme)
     classDef IngestStyle fill:#f7fafc,stroke:#e2e8f0,stroke-width:1.5px,color:#4a5568;
     classDef ConductorStyle fill:#ebf8ff,stroke:#bee3f8,stroke-width:2px,color:#2b6cb0;
     classDef EngineStyle fill:#faf5ff,stroke:#e9d8fd,stroke-width:2px,color:#553c9a;
@@ -180,7 +180,7 @@ graph TD
         PD -->|"Discord Webhook"| Discord
     end
 
-    %% Assign classes for beautiful HSL pastel styling
+    %% Assign classes for beautiful Lime-Pink styling
     class YF,FRED,YA,Fallback,FF,FA,News,GA IngestStyle;
     class Cond,Bus,Lake,DailyPart,EventLog ConductorStyle;
     class FE,Schema1,HMM,Schema2,RE,EnsembleInference,CalibCheck,AutoInversion,ConsensusCheck,Schema3 EngineStyle;
