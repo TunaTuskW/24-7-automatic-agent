@@ -50,6 +50,47 @@ class MarketExtremes(BaseModel):
     fragility_score: float = Field(default=0.0)
     vvix_vix_ratio: float = Field(default=0.0)
 
+class SMCState(BaseModel):
+    bos_direction: int = Field(default=0)
+    choch_detected: bool = Field(default=False)
+    active_ob_bullish: float = Field(default=0.0)
+    active_ob_bearish: float = Field(default=0.0)
+    fvg_bullish_active: bool = Field(default=False)
+    fvg_bearish_active: bool = Field(default=False)
+    liquidity_swept_low: bool = Field(default=False)
+    liquidity_swept_high: bool = Field(default=False)
+    premium_discount: str = Field(default="EQUILIBRIUM")
+    smc_bias: int = Field(default=0)
+
+class SessionState(BaseModel):
+    current_session: str = Field(default="UNKNOWN")
+    session_bias: str = Field(default="AVOID")
+    asia_high: float = Field(default=0.0)
+    asia_low: float = Field(default=0.0)
+    london_swept_asia_high: bool = Field(default=False)
+    london_swept_asia_low: bool = Field(default=False)
+    favorable_for_entry: bool = Field(default=False)
+    orb_signal: int = Field(default=0)
+    orb_strength: float = Field(default=0.0)
+    td9_exhaustion: bool = Field(default=False)
+    td9_direction: int = Field(default=0)
+    td9_count: int = Field(default=0)
+    td9_perfected: bool = Field(default=False)
+
+class LiquidityState(BaseModel):
+    nearest_pool_above: float = Field(default=0.0)
+    nearest_pool_below: float = Field(default=0.0)
+    magnet_target: str = Field(default="NONE")
+    pool_strength_above: int = Field(default=0)
+    pool_strength_below: int = Field(default=0)
+
+class TrendState(BaseModel):
+    trend_state: str = Field(default="UNKNOWN")
+    trend_conviction: float = Field(default=0.0)
+    fast_signal: int = Field(default=0)
+    slow_signal: int = Field(default=0)
+    atr_stop_fast: float = Field(default=0.0)
+
 class MarketSnapshot(BaseModel):
     generated_utc: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     raw_indicators: Dict[str, Any] = Field(default_factory=dict)
@@ -63,3 +104,7 @@ class MarketSnapshot(BaseModel):
     data_driven_escalation: str = Field(default="ROUTINE")
     news_signal: NewsSignal = Field(default_factory=NewsSignal)
     economic_calendar: EconomicCalendar = Field(default_factory=EconomicCalendar)
+    smc_state: SMCState = Field(default_factory=SMCState)
+    session_state: SessionState = Field(default_factory=SessionState)
+    liquidity_state: LiquidityState = Field(default_factory=LiquidityState)
+    trend_state: TrendState = Field(default_factory=TrendState)

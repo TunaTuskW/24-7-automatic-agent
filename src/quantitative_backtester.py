@@ -8,7 +8,11 @@ import argparse
 import os
 warnings.filterwarnings("ignore")
 
-from src.engines.hmm_engine import HMMEngine
+from src.engines.trend_engine import TrendEngine
+from src.engines.smc_engine import SMCEngine
+from src.engines.session_engine import SessionEngine
+from src.engines.liquidity_engine import LiquidityEngine
+from src.engines.regime_ensemble import RegimeEnsemble
 from src.engines.risk_engine import RiskEngine
 from src.engines.feature_engine import ALL_YF_TICKERS, compute_stats, compute_volume_heat, load_mlp_models, run_multi_mlp_inference, run_self_calibration
 from src.engines.rl_agent import RLAgent
@@ -63,12 +67,11 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
     q1_trading_days = spx_data[(spx_data.index >= q1_start) & (spx_data.index <= q1_end)].index
 
     
-    hmm_model_path = os.path.join(os.path.dirname(__file__), '..', 'models', f'hmm_model_{interval}.pkl')
-    # Backward compatibility fallback
-    if not os.path.exists(hmm_model_path) and interval == "1d":
-        hmm_model_path = None # HMMEngine will fallback to hmm_model.pkl
-        
-    hmm = HMMEngine(model_path=hmm_model_path)
+    trend_engine = TrendEngine()
+    smc_engine = SMCEngine()
+    session_engine = SessionEngine()
+    liquidity_engine = LiquidityEngine()
+    regime_ensemble = RegimeEnsemble()
     risk = RiskEngine()
     mlp_packages_dict = load_mlp_models(interval)
     
@@ -321,9 +324,22 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
             print(f"[{current_date.strftime('%Y-%m-%d')}] Features: {features_vector}")
         
         # 5. Math Engines
-        regime_probs, dom_regime, tr_risk, _ = hmm.run_inference(
-            features_vector,
-            features_window=hmm_features_window
+        from datetime import datetime, timezone
+        spx_slice = historical_slice["^GSPC"].dropna() if "^GSPC" in historical_slice.columns.levels[0] else pd.DataFrame()
+        
+        trend_state = trend_engine.score(spx_slice) if not spx_slice.empty else {}
+        smc_state = smc_engine.compute(spx_slice) if not spx_slice.empty else None
+        smc_dict = smc_state.__dict__ if smc_state else {}
+        
+        orb_res = session_engine.compute_orb_signal(spx_slice) if not spx_slice.empty else {}
+        td9_res = session_engine.td9_exhaustion_signal(spx_slice["Close"]) if not spx_slice.empty else {}
+        sess_bias = session_engine.compute_session_state(spx_slice, current_date.replace(tzinfo=timezone.utc)) if not spx_slice.empty else {}
+        session_state = {**orb_res, **td9_res, **sess_bias}
+        
+        liq_state = liquidity_engine.compute(spx_slice) if not spx_slice.empty else {}
+
+        regime_probs, dom_regime, tr_risk, _ = regime_ensemble.compute(
+            trend_state, smc_dict, session_state, liq_state, features_dict
         )
         if regime_probs is None:
             regime_probs = {"NEUTRAL_TRANSITIONAL": 1.0}

@@ -17,7 +17,11 @@ from src.adapters.yahoo_adapter import YahooAdapter
 from src.adapters.gemini_adapter import GeminiAdapter
 from src.adapters.forexfactory_adapter import ForexFactoryAdapter
 from src.adapters.paper_broker import PaperBroker
-from src.engines.hmm_engine import HMMEngine
+from src.engines.trend_engine import TrendEngine
+from src.engines.smc_engine import SMCEngine
+from src.engines.session_engine import SessionEngine
+from src.engines.liquidity_engine import LiquidityEngine
+from src.engines.regime_ensemble import RegimeEnsemble
 from src.engines.risk_engine import RiskEngine
 from src.engines.consensus_engine import ConsensusEngine
 from src.engines.entry_engine import EntryEngine
@@ -66,10 +70,11 @@ class Conductor:
         self.ff_adapter = ForexFactoryAdapter()
         self.gemini_adapter = GeminiAdapter()
         
-        hmm_model_path = os.path.join(os.path.dirname(__file__), '..', 'models', f'hmm_model_{self.interval}.pkl')
-        if not os.path.exists(hmm_model_path) and self.interval == "1d":
-            hmm_model_path = None
-        self.hmm_engine = HMMEngine(model_path=hmm_model_path)
+        self.trend_engine = TrendEngine()
+        self.smc_engine = SMCEngine()
+        self.session_engine = SessionEngine()
+        self.liquidity_engine = LiquidityEngine()
+        self.regime_ensemble = RegimeEnsemble()
         self.risk_engine = RiskEngine()
         self.consensus_engine = ConsensusEngine()
         self.entry_engine = EntryEngine()
@@ -146,6 +151,7 @@ class Conductor:
         raw_daily_data = payload["daily"]
         raw_hourly_data = payload["hourly"]
         self.raw_hourly_data = raw_hourly_data
+        self.raw_daily_data = raw_daily_data
         
         self.snapshot.economic_calendar = EconomicCalendar.model_validate(payload.get("calendar", {}))
         
@@ -348,7 +354,7 @@ class Conductor:
         self.features_window = persistent_window
         
         if self.use_1h_context:
-            logger.info("Using 1H HMM context for Daily Execution.")
+            logger.info("Using 1H context for Daily Execution.")
             prior_path = os.path.join(os.path.dirname(__file__), "..", "data", "state", "market_snapshot_prior.json")
             if os.path.exists(prior_path):
                 try:
@@ -366,21 +372,43 @@ class Conductor:
                 logger.warning("No prior 1H snapshot found! Falling back to flat probabilities.")
                 hmm_beta_probs, hmm_beta_dom, hmm_alpha_probs, hmm_alpha_dom, tr_risk = {}, "NEUTRAL_TRANSITIONAL", {}, "NEUTRAL_TRANSITIONAL", 0.0
         else:
-            hmm_beta_probs, hmm_beta_dom, tr_risk, _ = self.hmm_engine.run_inference(
-                self.features_vector, 
-                features_window=list(self.features_window)
+            try:
+                spx_daily = self.raw_daily_data["^GSPC"].dropna()
+            except Exception:
+                spx_daily = pd.DataFrame()
+            try:
+                spx_hourly = self.raw_hourly_data["^GSPC"].dropna()
+            except Exception:
+                spx_hourly = pd.DataFrame()
+
+            trend_state = self.trend_engine.score(spx_daily) if not spx_daily.empty else {}
+            smc_state = self.smc_engine.compute(spx_daily) if not spx_daily.empty else None
+            smc_dict = smc_state.__dict__ if smc_state else {}
+            
+            # ORB requires hourly bars
+            orb_res = self.session_engine.compute_orb_signal(spx_hourly) if not spx_hourly.empty else {}
+            # TD9 requires 1D closes for macro exhaustion
+            td9_res = self.session_engine.td9_exhaustion_signal(spx_daily["Close"]) if not spx_daily.empty else {}
+            # Session bias
+            from datetime import datetime, timezone
+            sess_bias = self.session_engine.compute_session_state(spx_hourly, datetime.now(timezone.utc)) if not spx_hourly.empty else {}
+            
+            session_state = {**orb_res, **td9_res, **sess_bias}
+            
+            liq_state = self.liquidity_engine.compute(spx_daily) if not spx_daily.empty else {}
+
+            hmm_beta_probs, hmm_beta_dom, tr_risk, _ = self.regime_ensemble.compute(
+                trend_state, smc_dict, session_state, liq_state, self.feature_metadata
             )
-            if hmm_beta_probs is None:
-                logger.error(f"HMM model returned None. Check that models/hmm_model_{self.interval}.pkl exists. "
-                             "Run: PYTHONPATH=. python3 src/train_models.py --interval 1d")
-                hmm_beta_probs = {}
-                hmm_beta_dom = "NEUTRAL_TRANSITIONAL"
-                tr_risk = 0.0
-                hmm_alpha_probs = {}
-                hmm_alpha_dom = "NEUTRAL_TRANSITIONAL"
-            else:
-                hmm_alpha_probs = hmm_beta_probs
-                hmm_alpha_dom = hmm_beta_dom
+            hmm_alpha_probs = hmm_beta_probs
+            hmm_alpha_dom = hmm_beta_dom
+            
+            # Populate snapshot models
+            from src.schemas.models import TrendState, SMCState, SessionState, LiquidityState
+            if trend_state: self.snapshot.trend_state = TrendState(**trend_state)
+            if smc_state: self.snapshot.smc_state = SMCState(**smc_dict)
+            if session_state: self.snapshot.session_state = SessionState(**session_state)
+            if liq_state: self.snapshot.liquidity_state = LiquidityState(**liq_state)
         
         current_regime = hmm_beta_dom if hmm_beta_dom else "NEUTRAL_TRANSITIONAL"
         

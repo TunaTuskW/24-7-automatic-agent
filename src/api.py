@@ -215,7 +215,11 @@ def get_model():
         "kalman_state": data.get("kalman_state", {}),
         "mlp_deep_state": data.get("mlp_deep_state", {}),
         "mcs": data.get("mcs", {}),
-        "regime": data.get("regime", {})
+        "regime": data.get("regime", {}),
+        "trend_state": data.get("trend_state", {}),
+        "smc_state": data.get("smc_state", {}),
+        "session_state": data.get("session_state", {}),
+        "liquidity_state": data.get("liquidity_state", {})
     }
 
 @app.get("/api/macro")
