@@ -17,4 +17,4 @@ COPY models/ ./models/
 ENV PYTHONPATH=/app
 EXPOSE 8000
 
-CMD ["sh", "-c", "python3 src/scheduler.py & uvicorn src.api:app --host 0.0.0.0 --port 8000 --workers 1"]
+CMD ["python3", "src/scheduler.py"]
