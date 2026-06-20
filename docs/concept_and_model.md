@@ -61,125 +61,94 @@ graph TD
     %% Define Styles & Classes (Neon Lime-Pink Night Canvas Scheme)
     classDef IngestStyle fill:#f7fafc,stroke:#e2e8f0,stroke-width:1.5px,color:#4a5568;
     classDef ConductorStyle fill:#ebf8ff,stroke:#bee3f8,stroke-width:2px,color:#2b6cb0;
+    classDef FeatureStyle fill:#fff5f5,stroke:#feb2b2,stroke-width:2px,color:#9b2c2c;
     classDef EngineStyle fill:#faf5ff,stroke:#e9d8fd,stroke-width:2px,color:#553c9a;
-    classDef MoEStyle fill:#fffaf0,stroke:#feebc8,stroke-width:2px,color:#c05621;
+    classDef RiskStyle fill:#fffaf0,stroke:#feebc8,stroke-width:2px,color:#c05621;
     classDef OutputStyle fill:#f0fff4,stroke:#c6f6d5,stroke-width:2px,color:#22543d;
 
-    %% 1. Data Ingestion & Timeframe Adapters
-    subgraph Ingestion["1. Multi-Timeframe Data Ingestion & Fallbacks"]
-        YF["yfinance API (Dynamic Interval)"] --> YA["YahooAdapter (fetch_yield_history)"]
-        FRED["FRED API"] -->|"Optional Key"| YA
-        YA -->|"Missing FRED Key Fallback"| Fallback["Yahoo proxy yields (^TNX & ^FVX)"]
-        FF["Forex Factory API"] --> FA["ForexFactoryAdapter"]
-        News["RSS News Feeds"] --> GA["GeminiAdapter"]
+    %% 1. Ingestion Phase
+    subgraph Ingestion["1. Multi-Timeframe Data Ingestion & Storage"]
+        YF["YahooAdapter (Dynamic OHLCV fetching for 41 global tickers)"]
+        FRED["FRED API (DGS2, DGS10 Yields)"]
+        FF["ForexFactoryAdapter (Global High-Impact Macro Events)"]
+        News["RSS / GeminiAdapter (Macro Headings)"]
+        LakeManager["LakeManager (data_lake/)"]
+        Parquet["Data Lake Partitioning: data/raw/YYYY/MM/DD/"]
+        
+        YF --> LakeManager
+        FRED --> LakeManager
+        FF --> LakeManager
+        News --> LakeManager
+        LakeManager -->|"Save as .parquet & .jsonl"| Parquet
     end
 
-    %% 2. Processing & Conductor Phase
-    subgraph Conductor["2. Event-Driven Conductor & Database Inception"]
-        Cond["fetch_market_data.py --interval [1d/1wk/4h/1h]"]
-        Bus["EventBus (src/observability/event_bus.py)"]
-        Lake["LakeManager (data_lake/)"]
-        DailyPart["data/raw/YYYY/MM/DD/<br>(raw_daily_ohlcv.parquet, raw_hourly_ohlcv.parquet)"]
-        EventLog["data/raw/YYYY/MM/DD/events.jsonl"]
-        
-        YA --> Cond
-        Fallback --> Cond
-        FA --> Cond
-        GA --> Cond
-        Cond -->|"SystemStart"| Bus
-        Bus -->|"All fired events intercepted"| Lake
-        Lake -->|"save_tabular (Parquet)"| DailyPart
-        Lake -->|"Global Event Intercept"| EventLog
+    %% 2. Feature Engineering
+    subgraph FeatureEngineering["2. Feature Engineering & Vectorization"]
+        Parquet --> FE["FeatureEngine (Dynamic Rolling Windows)"]
+        FE --> F_Spreads["Yield Spreads & Credit Stress"]
+        FE --> F_Vol["VIX Z-Scores & Volatility Expansion"]
+        FE --> F_Mom["Momentum (RSI, MACD_hist) & Moving Averages"]
+        FE --> F_Corr["SPX-VIX & Cross-Asset Correlations"]
+        F_Spreads & F_Vol & F_Mom & F_Corr --> Schema1["Pydantic Schema: 14-Feature Vector"]
     end
 
-    %% 3. Quantitative Mathematical Engines & Validation Checkpoints
-    subgraph Engines["3. Quantitative Mathematical Engines & Type-Safety"]
-        FE["FeatureEngine (Dynamic Rolling Window returns & spreads)"]
-        Schema1["Pydantic Schema: 14-Feature Vector<br>(spx_ret, dxy_ret, vix_zscore, Inst_Heat_Index, wti_ret,<br>gsr_ret, us10y_delta, spread_level, btc_ret, usdcad_ret,<br>es_ret, nq_ret, ym_ret, rty_ret)"]
-        HMM["HMMEngine (Uniform Start & VIX GARCH Penalty Filter)"]
-        Schema2["Pydantic Schema: RegimeState"]
-        RE["RiskEngine (Dynamic Measurement Noise & Ensembles)"]
-        EnsembleInference["Ensemble Classifiers (MLP + RF + GB)<br>for SPX, BTC, GLD, WTI"]
-        CalibCheck{"Brier Score > 0.60?"}
-        AutoInversion["Auto-Inversion Module<br>(Flip Probability: 1 - p)"]
-        ConsensusCheck["Model Consensus Scoring<br>(Standard Dev < 0.15)"]
-        Schema3["Pydantic Schema: RiskState"]
+    %% 3. Quantitative Processing (Regimes & Trends)
+    subgraph QuantProcessing["3. Quantitative Processing & State Estimation"]
+        Schema1 --> HMM["HMMEngine (Hidden Markov Model)"]
+        HMM -->|"VIX GARCH Penalty Filter"| Regime["Regime State: BULL_EXPANSION, BEAR_VOLATILITY, etc."]
         
-        DailyPart --> FE
-        FE -->|"Process 14 metrics & daily/hourly yield changes"| Schema1
-        Schema1 -->|"Aligned feature vectors"| HMM
-        HMM -->|"VIX z-score GARCH Bayesian Penalty Filter"| Schema2
-        Schema2 -->|"KalmanFilter & Dynamic Measurement Noise R"| RE
-        RE --> EnsembleInference
-        EnsembleInference --> CalibCheck
-        CalibCheck -->|Yes| AutoInversion
-        CalibCheck -->|No| ConsensusCheck
-        AutoInversion --> ConsensusCheck
-        ConsensusCheck -->|"1.5x Kelly consensus boost / 0.5x penalty"| Schema3
+        Schema1 --> Trend["TrendEngine"]
+        Trend -->|"Linear Regressions & Supertrend ATR"| TrendState["Trend Signals: LONG / SHORT / FLAT"]
+        
+        Schema1 --> KF["KalmanFilter & Volatility Engine"]
+        KF -->|"Dynamic Measurement Noise (R)"| VolState["State Covariance Matrices"]
     end
 
-    %% 4. Single LLM Expert
-    subgraph LLM["4. Single LLM Expert"]
-        MacroEx["Gemini Macro Expert"]
+    %% 4. AI & Ensembles
+    subgraph AI["4. Predictive AI & Ensemble Classifiers"]
+        Regime & TrendState & VolState --> Ens["Ensemble Machine Learning"]
+        Ens -->|"MLP Deep Neural Net"| ProbMLP["Bull Probability (SPX, BTC, GLD, WTI)"]
+        Ens -->|"Random Forest"| ProbRF["Tree-based Probabilities"]
+        Ens -->|"Gradient Boosting"| ProbGB["Boosted Probabilities"]
         
-        Schema3 -->|"Quant Context Ingestion"| MacroEx
+        ProbMLP & ProbRF & ProbGB --> Calib["Brier Score Calibration"]
+        Calib -->|"Score > 0.60?"| Inv["Auto-Inversion (1.0 - P)"]
+        Calib -->|"Score <= 0.60"| Cons["Standard Deviation Consensus"]
+        Inv --> Cons
     end
 
-    %% 5. Sizing Overrides & Sizing Allocations
-    subgraph Consensus["5. Sizing Overrides & Sizing Allocations (v6.4.0)"]
-        ConsensusEng["ConsensusEngine (engines/consensus_engine.py)"]
-        DivergeCheck{"VIX z-score > 1.5<br>& Bullish Headlines?"}
-        DivergeSlash["Apply 0.5x Divergence Slash<br>(All Longs except GLD)"]
+    %% 5. Risk & Execution
+    subgraph Risk["5. Risk Management & Portfolio Construction"]
+        Cons --> RE["RiskEngine (Kelly Criterion Sizing)"]
         
-        Overrides["System Sizing Overrides & Safety Circuit Breakers:<br>• Dynamic Asset Conviction Edge (SPX > 50%, BTC/GLD > 52%, NVDA > 53%, WTI/DELL > 54-55%, TSLA > 56%, SPCE > 72%)<br>• Black Swan Circuit Breaker (SPX return z < -3.5): Force SPX Kelly = 0.0<br>• Capitulation Override: 0.9x contrarian Kelly<br>• Auto-Inversion Calibration: 1 - prob if Brier Score > 0.60"]
+        RE --> Edge["Dynamic Asset Conviction Edges"]
+        Edge -->|"SPX > 50%, BTC/GLD > 52%, NVDA > 53%"| TargetAlloc["Target Base Allocations"]
         
-        RLAgent["RLAgent (engines/rl_agent.py)<br>[Disabled/Bypass]"]
-        AssetAlloc["compute_multi_asset_kelly (Primary Allocator)<br>• Runs AFTER Regime & HMM Coherence Gates<br>• Maps Short_Kelly to SH Inverse ETF"]
-        Balancer["Global Portfolio Balancer (Normalize to 1.2 leverage ceiling)"]
+        TargetAlloc --> MacroLLM["Gemini LLM Macro Synthesizer"]
+        MacroLLM -->|"CoT Reasoning & News Sentiment"| LLMSignal["Bull/Bear/Flat Macro Bias"]
         
-        MacroEx -->|"CoT reasoning contract"| ConsensusEng
-        ConsensusEng --> DivergeCheck
-        DivergeCheck -->|Yes| DivergeSlash
-        DivergeCheck -->|No| Overrides
-        DivergeSlash --> Overrides
-        Overrides --> AssetAlloc
-        AssetAlloc --> Balancer
+        LLMSignal & TargetAlloc --> ConsensusEng["ConsensusEngine (Final Validation)"]
+        ConsensusEng --> DivCheck{"Quantitative Divergence Slasher"}
+        DivCheck -->|"Bullish News BUT VIX Z-Score > 1.5"| Slash["Apply 0.5x Multiplier to all Longs (except GLD)"]
+        DivCheck -->|"No Divergence"| BlackLitterman["Black-Litterman Portfolio Balancer"]
+        Slash --> BlackLitterman
     end
 
-    %% 6. Snapshot, Reporting & Telemetry
-    subgraph Output["6. Persistent Event Logging, Presentation & Paper Trading"]
-        Snap["Validated Market Snapshot (data/state/market_snapshot.json)"]
-        Telem["Live Telemetry File (data/telemetry/live_telemetry.json)"]
-        PB["PaperBroker (data/paper_trading/paper_portfolio.json)"]
-        Ledger["Paper Ledger (data/paper_trading/paper_ledger.csv)"]
-        VPT["visualize_paper_trading.py"]
-        ExcelDash["Reports (paper_trading_performance.png & .xlsx)"]
-        VM["generate_visual_map.py"]
-        VisMap["visualize_map.png (Stacked allocation charts)"]
-        BR["build_report.py (v6.4.0 presenter)"]
-        PD["push_to_discord.py"]
-        Discord["Discord Channels"]
-        
-        Balancer -->|"SPX Long & Short / BTC / GLD / WTI / Cash"| Snap
-        Balancer -->|"Live Telemetry Output"| Telem
-        Balancer -->|"Kelly Target Allocations"| PB
-        PB -->|"Log execution (5 bps slippage, SH Inverse ETF mapping)"| Ledger
-        Ledger --> VPT
-        VPT -->|"Performance plots & spreadsheets"| ExcelDash
-        Snap -->|"Retrieve from events.jsonl"| BR
-        Snap -->|"Parse backtest daily log"| VM
-        VM --> VisMap
-        BR -->|"Renders Multi-Asset allocations in Brutalist Markdown"| PD
-        PD -->|"Discord Webhook"| Discord
+    %% 6. Output
+    subgraph Out["6. Execution Output & Trading Terminal Delivery"]
+        BlackLitterman --> Snap["Validated market_snapshot.json"]
+        Snap --> PB["PaperBroker Execution (5bps slippage)"]
+        PB --> Ledger["paper_ledger.csv"]
+        Snap --> Terminal["React Trading Terminal UI via FastAPI WebSocket"]
     end
 
-    %% Assign classes for beautiful Lime-Pink styling
-    class YF,FRED,YA,Fallback,FF,FA,News,GA IngestStyle;
-    class Cond,Bus,Lake,DailyPart,EventLog ConductorStyle;
-    class FE,Schema1,HMM,Schema2,RE,EnsembleInference,CalibCheck,AutoInversion,ConsensusCheck,Schema3 EngineStyle;
-    class MacroEx MoEStyle;
-    class ConsensusEng,DivergeCheck,DivergeSlash,Overrides,AssetAlloc,Balancer MoEStyle;
-    class Snap,Telem,PB,Ledger,VPT,ExcelDash,VM,VisMap,BR,PD,Discord OutputStyle;
+    %% Assign classes
+    class YF,FRED,FF,News,LakeManager,Parquet IngestStyle;
+    class FE,F_Spreads,F_Vol,F_Mom,F_Corr,Schema1 FeatureStyle;
+    class HMM,Regime,Trend,TrendState,KF,VolState EngineStyle;
+    class Ens,ProbMLP,ProbRF,ProbGB,Calib,Inv,Cons EngineStyle;
+    class RE,Edge,TargetAlloc,MacroLLM,LLMSignal,ConsensusEng,DivCheck,Slash,BlackLitterman RiskStyle;
+    class Snap,PB,Ledger,Terminal OutputStyle;
 ```
 
 ## Core Script Ecosystem & Ingestion Flow

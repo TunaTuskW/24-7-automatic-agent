@@ -19,7 +19,7 @@ def compute_linreg_candles(ohlcv: pd.DataFrame, period: int = 11) -> pd.DataFram
             
         lr[col] = ohlcv[col].rolling(period).apply(apply_linreg, raw=True)
         
-    return lr.fillna(method="bfill")
+    return lr.bfill()
 
 def compute_ut_bot_signal(close: pd.Series, atr: pd.Series, key_value: float = 1.5) -> pd.Series:
     """
@@ -77,7 +77,7 @@ class TrendEngine:
                 abs(ohlcv["Low"] - ohlcv["Close"].shift(1))
             )
         )
-        atr = tr.rolling(atr_period).mean().fillna(method="bfill")
+        atr = tr.rolling(atr_period).mean().bfill()
 
         fast_signal = compute_ut_bot_signal(close, atr, key_value=fast_kv)
         slow_signal = compute_ut_bot_signal(close, atr, key_value=slow_kv)
