@@ -91,12 +91,12 @@ export default function PaperTradingTab() {
   }, [viewType]);
 
   const triggerBacktest = async () => {
-    setTriggerStatus({ type: 'loading', msg: 'Running Simulation...' });
+    setTriggerStatus({ type: 'loading', msg: 'Running Simulation (~5 mins)...' });
     try {
       const res = await apiPost('/api/trigger', { job: 'test' });
       if (res.ok) {
-        setTriggerStatus({ type: 'ok', msg: 'Backtest triggered. Reload in ~30s.' });
-        setTimeout(() => { setTriggerStatus(null); fetchPortfolio(); }, 35000);
+        setTriggerStatus({ type: 'ok', msg: 'Backtest triggered. Please wait ~5 minutes and click Refresh.' });
+        setTimeout(() => { setTriggerStatus(null); }, 15000); // Clear message after 15s
       } else {
         const body = await res.json().catch(() => ({}));
         setTriggerStatus({ type: 'err', msg: `Failed: ${body.detail || res.status}` });
@@ -139,7 +139,7 @@ export default function PaperTradingTab() {
           </button>
 
           {viewType === 'backtest' && (
-            <button className="btn-danger" onClick={triggerBacktest}>
+            <button className="btn-danger" onClick={triggerBacktest} disabled={triggerStatus !== null}>
               <Activity size={13} /> Re-run Backtest
             </button>
           )}
