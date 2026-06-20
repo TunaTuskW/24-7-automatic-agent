@@ -1,13 +1,7 @@
 {
-    "cash": 6923.607730073365,
-    "positions": {
-        "SPX": 0.3957566854185347
-    },
-    "position_details": {
-        "SPX": {
-            "peak_price": 7501.60882995
-        }
-    },
-    "total_equity": 9895.441978285797,
-    "last_update": "2026-06-20T07:08:18.355783"
+    "cash": 9883.169580352273,
+    "positions": {},
+    "position_details": {},
+    "total_equity": 9883.169580352273,
+    "last_update": "2026-06-20T11:00:35.025968"
 }

@@ -90,8 +90,16 @@ Volume Activity Heat: {volume_heat}"""
         import time
         for attempt in range(max_retries):
             try:
-                response = self.client.models.generate_content(model='gemini-2.0-flash', contents=prompt)
-                raw_text = response.text.replace("```json", "").replace("```", "").strip()
+                response = self.client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
+                raw_text = response.text.strip()
+                logger.info(f"Gemini raw response: {raw_text}")
+                
+                # Extract json using regex
+                import re
+                json_match = re.search(r'\{.*\}', raw_text, re.DOTALL)
+                if json_match:
+                    raw_text = json_match.group(0)
+                    
                 return json.loads(raw_text)
             except Exception as e:
                 if ("503" in str(e) or "429" in str(e)) and attempt < (max_retries - 1):

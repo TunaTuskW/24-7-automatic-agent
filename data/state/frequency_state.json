@@ -1,14 +1,14 @@
 {
     "recommended_frequency": "1d",
     "score": -2,
-    "reason": "Low confidence \u2014 reducing to daily cadence. Factors: regime ambiguous or transitional; high regime entropy (1.29); regime too new (0.0 days).",
+    "reason": "Low confidence \u2014 reducing to daily cadence. Factors: regime ambiguous or transitional; degraded model Brier score (0.267); regime too new (0.4 days).",
     "inputs": {
-        "shannon_entropy": 1.295,
-        "vix_zscore": -0.865,
-        "dominant_regime": "VOLATILITY_EXPANSION",
-        "brier_score": 0.143,
-        "duration_days": 0.0,
-        "kalman_is_ambiguous": true
+        "shannon_entropy": 0.976,
+        "vix_zscore": -0.67,
+        "dominant_regime": "NEUTRAL_TRANSITIONAL",
+        "brier_score": 0.2665,
+        "duration_days": 0.4,
+        "kalman_is_ambiguous": false
     },
-    "evaluated_utc": "2026-06-20T00:08:18.358189+00:00"
+    "evaluated_utc": "2026-06-20T11:00:35.027057+00:00"
 }

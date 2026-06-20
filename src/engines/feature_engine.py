@@ -312,11 +312,16 @@ def run_mlp_inference(features_vector, mlp_package, current_regime: str, asset="
             # High consensus if standard deviation is low (models agree)
             consensus_score = 1.0 if std_prob_up < 0.15 else 0.0
         
-        # Extract Maximum Conviction to prevent ensemble suppression
-        prob_down = round(float(np.max(prob_down_list)), 3)
-        prob_up = round(float(np.max(prob_up_list)), 3)
-        prob_neutral = round(float(np.mean(prob_neutral_list)), 3)
-        predicted_class = 1 if prob_up > 0.5 else 0
+        # Extract Maximum Conviction and normalize to prevent probabilities exceeding 100%
+        raw_prob_down = float(np.max(prob_down_list))
+        raw_prob_up = float(np.max(prob_up_list))
+        raw_prob_neutral = float(np.mean(prob_neutral_list))
+        total = raw_prob_down + raw_prob_up + raw_prob_neutral
+        
+        prob_down = round(raw_prob_down / total, 3) if total > 0 else 0.0
+        prob_up = round(raw_prob_up / total, 3) if total > 0 else 0.0
+        prob_neutral = round(raw_prob_neutral / total, 3) if total > 0 else 0.0
+        predicted_class = 1 if prob_up > prob_down else 0
         
         return {
             "bull_probability": prob_up,
