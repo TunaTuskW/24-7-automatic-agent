@@ -1,5 +1,5 @@
 {
-    "generated_utc": "2026-06-20T11:00:35.020318+00:00",
+    "generated_utc": "2026-06-20T18:00:31.938427+00:00",
     "raw_indicators": {
         "SPX": {
             "current": 7497.8599,
@@ -353,14 +353,14 @@
             "momentum": "down"
         },
         "BTC": {
-            "current": 63609.6016,
-            "prev": 63667.0703,
-            "delta": -57.4688,
-            "delta_pct": -0.09,
-            "mean_60d": 63316.9488,
-            "std_60d": 633.3616,
-            "z_score": -0.172,
-            "momentum": "down"
+            "current": 63777.0,
+            "prev": 63751.1719,
+            "delta": 25.8281,
+            "delta_pct": 0.041,
+            "mean_60d": 63252.019,
+            "std_60d": 550.7753,
+            "z_score": 0.105,
+            "momentum": "up"
         },
         "IBIT": {
             "current": 35.615,
@@ -475,18 +475,18 @@
         },
         "transition_risk": 0.0,
         "start_utc": "2026-06-20T01:25:05.188258+00:00",
-        "duration_days": 0.39963317788194447
+        "duration_days": 0.6912695522916666
     },
     "kalman_state": {
         "dominant_prob": 0.841,
         "dominant_state": "transitional",
-        "tvd": 0.8078,
-        "brier_score_calibration": 0.2665,
+        "tvd": 0.8068,
+        "brier_score_calibration": 0.2674,
         "structural_ambiguity_index": 0.0,
         "probabilities": [
-            0.11161859414155242,
-            0.04768000601027137,
-            0.8407013998481762
+            0.11165336941813424,
+            0.04735172289978859,
+            0.8409949076820772
         ],
         "covariance_matrix": [
             [
@@ -507,14 +507,14 @@
         ],
         "is_ambiguous": false,
         "risk_on": 0.112,
-        "risk_off": 0.048,
+        "risk_off": 0.047,
         "transitional": 0.841
     },
     "mlp_deep_state": {
         "spx": {
-            "bull_probability": 0.464,
+            "bull_probability": 0.463,
             "bear_probability": 0.428,
-            "neutral_probability": 0.108,
+            "neutral_probability": 0.109,
             "predicted_class": 1,
             "consensus_score": 0.0
         },
@@ -533,16 +533,16 @@
             "consensus_score": 1.0
         },
         "nvda": {
-            "bull_probability": 0.201,
-            "bear_probability": 0.189,
-            "neutral_probability": 0.61,
+            "bull_probability": 0.202,
+            "bear_probability": 0.185,
+            "neutral_probability": 0.613,
             "predicted_class": 1,
             "consensus_score": 1.0
         },
         "tsla": {
             "bull_probability": 0.135,
-            "bear_probability": 0.197,
-            "neutral_probability": 0.668,
+            "bear_probability": 0.198,
+            "neutral_probability": 0.667,
             "predicted_class": 0,
             "consensus_score": 1.0
         },
@@ -555,15 +555,15 @@
         },
         "spce": {
             "bull_probability": 0.675,
-            "bear_probability": 0.254,
+            "bear_probability": 0.255,
             "neutral_probability": 0.071,
             "predicted_class": 1,
             "consensus_score": 0.0
         },
         "btc": {
-            "bull_probability": 0.111,
+            "bull_probability": 0.112,
             "bear_probability": 0.11,
-            "neutral_probability": 0.779,
+            "neutral_probability": 0.778,
             "predicted_class": 1,
             "consensus_score": 1.0
         }
@@ -597,7 +597,7 @@
             0.254,
             0.06,
             0.29,
-            -0.09,
+            0.041,
             0.179,
             1.152,
             -1.519,
@@ -616,7 +616,7 @@
             "gsr_ret": 0.254,
             "us10y_delta": 0.06,
             "spread_level": 0.29,
-            "btc_ret": -0.09,
+            "btc_ret": 0.041,
             "nvda_ret": 0.179,
             "tsla_ret": 1.152,
             "dell_ret": -1.519,
@@ -831,8 +831,8 @@
         "smc_bias": 0
     },
     "session_state": {
-        "current_session": "LONDON",
-        "session_bias": "TREND_FORMING",
+        "current_session": "NEW_YORK",
+        "session_bias": "TREND_CONFIRMING",
         "asia_high": 0.0,
         "asia_low": 0.0,
         "london_swept_asia_high": false,
@@ -859,5 +859,5 @@
         "slow_signal": -1,
         "atr_stop_fast": 7444.130965592028
     },
-    "timestamp": "2026-06-20T11:00:35.023943+00:00"
+    "timestamp": "2026-06-20T18:00:31.943823+00:00"
 }

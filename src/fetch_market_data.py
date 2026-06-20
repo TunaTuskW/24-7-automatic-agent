@@ -386,7 +386,7 @@ class Conductor:
             except Exception:
                 spx_daily = pd.DataFrame()
             try:
-                spx_hourly = self.raw_hourly_data["^GSPC"].dropna()
+                spx_hourly = self.raw_hourly_data["ES=F"].dropna()
             except Exception:
                 spx_hourly = pd.DataFrame()
 

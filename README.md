@@ -36,14 +36,23 @@ graph TD
 
     %% 3. Quantitative Processing (Regimes & Trends)
     subgraph QuantProcessing["3. Quantitative Processing & State Estimation"]
-        Schema1 --> Regime["RegimeEnsemble (Supervised ML)"]
+        Schema1 --> Regime["RegimeEnsemble (Supervised ML Fusion)"]
         Regime -->|"VIX Penalty Filter"| RegimeState["Regime State: BULL_EXPANSION, BEAR_VOLATILITY, etc."]
         
         Schema1 --> Trend["TrendEngine"]
-        Trend -->|"Linear Regressions & Supertrend ATR"| TrendState["Trend Signals: LONG / SHORT / FLAT"]
+        Trend -->|"Linear Regressions & Supertrend ATR"| TrendState["Trend Signals"]
+        
+        Schema1 --> SMC["SMCEngine"]
+        SMC -->|"Order Blocks & FVG"| SMCState["Smart Money Concepts State"]
+
+        Schema1 --> Session["SessionEngine"]
+        Session -->|"London/NY Overlap"| SessionState["Session Liquidity"]
+        
+        Schema1 --> Liquidity["LiquidityEngine"]
+        Liquidity -->|"Volume Imbalance"| LiqState["Liquidity Voids"]
         
         Schema1 --> KF["KalmanFilter & Volatility Engine"]
-        KF -->|"Dynamic Measurement Noise (R)"| VolState["State Covariance Matrices"]
+        KF -->|"Dynamic Measurement Noise"| VolState["State Covariance Matrices"]
     end
 
     %% 4. AI & Ensembles

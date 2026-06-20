@@ -88,6 +88,18 @@ class SessionEngine:
                 "favorable_for_entry": False
             }
             
+        # If data is daily (all hours 0), bypass session timings
+        if (ohlcv_1h.index.hour == 0).all():
+            return {
+                "current_session": "RTH",
+                "session_bias": "NEUTRAL",
+                "asia_high": 0.0,
+                "asia_low": 0.0,
+                "london_swept_asia_high": False,
+                "london_swept_asia_low": False,
+                "favorable_for_entry": False
+            }
+
         hour = utc_now.hour
 
         # Define session windows

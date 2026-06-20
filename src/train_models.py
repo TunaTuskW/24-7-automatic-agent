@@ -16,7 +16,7 @@ import yfinance as yf
 import requests
 import math
 from datetime import datetime, timezone, timedelta
-from hmmlearn.hmm import GaussianHMM
+
 from arch import arch_model
 from sklearn.preprocessing import StandardScaler
 from sklearn.neural_network import MLPClassifier
@@ -76,8 +76,9 @@ def fetch_training_data(years=TRAINING_YEARS, interval="1d"):
     spx_vol = data["Volume"]["^GSPC"].dropna()
     spx_high = data["High"]["^GSPC"].dropna()
     spx_low = data["Low"]["^GSPC"].dropna()
+    spx_open = data["Open"]["^GSPC"].dropna()
 
-    for idx, s in enumerate([spx, wti, dxy, silver, usdcad, gold, vix, spx_vol, spx_high, spx_low]):
+    for idx, s in enumerate([spx, wti, dxy, silver, usdcad, gold, vix, spx_vol, spx_high, spx_low, spx_open]):
         s.index = pd.to_datetime(s.index).tz_localize(None)
         if interval == "1d":
             s.index = s.index.normalize()
@@ -92,6 +93,7 @@ def fetch_training_data(years=TRAINING_YEARS, interval="1d"):
         elif idx == 7: spx_vol = s
         elif idx == 8: spx_high = s
         elif idx == 9: spx_low = s
+        elif idx == 10: spx_open = s
 
     spx_ret = spx.pct_change() * 100
     wti_ret = wti.pct_change() * 100
@@ -174,6 +176,7 @@ def fetch_training_data(years=TRAINING_YEARS, interval="1d"):
         "Volume":        spx_vol,
         "High":          spx_high,
         "Low":           spx_low,
+        "Open":          spx_open,
         "Close":         spx
     })
     df.index = pd.to_datetime(df.index).tz_localize(None)
@@ -232,48 +235,7 @@ def fetch_training_data(years=TRAINING_YEARS, interval="1d"):
     df = df.dropna()
     logging.info(f"Training data shape: {df.shape}")
     return df
-def label_states_by_emission(hmm_model, feature_names, interval="1d"):
-    means = hmm_model.means_
-    state_labels = {}
-    spx_idx = feature_names.index("spx_ret")
-    us10y_idx = feature_names.index("us10y_delta")
-    wti_idx = feature_names.index("wti_ret")
-    
-    # Scale return thresholds for intraday (smaller average moves per bar)
-    scale_factor = 1.0
-    if interval.endswith("h"):
-        hours = float(interval.replace("h", "") or 1)
-        scale_factor = math.sqrt(hours / 6.5) # Volatility scales with square root of time
-        
-    spx_thresh_up = 0.05 * scale_factor
-    spx_thresh_dn = -0.05 * scale_factor
-    wti_thresh_up = 0.1 * scale_factor
-    wti_thresh_dn = -0.1 * scale_factor
-    
-    assigned = set()
-    for state_id in range(len(means)):
-        spx_m  = means[state_id][spx_idx]
-        us10y_m = means[state_id][us10y_idx]
-        wti_m  = means[state_id][wti_idx]
-        if spx_m > spx_thresh_up and us10y_m > 0.002 * scale_factor:
-            label = "RISK_ON_EXPANSION"
-        elif spx_m > spx_thresh_up and us10y_m < -0.002 * scale_factor:
-            label = "LIQUIDITY_DRIVEN_RALLY"
-        elif spx_m < spx_thresh_dn and wti_m > wti_thresh_up:
-            label = "STAGFLATION_STRESS"
-        elif spx_m < spx_thresh_dn and us10y_m > 0.005 * scale_factor:
-            label = "RATE_SHOCK"
-        elif spx_m < spx_thresh_dn and wti_m < wti_thresh_dn:
-            label = "DEFLATION_FEAR"
-        elif spx_m < spx_thresh_dn:
-            label = "CRISIS_DISLOCATION" # Catch-all for heavy negative drift
-        else:
-            label = "NEUTRAL_TRANSITIONAL"
-        if label in assigned:
-            label = f"{label}_{state_id}"
-        assigned.add(label)
-        state_labels[state_id] = label
-    return state_labels
+
 def train_ensemble_classifier(df, feature_names, output_path, interval="1d", target_col="spx_ret", threshold=1.5):
     logging.info(f"Training Ensemble Classifiers for {target_col}...")
     X = df[feature_names].values
@@ -302,7 +264,6 @@ def train_ensemble_classifier(df, feature_names, output_path, interval="1d", tar
         solver="adam",
         max_iter=1000,
         random_state=42,
-        
     )
     mlp.fit(X_scaled, y)
     
@@ -334,7 +295,8 @@ def train_ensemble_classifier(df, feature_names, output_path, interval="1d", tar
     }
     joblib.dump(mlp_package, output_path)
     logging.info(f"Ensemble Classifiers saved successfully to {output_path}")
-def train_hmm(interval="1d"):
+
+def train_all_ml_models(interval="1d"):
     df = fetch_training_data(interval=interval)
     
     # Aligned 16 features schema
@@ -345,34 +307,6 @@ def train_hmm(interval="1d"):
         "spx_rsi_14", "spx_macd_hist", "spx_bbw", "spx_vix_corr"
     ]
     
-    X = df[feature_names].values
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
-    logging.info(f"Training HMM with {N_HIDDEN_STATES} states on {len(X)} observations...")
-    hmm = GaussianHMM(
-        n_components=N_HIDDEN_STATES,
-        covariance_type="full",
-        n_iter=N_ITERATIONS,
-        tol=1e-4,
-        random_state=42,
-        verbose=False,
-    )
-    hmm.fit(X_scaled)
-    state_labels = label_states_by_emission(hmm, feature_names, interval=interval)
-    logging.info(f"State labels assigned: {state_labels}")
-    output_hmm = os.path.join(os.path.dirname(__file__), '..', 'models', f'hmm_model_{interval}.pkl' if interval != "1d" else 'hmm_model.pkl')
-    output_mlp = os.path.join(os.path.dirname(__file__), '..', 'models', f'mlp_model_{interval}.pkl' if interval != "1d" else 'mlp_model.pkl')
-    os.makedirs(os.path.dirname(output_hmm), exist_ok=True)
-    model_package = {
-        "hmm":           hmm,
-        "scaler":        scaler,
-        "state_labels":  state_labels,
-        "feature_names": feature_names,
-        "trained_at":    datetime.now(timezone.utc).isoformat(),
-        "n_observations": len(X),
-    }
-    joblib.dump(model_package, output_hmm)
-    logging.info(f"HMM Model saved to {output_hmm}")
     # Target Assets for Multi-Model ML Pipeline
     assets = [
         {"name": "spx", "col": "spx_ret", "threshold": 1.25},  
@@ -390,10 +324,11 @@ def train_hmm(interval="1d"):
         train_ensemble_classifier(df, feature_names, output_mlp_asset, interval=interval, target_col=asset["col"], threshold=asset["threshold"])
         
     logging.info("All Ensemble models trained successfully!")
-    return model_package
+    return True
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--interval", type=str, default="1d", help="Data interval (e.g., 1d, 4h)")
     args = parser.parse_args()
-    train_hmm(interval=args.interval)
+    train_all_ml_models(interval=args.interval)

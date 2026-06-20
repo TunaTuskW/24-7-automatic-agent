@@ -166,6 +166,7 @@ class RiskEngine:
                 inverted_prob = round(1.0 - prob, 3)
                 logger.warning(f"[AUTO-INVERSION TRIGGERED] {asset.upper()} model is negatively correlated (Brier: {brier_score:.3f}). Inverting probability: {prob} -> {inverted_prob}")
                 prob = inverted_prob
+                mlp_predictions[asset]["bull_probability"] = prob
 
             # Apply bull trap logic ONLY to SPX
             asset_is_bull_trap = False
@@ -221,9 +222,12 @@ class RiskEngine:
         
         if spx_raw > 0:
             spx_kelly = round(min(max_kelly_cap, spx_raw), 3)
+            if is_downtrend:
+                spx_kelly = round(spx_kelly * 0.5, 3)
+                logger.warning("SPX is in a macro downtrend. Halving long Kelly allocation.")
         else:
-            short_kelly = 0.0
-            logger.info(f"Negative Edge Detected. Shorting disabled.")
+            short_kelly = round(min(max_kelly_cap, abs(spx_raw)), 3)
+            logger.info(f"Negative Edge Detected. Shorting enabled with allocation {short_kelly}.")
 
         # Black Swan Circuit Breaker overrides SPX
         if is_black_swan:
@@ -231,13 +235,13 @@ class RiskEngine:
             spx_kelly = 0.0
             
         # Process other assets
-        btc_kelly = round(max(0.0, min(1.0, raw_allocations.get("btc", 0.0))), 3)
-        gld_kelly = round(max(0.0, min(1.0, raw_allocations.get("gld", 0.0))), 3)
-        wti_kelly = round(max(0.0, min(1.0, raw_allocations.get("wti", 0.0))), 3)
-        nvda_kelly = round(max(0.0, min(1.0, raw_allocations.get("nvda", 0.0))), 3)
-        tsla_kelly = round(max(0.0, min(1.0, raw_allocations.get("tsla", 0.0))), 3)
-        dell_kelly = round(max(0.0, min(1.0, raw_allocations.get("dell", 0.0))), 3)
-        spce_kelly = round(max(0.0, min(1.0, raw_allocations.get("spce", 0.0))), 3)
+        btc_kelly = round(max(-1.0, min(1.0, raw_allocations.get("btc", 0.0))), 3)
+        gld_kelly = round(max(-1.0, min(1.0, raw_allocations.get("gld", 0.0))), 3)
+        wti_kelly = round(max(-1.0, min(1.0, raw_allocations.get("wti", 0.0))), 3)
+        nvda_kelly = round(max(-1.0, min(1.0, raw_allocations.get("nvda", 0.0))), 3)
+        tsla_kelly = round(max(-1.0, min(1.0, raw_allocations.get("tsla", 0.0))), 3)
+        dell_kelly = round(max(-1.0, min(1.0, raw_allocations.get("dell", 0.0))), 3)
+        spce_kelly = round(max(-1.0, min(1.0, raw_allocations.get("spce", 0.0))), 3)
 
 
         # Capital Rotation Engine (Active Rotation & Diversity)
@@ -293,9 +297,9 @@ class RiskEngine:
                 tsla_kelly = max(tsla_kelly, round(spx_kelly * 0.20, 3))
 
         # Global Portfolio Balancer (Normalize exposure)
-        total_exposure = spx_kelly + short_kelly + btc_kelly + gld_kelly + wti_kelly + nvda_kelly + tsla_kelly + dell_kelly + spce_kelly
-        if total_exposure > 1.2:
-            scale = 1.2 / total_exposure
+        total_exposure = spx_kelly + short_kelly + abs(btc_kelly) + abs(gld_kelly) + abs(wti_kelly) + abs(nvda_kelly) + abs(tsla_kelly) + abs(dell_kelly) + abs(spce_kelly)
+        if total_exposure > 1.0:
+            scale = 1.0 / total_exposure
             spx_kelly = round(spx_kelly * scale, 3)
             short_kelly = round(short_kelly * scale, 3)
             btc_kelly = round(btc_kelly * scale, 3)
@@ -305,7 +309,7 @@ class RiskEngine:
             tsla_kelly = round(tsla_kelly * scale, 3)
             dell_kelly = round(dell_kelly * scale, 3)
             spce_kelly = round(spce_kelly * scale, 3)
-            total_exposure = spx_kelly + short_kelly + btc_kelly + gld_kelly + wti_kelly + nvda_kelly + tsla_kelly + dell_kelly + spce_kelly
+            total_exposure = spx_kelly + short_kelly + abs(btc_kelly) + abs(gld_kelly) + abs(wti_kelly) + abs(nvda_kelly) + abs(tsla_kelly) + abs(dell_kelly) + abs(spce_kelly)
 
         cash = round(max(0.0, 1.0 - total_exposure), 3)
             

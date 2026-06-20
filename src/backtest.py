@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 backtest.py
-Simple historical backtest for the HMM Regime Classifier.
+Historical backtest for the RegimeEnsemble using sub-engine rolling window simulation.
 """
 
 import os
@@ -16,7 +16,6 @@ import requests
 from datetime import datetime, timezone, timedelta
 
 warnings.filterwarnings("ignore")
-
 logging.basicConfig(level=logging.INFO, format='%(asctime)s — %(message)s')
 
 def get_fred_key():
@@ -31,43 +30,74 @@ def get_fred_key():
                 return key
     return None
 
-from train_models import fetch_training_data
+from src.train_models import fetch_training_data
+from src.engines.trend_engine import TrendEngine
+from src.engines.smc_engine import SMCEngine
+from src.engines.session_engine import SessionEngine
+from src.engines.liquidity_engine import LiquidityEngine
+from src.engines.regime_ensemble import RegimeEnsemble
 
 def run_backtest():
-    model_path = os.path.join(os.path.dirname(__file__), '..', 'models', 'hmm_model.pkl')
-    if not os.path.exists(model_path):
-        logging.error("HMM model not found. Run train_models.py first.")
-        return
-
-    package = joblib.load(model_path)
-    hmm = package["hmm"]
-    scaler = package["scaler"]
-    state_labels = package["state_labels"]
-    feature_names = package["feature_names"]
+    logging.info("Initializing Sub-Engines for Chronological Simulation...")
+    trend_engine = TrendEngine()
+    smc_engine = SMCEngine()
+    session_engine = SessionEngine()
+    liquidity_engine = LiquidityEngine()
+    ensemble = RegimeEnsemble()
 
     df = fetch_training_data(years=2)
-    X = df[feature_names].values
-    X_scaled = scaler.transform(X)
+    if df is None or df.empty:
+        logging.error("Failed to fetch training data.")
+        return
 
-    # Decode the hidden states sequence
-    states = hmm.predict(X_scaled)
-    df["regime_id"] = states
-    df["regime_label"] = df["regime_id"].map(state_labels)
+    logging.info(f"Running rolling chronological simulation over {len(df)} bars (This may take a moment)...")
+    
+    lookback = 100
+    regimes = ["NEUTRAL_TRANSITIONAL"] * len(df)
+    
+    for i in range(lookback, len(df)):
+        window = df.iloc[i-lookback : i+1]
+        
+        # Poll micro-engines dynamically simulating live ingestion
+        trend_state = trend_engine.score(window)
+        smc_state = smc_engine.compute(window).__dict__
+        
+        session_state = session_engine.compute_session_state(window, window.index[-1])
+        session_state.update(session_engine.compute_orb_signal(window))
+        session_state.update(session_engine.td9_exhaustion_signal(window["Close"]))
+        
+        liq_state = liquidity_engine.compute(window)
+        
+        features_dict = {
+            "vix_zscore": window["vix_zscore"].iloc[-1],
+            "spread_level": window["spread_level"].iloc[-1]
+        }
+        
+        probs, dominant_regime, tr_risk, _ = ensemble.compute(
+            trend_state, smc_state, session_state, liq_state, features_dict
+        )
+        regimes[i] = dominant_regime
 
+    df["regime_label"] = regimes
+    
+    # Fix Lookahead Bias: Shift the returns by 1 to get the FORWARD return
+    df["fwd_spx_ret"] = df["spx_ret"].shift(-1)
+    df["fwd_us10y_delta"] = df["us10y_delta"].shift(-1)
+    df["fwd_wti_ret"] = df["wti_ret"].shift(-1)
+    
     # Analyze performance by regime
     results = []
-    
     total_days = len(df)
     
-    # Calculate annualized metrics
     for regime in df["regime_label"].unique():
         regime_df = df[df["regime_label"] == regime]
         days_in_regime = len(regime_df)
-        
-        # Mean daily returns
-        avg_daily_spx = regime_df["spx_ret"].mean()
-        avg_daily_us10y_delta = regime_df["us10y_delta"].mean()
-        avg_daily_wti = regime_df["wti_ret"].mean()
+        if days_in_regime == 0:
+            continue
+            
+        avg_daily_spx = regime_df["fwd_spx_ret"].mean()
+        avg_daily_us10y_delta = regime_df["fwd_us10y_delta"].mean()
+        avg_daily_wti = regime_df["fwd_wti_ret"].mean()
         
         # Annualized metrics (approx 252 trading days)
         ann_spx_ret = ((1 + avg_daily_spx/100)**252 - 1) * 100
@@ -83,7 +113,7 @@ def run_backtest():
         })
 
     # Output formatting
-    results_md = "# HMM 2-Year Historical Backtest Results\n\n"
+    results_md = "# Regime Ensemble 2-Year Historical Backtest Results\n\n"
     results_md += "| Regime | Days | Freq % | Ann. SPX Return | Ann. WTI Return | Avg 10Y Δ (bps/day) |\n"
     results_md += "|--------|------|--------|-----------------|-----------------|----------------------|\n"
     
@@ -95,6 +125,7 @@ def run_backtest():
     
     # Save to file
     out_path = os.path.join(os.path.dirname(__file__), '..', 'reports', 'backtest_results.md')
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with open(out_path, 'w') as f:
         f.write(results_md)
         

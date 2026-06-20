@@ -467,20 +467,7 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
         spce_kelly = kelly_dict.get("SPCE_Kelly", 0.0)
         cash_kelly = kelly_dict.get("Cash", 0.0)
         
-        # 1. Apply Mark-to-Market Growth based on current (previous bar's) allocations
-        portfolio_1bar_return = (
-            (current_allocations["spx"] * spx_1bar) +
-            (current_allocations["short"] * -spx_1bar) +
-            (current_allocations["btc"] * btc_1bar) +
-            (current_allocations["gld"] * gld_1bar) +
-            (current_allocations["wti"] * wti_1bar) +
-            (current_allocations["nvda"] * nvda_1bar) +
-            (current_allocations["tsla"] * tsla_1bar) +
-            (current_allocations["dell"] * dell_1bar) +
-            (current_allocations["spce"] * spce_1bar)
-        )
-        simulated_equity *= (1.0 + portfolio_1bar_return)
-        
+
         # 2. Rebalance to Target Kellys — only if min hold period has elapsed
         target_allocations = {"spx": spx_kelly, "short": short_kelly, "btc": btc_kelly, "gld": gld_kelly, "wti": wti_kelly, "nvda": nvda_kelly, "tsla": tsla_kelly, "dell": dell_kelly, "spce": spce_kelly, "cash": cash_kelly}
         
@@ -543,6 +530,25 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
                 current_allocations = target_allocations
         # else: hold current allocations unchanged — no trade, no fee
         
+        # 3. Apply Mark-to-Market Growth based on the rebalanced target allocations OR organically drifted allocations
+        asset_values = {
+            "spx": current_allocations["spx"] * simulated_equity * (1.0 + spx_1bar),
+            "short": current_allocations["short"] * simulated_equity * (1.0 - spx_1bar),
+            "btc": current_allocations["btc"] * simulated_equity * (1.0 + btc_1bar),
+            "gld": current_allocations["gld"] * simulated_equity * (1.0 + gld_1bar),
+            "wti": current_allocations["wti"] * simulated_equity * (1.0 + wti_1bar),
+            "nvda": current_allocations["nvda"] * simulated_equity * (1.0 + nvda_1bar),
+            "tsla": current_allocations["tsla"] * simulated_equity * (1.0 + tsla_1bar),
+            "dell": current_allocations["dell"] * simulated_equity * (1.0 + dell_1bar),
+            "spce": current_allocations["spce"] * simulated_equity * (1.0 + spce_1bar),
+            "cash": current_allocations["cash"] * simulated_equity
+        }
+        simulated_equity = sum(asset_values.values())
+        
+        # Organic Weight Drift (momentum drift)
+        if simulated_equity > 0:
+            current_allocations = {k: v / simulated_equity for k, v in asset_values.items()}
+
         # Backwards compatible fwd_5d_ret calculation for the report logging
         fwd_5d_ret = (
             (spx_kelly * spx_fwd_5d) +
@@ -590,9 +596,9 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
             win_count += 1
             
         # Drawdown protection metric (if SPX goes down > 1.5%, were we hedged/short?)
-        if r["fwd_5d_ret"] < -1.5 and (r["kelly_exposure"] < 0.2 or r["short_exposure"] > 0.1 or r["safe_haven_exposure"] > 0.5):
+        if r["spx_fwd_5d"] < -1.5 and (r["kelly_exposure"] < 0.2 or r["short_exposure"] > 0.1 or r["safe_haven_exposure"] > 0.5):
             drawdown_protected += 1
-        if r["fwd_5d_ret"] < -1.5:
+        if r["spx_fwd_5d"] < -1.5:
             total_drawdowns += 1
                 
     # Calculate accuracy based only on active trades (where exposure was taken or capital preservation triggered)

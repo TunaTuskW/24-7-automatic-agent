@@ -177,7 +177,7 @@ def compute_market_extremes(spx_series, vix_series, vvix_series=None, dxy_series
         # 1. Base Temperature & Crowdedness (Existing Logic)
         spx_abs = spx_returns.abs().sum()
         vix_abs = vix_returns.abs().sum()
-        temperature_z = (spx_abs - vix_abs) / vix_abs if vix_abs > 0 else 0.0
+        temperature_z = ((spx_abs * 4.0) - vix_abs) / vix_abs if vix_abs > 0 else 0.0
         crowdedness = spx_returns.corr(vix_returns)
         
         # 2. Hidden Fragility Calculations
@@ -457,14 +457,7 @@ def run_self_calibration(history, current_spx_val, current_ihi, grading_delay=5,
             if not forecast_to_grade.get("target_graded"):
                 window = forecast_to_grade.get("spx_vals_window", [])
                 if len(window) >= grading_delay:
-                    # Compute rolling sum of returns
-                    pct_returns = []
-                    prev_val = forecast_to_grade["spx_val_at_prediction"]
-                    for val in window[:grading_delay]:
-                        if prev_val > 0:
-                            pct_returns.append(((val - prev_val) / prev_val) * 100)
-                        prev_val = val
-                    ret = sum(pct_returns)
+                    ret = ((window[grading_delay - 1] - forecast_to_grade["spx_val_at_prediction"]) / forecast_to_grade["spx_val_at_prediction"]) * 100
                 else:
                     ret = ((current_spx_val - forecast_to_grade["spx_val_at_prediction"]) / forecast_to_grade["spx_val_at_prediction"]) * 100
                 

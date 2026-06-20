@@ -65,10 +65,15 @@ class SMCEngine:
             return bullish_fvg, bearish_fvg
         c1 = ohlcv.iloc[-3]
         c3 = ohlcv.iloc[-1]
-        gap_size = abs(c3["Low"] - c1["High"]) / c1["Close"]
-        if c3["Low"] > c1["High"] and gap_size >= self.fvg_min_pct:
+        if c1["Close"] == 0:
+            return bullish_fvg, bearish_fvg
+            
+        bull_gap_size = (c3["Low"] - c1["High"]) / c1["Close"]
+        bear_gap_size = (c1["Low"] - c3["High"]) / c1["Close"]
+        
+        if c3["Low"] > c1["High"] and bull_gap_size >= self.fvg_min_pct:
             bullish_fvg = True
-        if c3["High"] < c1["Low"] and gap_size >= self.fvg_min_pct:
+        if c3["High"] < c1["Low"] and bear_gap_size >= self.fvg_min_pct:
             bearish_fvg = True
         return bullish_fvg, bearish_fvg
 

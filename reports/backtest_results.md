@@ -1,10 +1,9 @@
-# HMM 2-Year Historical Backtest Results
+# Regime Ensemble 2-Year Historical Backtest Results
 
 | Regime | Days | Freq % | Ann. SPX Return | Ann. WTI Return | Avg 10Y Δ (bps/day) |
 |--------|------|--------|-----------------|-----------------|----------------------|
-| NEUTRAL_TRANSITIONAL_1 | 247 | 49.4% | 29.12% | 106.38% | 0.39 bps |
-| NEUTRAL_TRANSITIONAL_3 | 134 | 26.8% | 19.17% | 91.6% | -0.22 bps |
-| NEUTRAL_TRANSITIONAL_4 | 45 | 9.0% | 25.7% | 13.68% | -0.73 bps |
-| NEUTRAL_TRANSITIONAL | 38 | 7.6% | 84.54% | -11.39% | 1.16 bps |
-| DEFLATION_FEAR | 21 | 4.2% | -70.15% | -99.99% | -3.38 bps |
-| NEUTRAL_TRANSITIONAL_5 | 15 | 3.0% | 39.28% | -15.42% | -2.27 bps |
+| LIQUIDITY_DRIVEN_RALLY | 143 | 28.7% | 13.81% | 1.14% | -0.16 bps |
+| NEUTRAL_TRANSITIONAL | 139 | 27.9% | 21.67% | -33.91% | -0.2 bps |
+| RISK_ON_EXPANSION | 111 | 22.2% | 21.46% | 23.41% | 0.15 bps |
+| DEFENSIVE_RISK_OFF | 83 | 16.6% | 5.91% | 194.93% | 0.23 bps |
+| VOLATILITY_EXPANSION | 23 | 4.6% | 100.27% | -69.79% | 1.41 bps |
