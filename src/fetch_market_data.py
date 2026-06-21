@@ -611,11 +611,11 @@ class Conductor:
                     if entry_score < 0.20:
                         logger.warning(f"MTF Entry Gate: score {entry_score:.2f} below 0.20 floor. Zeroing long Kelly.")
                         for k in kelly:
-                            if k not in ["Short_Kelly", "Cash"]: kelly[k] = 0.0
+                            if k not in ["Short_Kelly", "Cash", "GLD_Kelly"]: kelly[k] = 0.0
                     elif entry_score < 0.35:
                         logger.info(f"MTF Entry Gate: score {entry_score:.2f} below 0.35. Halving long Kelly.")
                         for k in kelly:
-                            if k not in ["Short_Kelly", "Cash"]: kelly[k] = round(kelly[k] * 0.5, 3)
+                            if k not in ["Short_Kelly", "Cash", "GLD_Kelly"]: kelly[k] = round(kelly[k] * 0.5, 3)
                     else:
                         logger.info(f"MTF Entry Gate: score {entry_score:.2f} — no adjustment.")
 
@@ -825,8 +825,20 @@ class Conductor:
             recommended_action = "LIQUIDATE_ALL"
             gate_passed = False
         elif not gate_passed:
-            logger.warning(f"Conviction gate blocked execution. Score {entry_score:.2f} < threshold {entry_threshold:.2f} for {dominant_regime}. Holding cash.")
-            target_allocs = {k: 0.0 for k in target_allocs}
+            logger.warning(f"Conviction gate blocked execution. Score {entry_score:.2f} < threshold {entry_threshold:.2f} for {dominant_regime}. Holding cash/safe havens.")
+            
+            # Only allow safe-haven allocations through the gate
+            blocked_sum = sum([target_allocs[k] for k in ["SPX", "BTC", "WTI", "NVDA", "TSLA", "DELL", "SPCE"]])
+            target_allocs["SPX"] = 0.0
+            target_allocs["BTC"] = 0.0
+            target_allocs["WTI"] = 0.0
+            target_allocs["NVDA"] = 0.0
+            target_allocs["TSLA"] = 0.0
+            target_allocs["DELL"] = 0.0
+            target_allocs["SPCE"] = 0.0
+            
+            # We don't have a direct target_allocs['cash'] key in this dict until later,
+            # but PaperBroker dynamically allocates remainder to cash, so zeroing them is sufficient.
             recommended_action = "HOLD"
         else:
             recommended_action = "BUY" if entry_bias == "LONG" else ("SELL" if entry_bias == "SHORT" else "HOLD")

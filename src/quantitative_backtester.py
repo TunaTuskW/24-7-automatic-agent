@@ -122,6 +122,7 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
     simulated_equity = 10000.0
     peak_equity = simulated_equity
     current_allocations = {"spx": 0.0, "short": 0.0, "btc": 0.0, "gld": 0.0, "wti": 0.0, "nvda": 0.0, "tsla": 0.0, "dell": 0.0, "spce": 0.0, "cash": 1.0}
+    current_asset_values = {"spx": 0.0, "short": 0.0, "btc": 0.0, "gld": 0.0, "wti": 0.0, "nvda": 0.0, "tsla": 0.0, "dell": 0.0, "spce": 0.0, "cash": 10000.0}
     total_mock_trades = 0
     total_fees_paid = 0.0
     
@@ -577,24 +578,29 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
                         ledger_entries.append(f"{current_date.strftime('%Y-%m-%d %H:%M:%S')},{action},{asset_name},{trade_shares:.4f},{actual_price:.2f},{trade_value:.2f},{stat_str}")
 
             # 3. Update Allocations
+                current_asset_values = {k: target_allocations[k] * simulated_equity for k in target_allocations.keys()}
                 current_allocations = target_allocations
         # else: hold current allocations unchanged — no trade, no fee
         
         # 3. Apply Mark-to-Market Growth based on the rebalanced target allocations OR organically drifted allocations
         equity_before = simulated_equity  # Fix 6: snapshot for per-bar PnL
-        asset_values = {
-            "spx": current_allocations["spx"] * simulated_equity * (1.0 + spx_1bar),
-            "short": current_allocations["short"] * simulated_equity * (1.0 - spx_1bar),
-            "btc": current_allocations["btc"] * simulated_equity * (1.0 + btc_1bar),
-            "gld": current_allocations["gld"] * simulated_equity * (1.0 + gld_1bar),
-            "wti": current_allocations["wti"] * simulated_equity * (1.0 + wti_1bar),
-            "nvda": current_allocations["nvda"] * simulated_equity * (1.0 + nvda_1bar),
-            "tsla": current_allocations["tsla"] * simulated_equity * (1.0 + tsla_1bar),
-            "dell": current_allocations["dell"] * simulated_equity * (1.0 + dell_1bar),
-            "spce": current_allocations["spce"] * simulated_equity * (1.0 + spce_1bar),
-            "cash": current_allocations["cash"] * simulated_equity
+        current_asset_values = {
+            "spx": current_asset_values["spx"] * (1.0 + spx_1bar),
+            "short": current_asset_values["short"] * (1.0 - spx_1bar),
+            "btc": current_asset_values["btc"] * (1.0 + btc_1bar),
+            "gld": current_asset_values["gld"] * (1.0 + gld_1bar),
+            "wti": current_asset_values["wti"] * (1.0 + wti_1bar),
+            "nvda": current_asset_values["nvda"] * (1.0 + nvda_1bar),
+            "tsla": current_asset_values["tsla"] * (1.0 + tsla_1bar),
+            "dell": current_asset_values["dell"] * (1.0 + dell_1bar),
+            "spce": current_asset_values["spce"] * (1.0 + spce_1bar),
+            "cash": current_asset_values["cash"]
         }
-        simulated_equity = sum(asset_values.values())
+        simulated_equity = sum(current_asset_values.values())
+        
+        # Update current allocations to reflect the new organic drift
+        if simulated_equity > 0:
+            current_allocations = {k: v / simulated_equity for k, v in current_asset_values.items()}
         
         # Fix 6: Track per-bar PnL for accurate win rate
         bar_pnl = simulated_equity - equity_before
@@ -607,10 +613,6 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
             "gate_passed": gate_passed,
             "circuit_breaker": circuit_breaker_active
         })
-        
-        # Organic Weight Drift (momentum drift)
-        if simulated_equity > 0:
-            current_allocations = {k: v / simulated_equity for k, v in asset_values.items()}
 
         # Backwards compatible fwd_5d_ret calculation for the report logging
         fwd_5d_ret = (
