@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import ErrorBoundary from './ErrorBoundary';
-import { Newspaper, Calendar, BrainCircuit, ShieldAlert, RefreshCw, AlertCircle, Loader } from 'lucide-react';
 import { apiPost } from '../App';
 
 function MacroTabContent() {
@@ -53,7 +52,7 @@ function MacroTabContent() {
 
   const ErrorBanner = () => (
     <div className="glass-panel animate-fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', padding: '40px', textAlign: 'center' }}>
-      <AlertCircle size={40} style={{ color: 'var(--pink)', opacity: 0.7 }} />
+      
       <div>
         <p style={{ fontFamily: 'JetBrains Mono', color: 'var(--pink-soft)', fontSize: '1rem', marginBottom: '8px' }}>
           Macro Agent Not Running
@@ -66,7 +65,7 @@ function MacroTabContent() {
       </div>
       <button className="btn-primary" onClick={handleRetry} disabled={retrying}
         style={{ marginTop: '8px' }}>
-        {retrying ? <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <RefreshCw size={14} />}
+
         {retrying ? 'Triggering pipeline...' : 'Trigger 1H Context Run'}
       </button>
       {economic_calendar?.events?.length > 0 && (
@@ -90,7 +89,7 @@ function MacroTabContent() {
         <div className="data-panel col-span-12 animate-fade-in delay-1">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
             <h2>
-              <BrainCircuit size={18} style={{ color: 'var(--pink)' }} /> LLM Macro Sentiment Reasoning
+               LLM Macro Sentiment Reasoning
             </h2>
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
               {lastFetch && (
@@ -99,14 +98,14 @@ function MacroTabContent() {
                 </span>
               )}
               <button className="btn-primary" style={{ padding: '5px 12px', fontSize: '0.78rem' }} onClick={fetchMacro}>
-                <RefreshCw size={12} /> Refresh
+                 Refresh
               </button>
             </div>
           </div>
 
           {isLocal && (
             <div style={{ padding: '10px 14px', marginBottom: '16px', backgroundColor: 'rgba(240,192,64,0.08)', border: '1px solid rgba(240,192,64,0.3)', borderRadius: '8px', display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <ShieldAlert size={15} style={{ color: 'var(--plasma-amber)', flexShrink: 0 }} />
+              
               <span style={{ color: 'var(--plasma-amber)', fontSize: '0.82rem', fontFamily: 'JetBrains Mono' }}>
                 Running in Local Bypass Mode — Gemini API key missing or invalid. Macro signal is fallback only.
               </span>
@@ -136,7 +135,7 @@ function MacroTabContent() {
 
               {news_signal?.quantitative_divergence_flag && (
                 <div style={{ padding: '10px 14px', backgroundColor: 'rgba(240,111,160,0.08)', border: '1px solid var(--pink-deep)', borderRadius: '8px', display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <ShieldAlert size={14} style={{ color: 'var(--pink)', flexShrink: 0 }} />
+                  
                   <span style={{ color: 'var(--pink-soft)', fontSize: '0.82rem', fontFamily: 'JetBrains Mono' }}>
                     Quantitative Divergence — narrative conflicts with price action.
                   </span>
@@ -172,7 +171,7 @@ function MacroTabContent() {
       {/* Economic Calendar — always show if data exists */}
       <div className="data-panel col-span-12 animate-fade-in delay-2">
         <h2>
-          <Calendar size={18} style={{ color: 'var(--lime)' }} /> Upcoming High-Impact Events
+           Upcoming High-Impact Events
         </h2>
 
         {(!economic_calendar?.events || economic_calendar.events.length === 0) ? (
@@ -195,7 +194,7 @@ function MacroTabContent() {
                 {economic_calendar.events.map((evt, i) => {
                   const d = new Date(evt.date);
                   return (
-                    <tr key={i} className="data-item" style={{ borderBottom: '1px solid rgba(184,245,66,0.04)' }}>
+                    <tr key={i} className="table-row-item" style={{ borderBottom: '1px solid rgba(184,245,66,0.04)' }}>
                       <td style={{ padding: '14px 12px', color: 'var(--text-main)' }}>
                         {d.toLocaleDateString()} <span className="text-muted">{d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                       </td>

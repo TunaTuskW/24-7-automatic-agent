@@ -197,14 +197,73 @@ def get_portfolio(type: str = "live"):
     ledger = []
     if os.path.exists(ledger_path):
         try:
+            full_ledger = []
             with open(ledger_path, 'r') as f:
                 reader = csv.DictReader(f)
                 for row in reader:
-                    ledger.append(row)
+                    full_ledger.append(row)
+            
+            realized_pnl = 0.0
+            cost_basis = {}
+            
+            for row in full_ledger:
+                ticker = row.get('ticker')
+                action = row.get('action')
+                
+                try:
+                    shares = float(row.get('shares', 0))
+                except ValueError:
+                    shares = 0.0
+                    
+                # fallback if shares is missing
+                try:
+                    price = float(row.get('price', 0))
+                    value = float(row.get('value', 0))
+                except ValueError:
+                    price = 0.0
+                    value = 0.0
+                    
+                if shares == 0 and price > 0:
+                    shares = value / price
+                    
+                if ticker not in cost_basis:
+                    cost_basis[ticker] = {'qty': 0.0, 'cost': 0.0}
+                    
+                if action == 'BUY':
+                    cost_basis[ticker]['qty'] += shares
+                    cost_basis[ticker]['cost'] += value
+                elif action == 'SELL':
+                    if cost_basis[ticker]['qty'] > 1e-6:
+                        fraction_sold = shares / cost_basis[ticker]['qty']
+                        fraction_sold = min(1.0, fraction_sold)
+                        cost_of_sold = cost_basis[ticker]['cost'] * fraction_sold
+                        
+                        cost_basis[ticker]['qty'] -= shares
+                        cost_basis[ticker]['cost'] -= cost_of_sold
+            
+            # The remaining cost_basis is the cost of currently open positions
+            total_open_cost = sum(v['cost'] for v in cost_basis.values() if v['qty'] > 1e-6)
+            
+            # Current value of open positions = Total Equity - Cash
+            current_open_value = portfolio.get('total_equity', 10000.0) - portfolio.get('cash', 10000.0)
+            
+            unrealized_pnl = current_open_value - total_open_cost
+            total_pnl = portfolio.get('total_equity', 10000.0) - 10000.0
+            realized_pnl = total_pnl - unrealized_pnl
+            
+            # If no open positions, force unrealized to 0
+            if abs(current_open_value) < 1.0:
+                unrealized_pnl = 0.0
+                realized_pnl = total_pnl
+                
+            portfolio['realized_pnl'] = realized_pnl
+            portfolio['unrealized_pnl'] = unrealized_pnl
+
             # Return last 50 trades, reversed (newest first)
-            ledger = ledger[-50:]
+            ledger = full_ledger[-50:]
             ledger.reverse()
-        except Exception:
+        except Exception as e:
+            print(f"Error processing ledger: {e}")
             pass
             
     return {
@@ -342,23 +401,39 @@ def update_trading_settings(payload: TradingSettingsPayload):
 import yfinance as yf
 
 @app.get("/api/chart/{ticker}")
-def get_chart_data(ticker: str):
+def get_chart_data(ticker: str, interval: str = "1d"):
     try:
         # Map ticker to YF
         yf_map = {"SPX": "^GSPC", "BTC": "BTC-USD", "GLD": "GC=F", "WTI": "CL=F", "SH": "SH"}
         yf_ticker = yf_map.get(ticker.upper(), ticker.upper())
         
         data = yf.Ticker(yf_ticker)
-        hist = data.history(period="180d", interval="1d")
+        
+        # Determine period based on interval
+        if interval in ["1h", "60m"]:
+            period = "60d"
+        elif interval == "1wk":
+            period = "2y"
+        else:
+            period = "180d"
+            
+        hist = data.history(period=period, interval=interval)
         
         chart_data = []
         for date, row in hist.iterrows():
+            # For intraday, we need timestamp in seconds, for daily we need YYYY-MM-DD
+            if interval in ["1h", "60m"]:
+                time_val = int(date.timestamp())
+            else:
+                time_val = date.strftime('%Y-%m-%d')
+                
             chart_data.append({
-                "time": date.strftime('%Y-%m-%d'),
+                "time": time_val,
                 "open": float(row["Open"]),
                 "high": float(row["High"]),
                 "low": float(row["Low"]),
-                "close": float(row["Close"])
+                "close": float(row["Close"]),
+                "value": float(row["Volume"])  # Volume uses 'value' in lightweight-charts
             })
             
         return {"data": chart_data}

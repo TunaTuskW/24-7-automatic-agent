@@ -1,0 +1,27 @@
+{
+    "timestamp_utc": "2026-06-21T00:00:42.351434+00:00",
+    "regime": "DEFENSIVE_RISK_OFF",
+    "regime_confidence": 0.5,
+    "entry_score": 0.55,
+    "entry_bias": "LONG",
+    "kelly_fraction": 0.0,
+    "conviction_gate_passed": false,
+    "macro_signal": "MIXED",
+    "macro_conviction": 0.5,
+    "signal_conflict": false,
+    "conflict_detail": "",
+    "recommended_action": "HOLD",
+    "recommended_allocations": {
+        "SPX": 0.0,
+        "Short": 0.0,
+        "Gold": 0.0,
+        "BTC": 0.0,
+        "WTI": 0.0,
+        "NVDA": 0.0,
+        "TSLA": 0.0,
+        "DELL": 0.0,
+        "SPCE": 0.0
+    },
+    "decision_rationale": "Regime is DEFENSIVE_RISK_OFF. Entry score is 0.55 (LONG). Gate blocked (needed 0.75).",
+    "risk_flags": []
+}

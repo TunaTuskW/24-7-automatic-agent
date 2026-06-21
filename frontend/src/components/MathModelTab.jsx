@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import ErrorBoundary from './ErrorBoundary';
-import { Database, Network, Cpu, AlertTriangle, TrendingUp, TrendingDown, Zap, BarChart2, GitBranch, Layers } from 'lucide-react';
 
 function FeatureBar({ label, value, max = 5 }) {
   const pct = Math.min(Math.abs(value) / max, 1) * 100;
@@ -77,7 +76,7 @@ function MathModelTabContent() {
       {/* Feature Vector */}
       <div className="data-panel col-span-12 animate-fade-in delay-1">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
-          <h2><Database size={17} style={{ color: 'var(--lime)' }} /> Data Science Layer — Input Vector</h2>
+          <h2> Data Science Layer — Input Vector</h2>
           {lastUpdate && (
             <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontFamily: 'JetBrains Mono' }}>
               Refreshed {lastUpdate.toLocaleTimeString()}
@@ -97,7 +96,7 @@ function MathModelTabContent() {
       {/* Epistemic Metrics */}
       {Object.keys(epistemic).length > 0 && (
         <div className="glass-panel col-span-6 animate-fade-in delay-1">
-          <h2><Zap size={17} style={{ color: 'var(--plasma-amber)' }} /> Epistemic Metrics</h2>
+          <h2> Epistemic Metrics</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontFamily: 'JetBrains Mono' }}>
             {epistemic.brier_score !== undefined && (
               <div className="data-item">
@@ -125,7 +124,7 @@ function MathModelTabContent() {
 
       {/* Regime Summary */}
       <div className="glass-panel col-span-6 animate-fade-in delay-1">
-        <h2><GitBranch size={17} style={{ color: 'var(--pink)' }} /> Active Regime</h2>
+        <h2> Active Regime</h2>
         <div style={{ marginBottom: '16px' }}>
           <p style={{ fontFamily: 'JetBrains Mono', color: 'var(--lime)', fontSize: '1.5rem', fontWeight: 700, marginBottom: '4px' }}>
             {dominantRegime.replace(/_/g, ' ')}
@@ -139,101 +138,105 @@ function MathModelTabContent() {
         ))}
       </div>
 
-      {/* Kalman Filter */}
-      <div className="glass-panel col-span-6 animate-fade-in delay-2">
-        <h2><Network size={17} style={{ color: 'var(--pink-soft)' }} /> Kalman Filter — Regime Probability</h2>
-        <div style={{ fontFamily: 'JetBrains Mono' }}>
-          <RegimeBar label="Risk On" value={kalman_state?.risk_on} color="var(--lime)" />
-          <RegimeBar label="Transitional" value={kalman_state?.transitional} color="var(--plasma-amber)" />
-          <RegimeBar label="Risk Off" value={kalman_state?.risk_off} color="var(--pink-deep)" />
+      <div className="col-span-6" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {/* Kalman Filter */}
+        <div className="glass-panel animate-fade-in delay-2">
+          <h2> Kalman Filter — Regime Probability</h2>
+          <div style={{ fontFamily: 'JetBrains Mono' }}>
+            <RegimeBar label="Risk On" value={kalman_state?.risk_on} color="var(--lime)" />
+            <RegimeBar label="Transitional" value={kalman_state?.transitional} color="var(--plasma-amber)" />
+            <RegimeBar label="Risk Off" value={kalman_state?.risk_off} color="var(--pink-deep)" />
+          </div>
+          {kalman_state?.is_ambiguous && (
+            <div style={{ marginTop: '16px', padding: '10px 14px', backgroundColor: 'rgba(240,192,64,0.08)', border: '1px solid var(--plasma-amber)', borderRadius: '8px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+              
+              <span style={{ color: 'var(--plasma-amber)', fontSize: '0.8rem', fontFamily: 'JetBrains Mono' }}>High structural ambiguity detected in covariance matrix.</span>
+            </div>
+          )}
+          {kalman_state?.gain !== undefined && (
+            <div style={{ marginTop: '14px', display: 'flex', gap: '16px', fontFamily: 'JetBrains Mono', fontSize: '0.8rem' }}>
+              <span className="text-muted">Kalman Gain: <span style={{ color: 'var(--lime)' }}>{kalman_state.gain?.toFixed(4)}</span></span>
+              {kalman_state?.innovation !== undefined && (
+                <span className="text-muted">Innovation: <span style={{ color: 'var(--lime)' }}>{kalman_state.innovation?.toFixed(4)}</span></span>
+              )}
+            </div>
+          )}
         </div>
-        {kalman_state?.is_ambiguous && (
-          <div style={{ marginTop: '16px', padding: '10px 14px', backgroundColor: 'rgba(240,192,64,0.08)', border: '1px solid var(--plasma-amber)', borderRadius: '8px', display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <AlertTriangle size={14} style={{ color: 'var(--plasma-amber)', flexShrink: 0 }} />
-            <span style={{ color: 'var(--plasma-amber)', fontSize: '0.8rem', fontFamily: 'JetBrains Mono' }}>High structural ambiguity detected in covariance matrix.</span>
+
+        {/* SMC State */}
+        {smc_state && Object.keys(smc_state).length > 0 && (
+          <div className="glass-panel animate-fade-in delay-2">
+            <h2> SMC State Machine</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontFamily: 'JetBrains Mono', fontSize: '0.82rem' }}>
+              {Object.entries(smc_state).map(([k, v]) => (
+                <div className="data-item" key={k}>
+                  <span className="text-muted" style={{ textTransform: 'uppercase', fontSize: '0.72rem', letterSpacing: '0.08em' }}>{k.replace(/_/g, ' ')}</span>
+                  <span style={{ color: v === true ? 'var(--lime)' : v === false ? 'var(--pink-deep)' : typeof v === 'number' ? (v > 0 ? 'var(--lime)' : v < 0 ? 'var(--pink)' : 'var(--text-muted)') : 'var(--text-main)' }}>
+                    {typeof v === 'boolean' ? (v ? 'YES' : 'NO') : typeof v === 'number' ? v.toFixed(4) : String(v)}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
-        {kalman_state?.gain !== undefined && (
-          <div style={{ marginTop: '14px', display: 'flex', gap: '16px', fontFamily: 'JetBrains Mono', fontSize: '0.8rem' }}>
-            <span className="text-muted">Kalman Gain: <span style={{ color: 'var(--lime)' }}>{kalman_state.gain?.toFixed(4)}</span></span>
-            {kalman_state?.innovation !== undefined && (
-              <span className="text-muted">Innovation: <span style={{ color: 'var(--lime)' }}>{kalman_state.innovation?.toFixed(4)}</span></span>
-            )}
+
+        {/* Trend State */}
+        {trend_state && Object.keys(trend_state).length > 0 && (
+          <div className="glass-panel animate-fade-in delay-3">
+            <h2> UT Bot Trend State</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontFamily: 'JetBrains Mono', fontSize: '0.82rem' }}>
+              {Object.entries(trend_state).map(([k, v]) => (
+                <div className="data-item" key={k}>
+                  <span className="text-muted" style={{ textTransform: 'uppercase', fontSize: '0.72rem', letterSpacing: '0.08em' }}>{k.replace(/_/g, ' ')}</span>
+                  <span style={{ color: typeof v === 'string' && v.includes('UP') ? 'var(--lime)' : typeof v === 'string' && v.includes('DOWN') ? 'var(--pink)' : 'var(--text-main)' }}>
+                    {typeof v === 'number' ? v.toFixed(4) : String(v)}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
 
-      {/* MLP Neural Net */}
-      <div className="glass-panel col-span-6 animate-fade-in delay-3">
-        <h2><Cpu size={17} style={{ color: 'var(--lime-soft)' }} /> MLP Deep Neural Net — Consensus</h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {mlp_deep_state && Object.entries(mlp_deep_state).map(([asset, preds]) => {
-            const bullP = (preds.bull_probability || 0) * 100;
-            const bearP = (preds.bear_probability || 0) * 100;
-            const bias = bullP > bearP ? 'BULL' : 'BEAR';
-            return (
-              <div key={asset} style={{ background: 'rgba(0,0,0,0.2)', padding: '14px 16px', borderRadius: '8px', border: '1px solid rgba(184,245,66,0.06)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ fontWeight: 700, color: '#fff', fontSize: '1rem', fontFamily: 'JetBrains Mono', textTransform: 'uppercase' }}>{asset}</span>
-                  <span style={{ fontSize: '0.72rem', padding: '2px 8px', borderRadius: '4px', background: bias === 'BULL' ? 'rgba(184,245,66,0.12)' : 'rgba(192,53,90,0.12)', color: bias === 'BULL' ? 'var(--lime)' : 'var(--pink)', fontFamily: 'JetBrains Mono', fontWeight: 700 }}>
-                    {bias === 'BULL' ? <TrendingUp size={10} style={{ display: 'inline', marginRight: '4px' }} /> : <TrendingDown size={10} style={{ display: 'inline', marginRight: '4px' }} />}
-                    {bias}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', gap: '24px', fontFamily: 'JetBrains Mono' }}>
-                  <div>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginBottom: '2px' }}>BULL</span>
-                    <span style={{ color: 'var(--lime)', fontWeight: 700, fontSize: '1.1rem' }}>{bullP.toFixed(1)}%</span>
+      <div className="col-span-6" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {/* MLP Neural Net */}
+        <div className="glass-panel animate-fade-in delay-3">
+          <h2> MLP Deep Neural Net — Consensus</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {mlp_deep_state && Object.entries(mlp_deep_state).map(([asset, preds]) => {
+              const bullP = (preds.bull_probability || 0) * 100;
+              const bearP = (preds.bear_probability || 0) * 100;
+              const bias = bullP > bearP ? 'BULL' : 'BEAR';
+              return (
+                <div key={asset} style={{ background: 'rgba(0,0,0,0.2)', padding: '14px 16px', borderRadius: '8px', border: '1px solid rgba(184,245,66,0.06)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <span style={{ fontWeight: 700, color: '#fff', fontSize: '1rem', fontFamily: 'JetBrains Mono', textTransform: 'uppercase' }}>{asset}</span>
+                    <span style={{ fontSize: '0.72rem', padding: '2px 8px', borderRadius: '4px', background: bias === 'BULL' ? 'rgba(184,245,66,0.12)' : 'rgba(192,53,90,0.12)', color: bias === 'BULL' ? 'var(--lime)' : 'var(--pink)', fontFamily: 'JetBrains Mono', fontWeight: 700 }}>
+
+                      {bias}
+                    </span>
                   </div>
-                  <div>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginBottom: '2px' }}>BEAR</span>
-                    <span style={{ color: 'var(--pink-deep)', fontWeight: 700, fontSize: '1.1rem' }}>{bearP.toFixed(1)}%</span>
-                  </div>
-                  <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-                    <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${bullP}%`, background: 'linear-gradient(90deg, var(--lime-dim), var(--lime))', transition: 'width 0.8s ease' }} />
+                  <div style={{ display: 'flex', gap: '24px', fontFamily: 'JetBrains Mono' }}>
+                    <div>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginBottom: '2px' }}>BULL</span>
+                      <span style={{ color: 'var(--lime)', fontWeight: 700, fontSize: '1.1rem' }}>{bullP.toFixed(1)}%</span>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginBottom: '2px' }}>BEAR</span>
+                      <span style={{ color: 'var(--pink-deep)', fontWeight: 700, fontSize: '1.1rem' }}>{bearP.toFixed(1)}%</span>
+                    </div>
+                    <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+                      <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${bullP}%`, background: 'linear-gradient(90deg, var(--lime-dim), var(--lime))', transition: 'width 0.8s ease' }} />
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
-
-      {/* SMC State */}
-      {smc_state && Object.keys(smc_state).length > 0 && (
-        <div className="glass-panel col-span-6 animate-fade-in delay-2">
-          <h2><Layers size={17} style={{ color: 'var(--pink-soft)' }} /> SMC State Machine</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontFamily: 'JetBrains Mono', fontSize: '0.82rem' }}>
-            {Object.entries(smc_state).map(([k, v]) => (
-              <div className="data-item" key={k}>
-                <span className="text-muted" style={{ textTransform: 'uppercase', fontSize: '0.72rem', letterSpacing: '0.08em' }}>{k.replace(/_/g, ' ')}</span>
-                <span style={{ color: v === true ? 'var(--lime)' : v === false ? 'var(--pink-deep)' : typeof v === 'number' ? (v > 0 ? 'var(--lime)' : v < 0 ? 'var(--pink)' : 'var(--text-muted)') : 'var(--text-main)' }}>
-                  {typeof v === 'boolean' ? (v ? 'YES' : 'NO') : typeof v === 'number' ? v.toFixed(4) : String(v)}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Trend State */}
-      {trend_state && Object.keys(trend_state).length > 0 && (
-        <div className="glass-panel col-span-6 animate-fade-in delay-3">
-          <h2><BarChart2 size={17} style={{ color: 'var(--lime-soft)' }} /> UT Bot Trend State</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontFamily: 'JetBrains Mono', fontSize: '0.82rem' }}>
-            {Object.entries(trend_state).map(([k, v]) => (
-              <div className="data-item" key={k}>
-                <span className="text-muted" style={{ textTransform: 'uppercase', fontSize: '0.72rem', letterSpacing: '0.08em' }}>{k.replace(/_/g, ' ')}</span>
-                <span style={{ color: typeof v === 'string' && v.includes('UP') ? 'var(--lime)' : typeof v === 'string' && v.includes('DOWN') ? 'var(--pink)' : 'var(--text-main)' }}>
-                  {typeof v === 'number' ? v.toFixed(4) : String(v)}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
     </div>
   );

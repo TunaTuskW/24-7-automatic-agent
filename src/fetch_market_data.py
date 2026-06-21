@@ -590,7 +590,7 @@ class Conductor:
                 hmm_regime=self.snapshot.regime.current,
                 current_ihi=current_ihi,
                 is_downtrend=is_downtrend,
-                max_kelly_cap=0.30 if self.interval == "4h" else 0.40,
+                max_kelly_cap=0.40 if self.interval == "4h" else 0.60,
                 equity_drawdown=self.paper_broker.get_equity_drawdown(),
                 entry_score=entry_score
             )
@@ -796,11 +796,11 @@ class Conductor:
         news_signal = self.snapshot.news_signal
         
         CONVICTION_GATE = {
-            "RISK_ON_EXPANSION":      0.45,
-            "LIQUIDITY_DRIVEN_RALLY": 0.50,
-            "NEUTRAL_TRANSITIONAL":   0.65,
+            "RISK_ON_EXPANSION":      0.40,
+            "LIQUIDITY_DRIVEN_RALLY": 0.45,
+            "NEUTRAL_TRANSITIONAL":   0.60,
             "DEFENSIVE_RISK_OFF":     0.75,
-            "VOLATILITY_EXPANSION":   0.80,
+            "VOLATILITY_EXPANSION":   0.85,
         }
         
         entry_threshold = CONVICTION_GATE.get(dominant_regime, 0.60)
@@ -818,7 +818,13 @@ class Conductor:
             "SPCE":  kelly_obj.get("SPCE_Kelly", 0.0)
         }
         
-        if not gate_passed:
+        equity_drawdown = self.paper_broker.get_equity_drawdown()
+        if equity_drawdown > 0.15:
+            logger.warning(f"CIRCUIT BREAKER: Drawdown {equity_drawdown:.2%} > 15%. Liquidating to cash.")
+            target_allocs = {k: 0.0 for k in target_allocs}
+            recommended_action = "LIQUIDATE_ALL"
+            gate_passed = False
+        elif not gate_passed:
             logger.warning(f"Conviction gate blocked execution. Score {entry_score:.2f} < threshold {entry_threshold:.2f} for {dominant_regime}. Holding cash.")
             target_allocs = {k: 0.0 for k in target_allocs}
             recommended_action = "HOLD"

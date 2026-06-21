@@ -1,9 +1,9 @@
-# Concept and Model: v6.4.0 Multi-Asset Trading Terminal & Dynamic Conviction Edge OS
+# Concept and Model: v6.5.0 Multi-Asset Trading Terminal & Dynamic Conviction Edge OS
 
 ## Core Concept
 The Macro Briefing Agent has evolved into a fully autonomous, multi-asset trading engine capable of processing mathematical models for an array of global assets, specifically: `SPX`, `BTC`, `GLD`, `WTI`, `NVDA`, `TSLA`, `DELL`, and `SPCE`. 
 
-Unlike traditional trading systems that utilize static thresholds, v6.4.0 operates a **Dynamic Conviction Edge OS**. This framework evaluates not only the direction of an asset but enforces extremely strict, mathematically optimal "edges" based on the underlying volatility and beta profile of that specific asset.
+Unlike traditional trading systems that utilize static thresholds, v6.5.0 operates a **Dynamic Conviction Edge OS**. This framework evaluates not only the direction of an asset but enforces extremely strict, mathematically optimal "edges" based on the underlying volatility and beta profile of that specific asset.
 
 ## 1. Dynamic Asset Conviction Edge
 The Risk Engine (`src/engines/risk_engine.py`) has been overhauled to apply per-asset Kelly Criterion base thresholds:
@@ -38,7 +38,7 @@ To prevent a single asset's data outage (e.g., Yahoo Finance failing to deliver 
 - The Capital Rotation Engine has been moved to execute **AFTER** the universal regime and Ensemble locks. This ensures that when single-name high-beta tech assets are forbidden (zeroed out), they are not re-amplified by the SPX rotation boost.
 
 ## 6. Core Bug Fixes and Code Alignment
-To ensure model fidelity and operational stability under stress, key fixes implemented in v6.4.0 include:
+To ensure model fidelity and operational stability under stress, key fixes implemented in v6.5.0 include:
 
 1. **Feature Rolling Window Alignment:** Set `self.dynamic_rolling_window = 20` to ensure alignment between real-time data frame generation and the historical feature metrics.
 2. **Feature Label Remapping:** Adjusted ordered feature keys from `spx_macd` to `spx_macd_hist`.
@@ -52,7 +52,7 @@ To ensure model fidelity and operational stability under stress, key fixes imple
 10. **API Hardening:** Locked previously exposed endpoints with `dependencies=[Depends(require_auth)]`.
 11. **Parallel RSS Fetching:** Replaced sequential feed fetching with a `ThreadPoolExecutor` and 8-second global timeout, preventing stale feeds from hanging the pipeline.
 
-## v6.4.0 Multi-Asset Trading Terminal & Dynamic Conviction Edge OS
+## v6.5.0 Multi-Asset Trading Terminal & Dynamic Conviction Edge OS
 
 The data pipeline operates as an enterprise-grade containerized event-driven OS featuring parallel LLM experts, step-by-step Chain-of-Thought (CoT) verification, and quantitative divergence protection filters.
 
@@ -183,3 +183,8 @@ The Python architecture is structured as a modular quantitative pipeline. Below 
 4. **`backtest.py` (Empirical Backtest Audit Engine)**
    - **Evaluation:** Loads the active models and decodes 2 years of daily market features into chronological state labels sequence.
    - **Statistical Auditing:** Measures mean daily returns, annualizes SPX/WTI metrics, and compiles daily yield changes (in basis points) across all regimes, outputting a clear performance audit.
+
+## New in v6.5.0
+- **AdvancedRealTimeChart Integration**: Seamless replacement of lightweight-charts with the official TradingView Advanced Chart widget for 1:1 replica of institutional trading terminals, including full multi-timeframe capability and built-in technical indicators.
+- **Precision PnL Mathematical Engine**: Backend API mathematically derives Unrealized PnL from exact Open Positions (`Total Equity - Cash`), forcing zero drift and perfectly absorbing all execution slippage and commissions into Realized PnL.
+- **Enhanced Aesthetic Profile**: Streamlined visual styling, removal of distracting icons/emojis, and adoption of professional institutional color palettes.

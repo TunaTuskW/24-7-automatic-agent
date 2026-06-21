@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Key, MessageSquare, Check, Loader2 } from 'lucide-react';
 
 export default function SettingsTab() {
   const [settings, setSettings] = useState(null);
@@ -69,7 +68,7 @@ export default function SettingsTab() {
     <div className="grid-layout">
       
       <div className="glass-panel col-span-12 animate-fade-in delay-1" style={{ maxWidth: '800px', margin: '0 auto' }}>
-        <h2 style={{ marginBottom: '24px' }}><Settings size={20} className="text-muted"/> System Configuration</h2>
+        <h2 style={{ marginBottom: '24px' }}> System Configuration</h2>
         
         <p className="text-muted" style={{ marginBottom: '32px', fontSize: '0.9rem' }}>
           Configure API credentials and external service integrations. Keys are masked for security. 
@@ -81,7 +80,7 @@ export default function SettingsTab() {
           {/* Gemini API Key */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <label style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Key size={16} className="text-accent" /> Google Gemini API Key
+               Google Gemini API Key
             </label>
             <p className="text-muted" style={{ fontSize: '0.8rem' }}>Used for the LLM Macro Sentiment Agent.</p>
             <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
@@ -92,14 +91,14 @@ export default function SettingsTab() {
                 onChange={(e) => setInputs({...inputs, gemini_key: e.target.value})}
                 style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: 'white', fontFamily: 'monospace' }}
               />
-              {settings.has_gemini && <span style={{ color: 'var(--success)', fontSize: '0.85rem' }}><Check size={14}/> Active</span>}
+              {settings.has_gemini && <span style={{ color: 'var(--success)', fontSize: '0.85rem' }}> Active</span>}
             </div>
           </div>
 
           {/* FRED API Key */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
             <label style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Key size={16} className="text-accent" /> FRED API Key
+               FRED API Key
             </label>
             <p className="text-muted" style={{ fontSize: '0.8rem' }}>Used to fetch Federal Reserve economic data like the Yield Curve.</p>
             <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
@@ -110,14 +109,14 @@ export default function SettingsTab() {
                 onChange={(e) => setInputs({...inputs, fred_key: e.target.value})}
                 style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: 'white', fontFamily: 'monospace' }}
               />
-              {settings.has_fred && <span style={{ color: 'var(--success)', fontSize: '0.85rem' }}><Check size={14}/> Active</span>}
+              {settings.has_fred && <span style={{ color: 'var(--success)', fontSize: '0.85rem' }}> Active</span>}
             </div>
           </div>
 
           {/* Discord Webhook */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
             <label style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <MessageSquare size={16} className="text-accent" /> Discord Webhook URL
+               Discord Webhook URL
             </label>
             <p className="text-muted" style={{ fontSize: '0.8rem' }}>Used by the Paper Trader to push execution alerts to your Discord channel.</p>
             <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
@@ -128,7 +127,7 @@ export default function SettingsTab() {
                 onChange={(e) => setInputs({...inputs, discord_webhook: e.target.value})}
                 style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: 'white', fontFamily: 'monospace' }}
               />
-              {settings.has_webhook && <span style={{ color: 'var(--success)', fontSize: '0.85rem' }}><Check size={14}/> Active</span>}
+              {settings.has_webhook && <span style={{ color: 'var(--success)', fontSize: '0.85rem' }}> Active</span>}
             </div>
           </div>
 
@@ -152,13 +151,13 @@ export default function SettingsTab() {
               gap: '8px'
             }}
           >
-            {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Settings size={18} />}
+
             Save Settings
           </button>
           
           {saveSuccess && (
             <span style={{ color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold' }}>
-              <Check size={18} /> Configuration Saved Successfully!
+               Configuration Saved Successfully!
             </span>
           )}
         </div>

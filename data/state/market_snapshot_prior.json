@@ -1,5 +1,5 @@
 {
-    "generated_utc": "2026-06-20T18:00:31.938427+00:00",
+    "generated_utc": "2026-06-21T00:00:42.351434+00:00",
     "raw_indicators": {
         "SPX": {
             "current": 7497.8599,
@@ -353,13 +353,13 @@
             "momentum": "down"
         },
         "BTC": {
-            "current": 63777.0,
-            "prev": 63751.1719,
-            "delta": 25.8281,
-            "delta_pct": 0.041,
-            "mean_60d": 63252.019,
-            "std_60d": 550.7753,
-            "z_score": 0.105,
+            "current": 64229.6719,
+            "prev": 64208.4688,
+            "delta": 21.2031,
+            "delta_pct": 0.033,
+            "mean_60d": 63237.1368,
+            "std_60d": 525.825,
+            "z_score": 0.081,
             "momentum": "up"
         },
         "IBIT": {
@@ -449,66 +449,66 @@
         "spread_2s10s": 0.29
     },
     "market_extremes_insight": {
-        "temperature_zscore": -0.67,
+        "temperature_zscore": 0.321,
         "temperature_state": "NORMAL",
         "crowded_state": "BALANCED",
         "fragility_score": 0.0,
         "vvix_vix_ratio": 5.25
     },
     "regime": {
-        "current": "NEUTRAL_TRANSITIONAL",
-        "dominant_regime": "NEUTRAL_TRANSITIONAL",
-        "tactical_alpha_regime": "NEUTRAL_TRANSITIONAL",
+        "current": "DEFENSIVE_RISK_OFF",
+        "dominant_regime": "DEFENSIVE_RISK_OFF",
+        "tactical_alpha_regime": "DEFENSIVE_RISK_OFF",
         "probabilities": {
             "RISK_ON_EXPANSION": 0.0,
-            "LIQUIDITY_DRIVEN_RALLY": 0.15,
-            "NEUTRAL_TRANSITIONAL": 0.7,
-            "DEFENSIVE_RISK_OFF": 0.15,
-            "VOLATILITY_EXPANSION": 0.0
+            "LIQUIDITY_DRIVEN_RALLY": 0.0,
+            "NEUTRAL_TRANSITIONAL": 0.4,
+            "DEFENSIVE_RISK_OFF": 0.5,
+            "VOLATILITY_EXPANSION": 0.1
         },
         "tactical_alpha_probabilities": {
             "RISK_ON_EXPANSION": 0.0,
-            "LIQUIDITY_DRIVEN_RALLY": 0.15,
-            "NEUTRAL_TRANSITIONAL": 0.7,
-            "DEFENSIVE_RISK_OFF": 0.15,
-            "VOLATILITY_EXPANSION": 0.0
+            "LIQUIDITY_DRIVEN_RALLY": 0.0,
+            "NEUTRAL_TRANSITIONAL": 0.4,
+            "DEFENSIVE_RISK_OFF": 0.5,
+            "VOLATILITY_EXPANSION": 0.1
         },
-        "transition_risk": 0.0,
-        "start_utc": "2026-06-20T01:25:05.188258+00:00",
-        "duration_days": 0.6912695522916666
+        "transition_risk": 0.060000000000000026,
+        "start_utc": "2026-06-20T19:00:41.855522+00:00",
+        "duration_days": 0.2083265522800926
     },
     "kalman_state": {
-        "dominant_prob": 0.841,
+        "dominant_prob": 0.82,
         "dominant_state": "transitional",
-        "tvd": 0.8068,
-        "brier_score_calibration": 0.2674,
+        "tvd": 0.8712,
+        "brier_score_calibration": 0.291,
         "structural_ambiguity_index": 0.0,
         "probabilities": [
-            0.11165336941813424,
-            0.04735172289978859,
-            0.8409949076820772
+            0.04787868344581005,
+            0.13234192112680723,
+            0.8197793954273828
         ],
         "covariance_matrix": [
             [
-                0.02173889544979701,
-                0.0007136762268784905,
-                0.0007136762268784906
+                0.021738895449797017,
+                0.0007136762268784909,
+                0.000713676226878491
             ],
             [
-                0.0007136762268784906,
+                0.0007136762268784907,
                 0.02173889544979702,
                 0.000713676226878491
             ],
             [
-                0.0007136762268784906,
+                0.0007136762268784909,
                 0.000713676226878491,
                 0.02173889544979702
             ]
         ],
         "is_ambiguous": false,
-        "risk_on": 0.112,
-        "risk_off": 0.047,
-        "transitional": 0.841
+        "risk_on": 0.048,
+        "risk_off": 0.132,
+        "transitional": 0.82
     },
     "mlp_deep_state": {
         "spx": {
@@ -597,7 +597,7 @@
             0.254,
             0.06,
             0.29,
-            0.041,
+            0.033,
             0.179,
             1.152,
             -1.519,
@@ -616,7 +616,7 @@
             "gsr_ret": 0.254,
             "us10y_delta": 0.06,
             "spread_level": 0.29,
-            "btc_ret": 0.041,
+            "btc_ret": 0.033,
             "nvda_ret": 0.179,
             "tsla_ret": 1.152,
             "dell_ret": -1.519,
@@ -627,18 +627,18 @@
             "vix_corr": 0.0
         },
         "epistemic_metrics": {
-            "shannon_entropy": 0.976,
+            "shannon_entropy": 1.361,
             "kelly_exposure_fraction": {
                 "SPX_Kelly": 0.0,
-                "Short_Kelly": 0.0,
+                "Short_Kelly": 0.118,
                 "BTC_Kelly": 0.0,
-                "GLD_Kelly": 0.0,
+                "GLD_Kelly": 0.047,
                 "WTI_Kelly": 0.0,
                 "NVDA_Kelly": 0.0,
                 "TSLA_Kelly": 0.0,
                 "DELL_Kelly": 0.0,
                 "SPCE_Kelly": 0.0,
-                "Cash": 1.0
+                "Cash": 0.835
             },
             "is_high_risk_edge": true,
             "is_capitulation_override_active": false
@@ -831,15 +831,15 @@
         "smc_bias": 0
     },
     "session_state": {
-        "current_session": "NEW_YORK",
-        "session_bias": "TREND_CONFIRMING",
-        "asia_high": 0.0,
-        "asia_low": 0.0,
-        "london_swept_asia_high": false,
+        "current_session": "ASIA",
+        "session_bias": "RANGE",
+        "asia_high": 7568.25,
+        "asia_low": 7530.75,
+        "london_swept_asia_high": true,
         "london_swept_asia_low": false,
-        "favorable_for_entry": true,
-        "orb_signal": 0,
-        "orb_strength": 0.0,
+        "favorable_for_entry": false,
+        "orb_signal": -1,
+        "orb_strength": 0.17543859649122806,
         "td9_exhaustion": false,
         "td9_direction": 1,
         "td9_count": 6,
@@ -859,5 +859,5 @@
         "slow_signal": -1,
         "atr_stop_fast": 7444.130965592028
     },
-    "timestamp": "2026-06-20T18:00:31.943823+00:00"
+    "timestamp": "2026-06-21T00:00:42.358643+00:00"
 }

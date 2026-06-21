@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Activity, Database, BrainCircuit, ShieldAlert, Save, CheckCircle, Zap, Globe } from 'lucide-react';
 
 export default function PipelineVisualizer() {
   const [logs, setLogs] = useState([]);
@@ -42,7 +41,7 @@ export default function PipelineVisualizer() {
 
   const isComplete = activeComponent === "complete";
 
-  const Node = ({ id, label, icon: Icon, components, delay = "0s", highlightColor = "#00f0ff" }) => {
+  const Node = ({ id, label, components, delay = "0s", highlightColor = "#00f0ff" }) => {
     const active = isActive(components) || (isComplete && id === 'complete');
     return (
       <div style={{
@@ -60,7 +59,7 @@ export default function PipelineVisualizer() {
           boxShadow: active ? `0 0 25px ${highlightColor}80, inset 0 0 10px ${highlightColor}40` : '0 4px 6px rgba(0,0,0,0.1)',
           color: active ? highlightColor : '#aaa'
         }}>
-          <Icon size={24} />
+          <span style={{ fontSize: '20px', fontWeight: 'bold' }}>{label.charAt(0)}</span>
         </div>
         <span style={{ fontSize: '0.75rem', fontWeight: active ? 'bold' : 'normal', color: active ? '#fff' : '#888', textShadow: active ? `0 0 5px ${highlightColor}` : 'none' }}>
           {label}
@@ -72,7 +71,7 @@ export default function PipelineVisualizer() {
   return (
     <div style={{ padding: '20px', background: 'rgba(0,0,0,0.2)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
       <h3 style={{ margin: '0 0 20px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <Activity className="text-accent" size={18} /> Process Graph Visualizer
+         Process Graph Visualizer
       </h3>
 
       {/* Graph Area */}
@@ -103,27 +102,27 @@ export default function PipelineVisualizer() {
 
         {/* Nodes Positioning */}
         <div style={{ position: 'absolute', top: '0px', left: '50%', transform: 'translateX(-50%)' }}>
-          <Node id="trigger" label="Conductor" icon={Zap} components={['conductor']} highlightColor="#ffd700" />
+          <Node id="trigger" label="Conductor" components={['conductor']} highlightColor="#ffd700" />
         </div>
 
         <div style={{ position: 'absolute', top: '100px', left: '250px', transform: 'translateX(-50%)' }}>
-          <Node id="ingest1" label="Data Ingestion" icon={Database} components={['yahoo-adapter', 'forexfactory-adapter', 'economic-calendar']} />
+          <Node id="ingest1" label="Data Ingestion" components={['yahoo-adapter', 'forexfactory-adapter', 'economic-calendar']} />
         </div>
 
         <div style={{ position: 'absolute', top: '100px', left: '550px', transform: 'translateX(-50%)' }}>
-          <Node id="inference1" label="State Filters" icon={BrainCircuit} components={['hmm-engine', 'kalman-filter']} highlightColor="#bd00ff" />
+          <Node id="inference1" label="State Filters" components={['hmm-engine', 'kalman-filter']} highlightColor="#bd00ff" />
         </div>
 
         <div style={{ position: 'absolute', top: '200px', left: '50%', transform: 'translateX(-50%)' }}>
-          <Node id="inference" label="AI Consensus" icon={Activity} components={['gemini-adapter', 'consensus-engine']} highlightColor="#00f0ff" />
+          <Node id="inference" label="AI Consensus" components={['gemini-adapter', 'consensus-engine']} highlightColor="#00f0ff" />
         </div>
 
         <div style={{ position: 'absolute', top: '290px', left: '300px', transform: 'translateX(-50%)' }}>
-          <Node id="risk" label="Risk Engine" icon={ShieldAlert} components={['risk-engine']} highlightColor="#ff4444" />
+          <Node id="risk" label="Risk Engine" components={['risk-engine']} highlightColor="#ff4444" />
         </div>
         
         <div style={{ position: 'absolute', top: '290px', left: '500px', transform: 'translateX(-50%)' }}>
-          <Node id="lake" label="Data Lake" icon={Save} components={['lake-manager']} highlightColor="#00ff00" />
+          <Node id="lake" label="Data Lake" components={['lake-manager']} highlightColor="#00ff00" />
         </div>
 
         {/* Floating Active State Message Box */}
@@ -136,17 +135,17 @@ export default function PipelineVisualizer() {
             zIndex: 10, display: 'flex', alignItems: 'center', gap: '8px',
             animation: 'slide-up 0.3s ease-out'
           }}>
-            <Activity size={14} className="text-accent" style={{ animation: 'spin 2s linear infinite' }} />
+            
             <span style={{ color: '#ffb86c' }}>[{activeComponent}]</span> {activeMessage}
           </div>
         )}
       </div>
       
       <div style={{ marginTop: '20px', padding: '12px', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', fontFamily: 'monospace', fontSize: '0.75rem', color: '#aaa', maxHeight: '150px', overflowY: 'auto' }}>
-        {logs.map((log, i) => (
+        {logs.filter(log => log.component || log.message).map((log, i) => (
           <div key={i} style={{ marginBottom: '4px' }}>
             <span style={{ color: '#555' }}>{log.timestamp}</span>{' '}
-            <span style={{ color: log.level === 'ERROR' ? '#ff4444' : log.level === 'WARNING' ? '#ffb86c' : '#00f0ff' }}>[{log.component}]</span>{' '}
+            {log.component && <span style={{ color: log.level === 'ERROR' ? '#ff4444' : log.level === 'WARNING' ? '#ffb86c' : '#00f0ff' }}>[{log.component}]</span>}{' '}
             {log.message}
           </div>
         ))}

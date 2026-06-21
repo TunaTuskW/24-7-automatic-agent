@@ -7,7 +7,6 @@ import MacroTab from './components/MacroTab';
 import DiagnosticsTab from './components/DiagnosticsTab';
 import SettingsTab from './components/SettingsTab';
 import ReportsTab from './components/ReportsTab';
-import { Settings, FileText, FlaskConical } from 'lucide-react';
 import './index.css';
 
 // Auth helper — reads stored key from localStorage (set in Settings tab)
@@ -72,22 +71,20 @@ function App() {
 
   return (
     <div className="dashboard-container">
-      {/* Signature Identity Bar */}
-      <header className="identity-header animate-fade-in">
+      {/* Identity Bar */}
+      <header className="identity-header">
         <div className="logotype">
-          <FlaskConical size={20} color="var(--lime)" />
-          i made this for fund v6.4.0
+          [SYS] I MADE THIS FOR FUND v6.5.0
         </div>
         
         <div className="header-center">
-          <span>◉ {data.regime.replace(/_/g, ' ')}</span>
-          <span style={{ color: 'var(--plasma-purple)' }}>
-            {(data.regimeProb * 100).toFixed(1)}%
-          </span>
+          <span className="text-muted">REGIME:</span>
+          <span className="text-cyan">{data.regime.replace(/_/g, ' ')}</span>
+          <span className="text-purple">{(data.regimeProb * 100).toFixed(1)}%</span>
         </div>
 
         <div className="header-right">
-          <span>UTC {utcClock}</span>
+          <span className="text-muted">UTC {utcClock}</span>
           <div className="status-beacon">
             <div className="status-dot"></div>
             {data.status.toUpperCase()}
@@ -95,27 +92,20 @@ function App() {
         </div>
       </header>
       
-      {/* Segmented Orbital Selector */}
-      <div className="orbital-nav animate-fade-in delay-1">
-        <button className={`orbital-tab ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}>Overview</button>
-        <button className={`orbital-tab ${activeTab === 'terminal' ? 'active' : ''}`} onClick={() => setActiveTab('terminal')}>Terminal</button>
-        <button className={`orbital-tab ${activeTab === 'trading' ? 'active' : ''}`} onClick={() => setActiveTab('trading')}>Paper Trading</button>
-        <button className={`orbital-tab ${activeTab === 'macro' ? 'active' : ''}`} onClick={() => setActiveTab('macro')}>Macro</button>
-        <button className={`orbital-tab ${activeTab === 'model' ? 'active' : ''}`} onClick={() => setActiveTab('model')}>Math Model</button>
-        <button className={`orbital-tab ${activeTab === 'logs' ? 'active' : ''}`} onClick={() => setActiveTab('logs')}>Diagnostics</button>
-        
-        <div style={{ width: '1px', background: 'rgba(0,255,224,0.2)', margin: '0 8px' }}></div>
-        
-        <button className={`orbital-tab ${activeTab === 'reports' ? 'active' : ''}`} onClick={() => setActiveTab('reports')} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <FileText size={16}/> Reports
-        </button>
-        <button className={`orbital-tab ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Settings size={16}/> Settings
-        </button>
+      {/* Segmented Orbital Selector -> High Density Tabs */}
+      <div className="orbital-nav">
+        <button className={`orbital-tab ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}>[ OVERVIEW ]</button>
+        <button className={`orbital-tab ${activeTab === 'terminal' ? 'active' : ''}`} onClick={() => setActiveTab('terminal')}>[ TERMINAL ]</button>
+        <button className={`orbital-tab ${activeTab === 'trading' ? 'active' : ''}`} onClick={() => setActiveTab('trading')}>[ LEDGER ]</button>
+        <button className={`orbital-tab ${activeTab === 'macro' ? 'active' : ''}`} onClick={() => setActiveTab('macro')}>[ MACRO ]</button>
+        <button className={`orbital-tab ${activeTab === 'model' ? 'active' : ''}`} onClick={() => setActiveTab('model')}>[ MODELS ]</button>
+        <button className={`orbital-tab ${activeTab === 'logs' ? 'active' : ''}`} onClick={() => setActiveTab('logs')}>[ DIAGNOSTICS ]</button>
+        <button className={`orbital-tab ${activeTab === 'reports' ? 'active' : ''}`} onClick={() => setActiveTab('reports')}>[ REPORTS ]</button>
+        <button className={`orbital-tab ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>[ SYS_CFG ]</button>
       </div>
 
       {/* Main Tab Content */}
-      <main className="animate-fade-in delay-2">
+      <main>
         {activeTab === 'overview' && <OverviewTab data={data} />}
         {activeTab === 'terminal' && <TradingTerminal />}
         {activeTab === 'trading' && <PaperTradingTab />}

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Terminal, RefreshCw } from 'lucide-react';
 
 export default function DiagnosticsTab() {
   const [logs, setLogs] = useState([]);
@@ -44,7 +43,7 @@ export default function DiagnosticsTab() {
       <div className="data-panel col-span-12 animate-fade-in delay-1" style={{ display: 'flex', flexDirection: 'column', height: '70vh' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-            <Terminal size={20} className="text-plasma-cyan" /> System Diagnostics Console
+             System Diagnostics Console
           </h2>
           <div style={{ display: 'flex', gap: '16px', alignItems: 'center', fontFamily: 'JetBrains Mono' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', cursor: 'pointer', color: 'var(--plasma-cyan)' }}>
@@ -57,7 +56,7 @@ export default function DiagnosticsTab() {
               Auto-scroll
             </label>
             <button onClick={fetchLogs} style={{ background: 'transparent', border: 'none', color: 'var(--plasma-cyan)', cursor: 'pointer' }}>
-              <RefreshCw size={16} />
+              
             </button>
           </div>
         </div>

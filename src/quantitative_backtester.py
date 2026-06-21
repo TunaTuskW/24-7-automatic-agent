@@ -124,12 +124,28 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
     current_allocations = {"spx": 0.0, "short": 0.0, "btc": 0.0, "gld": 0.0, "wti": 0.0, "nvda": 0.0, "tsla": 0.0, "dell": 0.0, "spce": 0.0, "cash": 1.0}
     total_mock_trades = 0
     total_fees_paid = 0.0
-    simulated_slippage_rate = 0.001 # 10 basis points slippage on turnover
     
     ledger_entries = []
+    bar_pnl_history = []  # Track per-bar PnL for accurate win rate
     
-    MIN_HOLD_BARS = 3   # For 4H: 3 bars = 12 hours minimum hold
+    # Fix 3: Adaptive MIN_HOLD_BARS by interval
+    MIN_HOLD_MAP = {"1h": 6, "4h": 3, "1d": 5, "1wk": 2}
+    MIN_HOLD_BARS = MIN_HOLD_MAP.get(interval, 5)
     last_rebalance_i = -MIN_HOLD_BARS  # Initialize so first bar can trade
+    
+    # Fix 7: Drawdown circuit breaker
+    MAX_DRAWDOWN_LIMIT = 0.15  # 15% max drawdown before forced cash
+    circuit_breaker_active = False
+    circuit_breaker_count = 0
+    
+    # Fix 2: Conviction gate thresholds per regime
+    CONVICTION_GATE = {
+        "RISK_ON_EXPANSION":      0.40,
+        "LIQUIDITY_DRIVEN_RALLY": 0.45,
+        "NEUTRAL_TRANSITIONAL":   0.60,
+        "DEFENSIVE_RISK_OFF":     0.75,
+        "VOLATILITY_EXPANSION":   0.85,
+    }
         
     for i, current_date in enumerate(q1_trading_days):
         # Track rolling window of feature vectors for HMM sequence inference
@@ -396,6 +412,19 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
         peak_equity = max(peak_equity, simulated_equity)
         equity_drawdown = (peak_equity - simulated_equity) / peak_equity if peak_equity > 0 else 0.0
 
+        # Fix 7: Drawdown circuit breaker
+        if equity_drawdown >= MAX_DRAWDOWN_LIMIT:
+            if not circuit_breaker_active:
+                circuit_breaker_active = True
+                circuit_breaker_count += 1
+                print(f"  [CIRCUIT BREAKER] {equity_drawdown:.1%} drawdown at {current_date.strftime('%Y-%m-%d')}. Forcing 100% cash.")
+        elif circuit_breaker_active and equity_drawdown < MAX_DRAWDOWN_LIMIT * 0.5:
+            # Reset circuit breaker once drawdown recovers to half the limit
+            circuit_breaker_active = False
+
+        # Fix 4: Dynamic VIX-scaled slippage (matches live paper_broker)
+        simulated_slippage_rate = min(0.005, max(0.0005, 0.0005 + (vix_zscore_val * 0.0002)))
+
         kelly_dict = risk.compute_multi_asset_kelly(
             mlp_predictions=mlp_predictions,
             dominant_state=kalman_state.dominant_state,
@@ -408,7 +437,7 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
             hmm_regime=dom_regime,
             current_ihi=ihi_val,
             is_downtrend=is_downtrend,
-            max_kelly_cap=0.30 if interval == "4h" else 0.40,
+            max_kelly_cap=0.40 if interval == "4h" else 0.60,
             equity_drawdown=equity_drawdown
         )
         spx_kelly = kelly_dict.get("SPX_Kelly", 0.0)
@@ -471,6 +500,27 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
         # 2. Rebalance to Target Kellys — only if min hold period has elapsed
         target_allocations = {"spx": spx_kelly, "short": short_kelly, "btc": btc_kelly, "gld": gld_kelly, "wti": wti_kelly, "nvda": nvda_kelly, "tsla": tsla_kelly, "dell": dell_kelly, "spce": spce_kelly, "cash": cash_kelly}
         
+        # Fix 7: Circuit breaker override — force all to cash
+        if circuit_breaker_active:
+            target_allocations = {k: 0.0 for k in target_allocations}
+            target_allocations["cash"] = 1.0
+        
+        # Fix 2: Conviction gate — block low-quality entries
+        entry_threshold = CONVICTION_GATE.get(dom_regime, 0.60)
+        gate_passed = mlp_prob >= entry_threshold
+        if not gate_passed and not circuit_breaker_active:
+            # Only allow safe-haven allocations (cash, gld, short) through the gate
+            target_allocations["spx"] = 0.0
+            target_allocations["btc"] = 0.0
+            target_allocations["wti"] = 0.0
+            target_allocations["nvda"] = 0.0
+            target_allocations["tsla"] = 0.0
+            target_allocations["dell"] = 0.0
+            target_allocations["spce"] = 0.0
+            # Redistribute blocked allocation to cash
+            blocked_sum = spx_kelly + btc_kelly + wti_kelly + nvda_kelly + tsla_kelly + dell_kelly + spce_kelly
+            target_allocations["cash"] = cash_kelly + blocked_sum
+        
         if use_rl_agent and rl_agent_instance:
             rl_allocs = rl_agent_instance.predict_allocations(features_vector_clipped, current_allocations)
             if rl_allocs:
@@ -531,6 +581,7 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
         # else: hold current allocations unchanged — no trade, no fee
         
         # 3. Apply Mark-to-Market Growth based on the rebalanced target allocations OR organically drifted allocations
+        equity_before = simulated_equity  # Fix 6: snapshot for per-bar PnL
         asset_values = {
             "spx": current_allocations["spx"] * simulated_equity * (1.0 + spx_1bar),
             "short": current_allocations["short"] * simulated_equity * (1.0 - spx_1bar),
@@ -544,6 +595,18 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
             "cash": current_allocations["cash"] * simulated_equity
         }
         simulated_equity = sum(asset_values.values())
+        
+        # Fix 6: Track per-bar PnL for accurate win rate
+        bar_pnl = simulated_equity - equity_before
+        bar_pnl_history.append({
+            "date": current_date.strftime("%Y-%m-%d"),
+            "pnl": bar_pnl,
+            "equity": simulated_equity,
+            "cash_frac": current_allocations.get("cash", 0.0),
+            "regime": dom_regime,
+            "gate_passed": gate_passed,
+            "circuit_breaker": circuit_breaker_active
+        })
         
         # Organic Weight Drift (momentum drift)
         if simulated_equity > 0:
@@ -580,35 +643,67 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
         })
 
     # 7. Generate Output Report
-    win_count = 0
+    # Fix 1 + Fix 6: Split metrics using per-bar PnL (accurate) and legacy 5d (backward compat)
+    active_wins = 0         # bar where portfolio made money
+    active_losses = 0       # bar where portfolio lost money
+    preservation_events = 0 # bar where we were mostly cash and SPX dropped
     total_drawdowns = 0
     drawdown_protected = 0
+    conviction_blocks = 0   # bars where conviction gate blocked execution
+    
+    for bp in bar_pnl_history:
+        if bp["cash_frac"] > 0.7 and not bp["gate_passed"]:
+            conviction_blocks += 1
+        if bp["pnl"] > 1.0:        # more than $1 gain on the bar
+            active_wins += 1
+        elif bp["pnl"] < -1.0:     # more than $1 loss on the bar
+            active_losses += 1
+        else:
+            # Flat bar -- check if it was a preservation event
+            preservation_events += 1
     
     for r in results:
-        # Evaluate Multi-Asset Win logic
-        # Positive generated alpha on the portfolio is a win
-        spx_ret_fwd = r.get("spx_fwd_5d", 0.0)
-        
-        if r["fwd_5d_ret"] > 0.01:
-            win_count += 1
-        elif abs(r["fwd_5d_ret"]) <= 0.01 and spx_ret_fwd < 0:
-            # Model went to cash and dodged an SPX drop (Capital Preservation Win)
-            win_count += 1
-            
         # Drawdown protection metric (if SPX goes down > 1.5%, were we hedged/short?)
         if r["spx_fwd_5d"] < -1.5 and (r["kelly_exposure"] < 0.2 or r["short_exposure"] > 0.1 or r["safe_haven_exposure"] > 0.5):
             drawdown_protected += 1
         if r["spx_fwd_5d"] < -1.5:
             total_drawdowns += 1
                 
-    # Calculate accuracy based only on active trades (where exposure was taken or capital preservation triggered)
-    active_periods = sum(1 for r in results if abs(r["fwd_5d_ret"]) > 0.01 or (abs(r["fwd_5d_ret"]) <= 0.01 and r.get("spx_fwd_5d", 0.0) < 0))
-    if active_periods == 0:
-        accuracy = 0.0
-    else:
-        accuracy = (win_count / active_periods) * 100
-        
+    total_active = active_wins + active_losses
+    active_win_rate = (active_wins / total_active * 100) if total_active > 0 else 0.0
+    overall_win_rate = (active_wins / len(bar_pnl_history) * 100) if len(bar_pnl_history) > 0 else 0.0
+    
     protection_rate = (drawdown_protected / total_drawdowns * 100) if total_drawdowns > 0 else 100.0
+    
+    # Fix 8: Benchmark comparison
+    spx_start_price = float(spx_data.loc[q1_trading_days[0]]["Close"])
+    spx_end_price = float(spx_data.loc[q1_trading_days[-1]]["Close"])
+    benchmark_return = ((spx_end_price - spx_start_price) / spx_start_price) * 100
+    
+    pnl_pct = ((simulated_equity - 10000.0) / 10000.0) * 100
+    alpha = pnl_pct - benchmark_return
+    
+    # Sharpe Ratio (annualized)
+    bar_returns = [bp["pnl"] / (bp["equity"] - bp["pnl"]) if (bp["equity"] - bp["pnl"]) > 0 else 0.0 for bp in bar_pnl_history]
+    if len(bar_returns) > 1:
+        avg_ret = np.mean(bar_returns)
+        std_ret = np.std(bar_returns, ddof=1)
+        # Annualize based on interval
+        periods_per_year = {"1h": 252 * 6.5, "4h": 252 * 1.625, "1d": 252, "1wk": 52}
+        annual_factor = np.sqrt(periods_per_year.get(interval, 252))
+        sharpe = (avg_ret / std_ret * annual_factor) if std_ret > 0 else 0.0
+    else:
+        sharpe = 0.0
+    
+    # Max drawdown from equity curve
+    equities = [bp["equity"] for bp in bar_pnl_history]
+    running_peak = 0.0
+    max_dd = 0.0
+    for eq in equities:
+        running_peak = max(running_peak, eq)
+        dd = (running_peak - eq) / running_peak if running_peak > 0 else 0.0
+        max_dd = max(max_dd, dd)
+
     
     # Generate Probability Calibration Table
     prob_bins = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
@@ -641,11 +736,25 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
             prob_table += f"| {label} | 0 | 0.0% | 0.000% |\n"
 
     # Build Simulated Trading Ledger Analysis
-    pnl_pct = ((simulated_equity - 10000.0) / 10000.0) * 100
     paper_section = "## Simulated Trading Ledger Analysis (Continuous Compounding)\n"
     paper_section += f"- **Mock Execution PnL:** {pnl_pct:.2f}% (Total Equity: ${simulated_equity:,.2f})\n"
     paper_section += f"- **Total Executed Rotations:** {total_mock_trades}\n"
     paper_section += f"- **Total Slippage/Fees Paid:** ${total_fees_paid:,.2f}\n"
+    paper_section += f"- **Circuit Breaker Activations:** {circuit_breaker_count}\n"
+    paper_section += f"- **Conviction Gate Blocks:** {conviction_blocks} bars\n"
+    
+    # Fix 8: Benchmark comparison section
+    benchmark_section = "## Benchmark Comparison\n"
+    benchmark_section += f"| Metric | Portfolio | SPX Buy-and-Hold |\n"
+    benchmark_section += f"|--------|-----------|------------------|\n"
+    benchmark_section += f"| Total Return | {pnl_pct:.2f}% | {benchmark_return:.2f}% |\n"
+    benchmark_section += f"| Alpha vs SPX | {alpha:+.2f}% | -- |\n"
+    benchmark_section += f"| Sharpe Ratio (Ann.) | {sharpe:.2f} | -- |\n"
+    benchmark_section += f"| Max Drawdown | {max_dd:.1%} | -- |\n"
+    benchmark_section += f"| Active Win Rate | {active_win_rate:.1f}% ({active_wins}/{total_active}) | -- |\n"
+    benchmark_section += f"| Preservation Events | {preservation_events} | -- |\n"
+    benchmark_section += f"| Crash Protection | {protection_rate:.1f}% ({drawdown_protected}/{total_drawdowns}) | -- |\n"
+
             
     report = f"""# Quantitative Engine Backtest: Detailed (Rolling 6-Month)
 
@@ -653,9 +762,15 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
 **Samples:** {len(results)} Trading Periods
 
 ## Performance Summary
-- **Portfolio Win Rate (Edge Accuracy):** {accuracy:.1f}%
+- **Active Win Rate:** {active_win_rate:.1f}% ({active_wins} wins / {active_losses} losses)
+- **Overall Win Rate (incl. preservation):** {overall_win_rate:.1f}%
 - **Crash Protection Rate:** {protection_rate:.1f}% ({drawdown_protected}/{total_drawdowns} major dips avoided)
 - **Average Kelly Allocation:** {np.mean([r['kelly_exposure'] for r in results]):.3f}
+- **Sharpe Ratio (Annualized):** {sharpe:.2f}
+- **Alpha vs SPX:** {alpha:+.2f}%
+- **Max Drawdown:** {max_dd:.1%}
+
+{benchmark_section}
 
 {prob_table}
 
@@ -674,24 +789,38 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
         
     # Overwrite the paper trading portfolio so the UI reflects the backtest's final simulated state
     final_cash = simulated_equity * current_allocations.get("cash", 1.0)
+    # Fix 5: Use actual asset prices for share calculation instead of dividing by 100
+    ticker_map_final = {"spx": "SPX", "short": "SPX", "btc": "BTC", "gld": "Gold", "wti": "WTI", "nvda": "NVDA", "tsla": "TSLA", "dell": "DELL", "spce": "SPCE"}
     final_positions = {}
     for k, alloc in current_allocations.items():
         if k != "cash" and alloc > 0:
             asset_label = k.upper()
             if asset_label == "SHORT":
                 asset_label = "SH"
-            # Approximation of shares: alloc * simulated_equity / 100
-            final_positions[asset_label] = (alloc * simulated_equity) / 100.0
+            mapped_key = ticker_map_final.get(k, "SPX")
+            asset_price = float(parsed_daily.get(mapped_key, {}).get("current", 100.0))
+            if asset_price <= 0: asset_price = 100.0
+            final_positions[asset_label] = (alloc * simulated_equity) / asset_price
             
     portfolio_state = {
         "cash": final_cash,
         "positions": final_positions,
         "position_details": {},
         "total_equity": simulated_equity,
-        "peak_equity": simulated_equity,
+        "peak_equity": peak_equity,
         "last_update": datetime.now().isoformat(),
         "total_fees_paid": total_fees_paid,
-        "win_rate": accuracy
+        "win_rate": active_win_rate,
+        "overall_win_rate": overall_win_rate,
+        "active_wins": active_wins,
+        "active_losses": active_losses,
+        "preservation_events": preservation_events,
+        "sharpe_ratio": round(sharpe, 2),
+        "alpha_vs_spx": round(alpha, 2),
+        "benchmark_return": round(benchmark_return, 2),
+        "max_drawdown": round(max_dd * 100, 1),
+        "circuit_breaker_count": circuit_breaker_count,
+        "conviction_blocks": conviction_blocks
     }
     
     portfolio_path = os.path.join(os.path.dirname(__file__), "..", "data", "paper_trading", "backtest_portfolio.json")

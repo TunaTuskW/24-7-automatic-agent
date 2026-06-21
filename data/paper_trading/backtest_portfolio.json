@@ -1,15 +1,20 @@
 {
-    "cash": 0.0,
-    "positions": {
-        "SH": 1.9742879476242333e-23,
-        "BTC": 3.2796469701812173e-24,
-        "GLD": 9.553835328157775e-24,
-        "WTI": 1.123499723692825e-23
-    },
+    "cash": 16889.391514499963,
+    "positions": {},
     "position_details": {},
-    "total_equity": 4.381135901150957e-21,
-    "peak_equity": 4.381135901150957e-21,
-    "last_update": "2026-06-21T01:20:57.771572",
-    "total_fees_paid": 21.69691651676701,
-    "win_rate": 32.075471698113205
+    "total_equity": 16889.391514499963,
+    "peak_equity": 17468.849560868588,
+    "last_update": "2026-06-21T05:42:13.585438",
+    "total_fees_paid": 121.90875185399332,
+    "win_rate": 54.65116279069767,
+    "overall_win_rate": 40.51724137931034,
+    "active_wins": 47,
+    "active_losses": 39,
+    "preservation_events": 30,
+    "sharpe_ratio": 3.01,
+    "alpha_vs_spx": 59.53,
+    "benchmark_return": 9.36,
+    "max_drawdown": 4.6,
+    "circuit_breaker_count": 0,
+    "conviction_blocks": 15
 }

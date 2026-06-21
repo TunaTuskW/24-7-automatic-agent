@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Play, FileText, DownloadCloud, Activity, CheckCircle, XCircle, Loader } from 'lucide-react';
 import PipelineVisualizer from './PipelineVisualizer';
 import ErrorBoundary from './ErrorBoundary';
 import { apiPost } from '../App';
@@ -67,9 +66,9 @@ export default function ReportsTab() {
 
   const statusIcon = () => {
     if (!triggerStatus) return null;
-    if (triggerStatus.type === 'loading') return <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} />;
-    if (triggerStatus.type === 'ok') return <CheckCircle size={14} />;
-    return <XCircle size={14} />;
+    if (triggerStatus.type === 'loading') return ;
+    if (triggerStatus.type === 'ok') return ;
+    return ;
   };
 
   const statusColor = () => {
@@ -85,7 +84,7 @@ export default function ReportsTab() {
       <div className="glass-panel animate-fade-in delay-1" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0, fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            <Activity size={16} style={{ color: 'var(--lime)' }} /> Manual Execution Override
+             Manual Execution Override
           </h3>
           <p className="text-muted" style={{ margin: '6px 0 0 0', fontSize: '0.82rem' }}>
             Force the pipeline to run out-of-band without waiting for the internal APScheduler.
@@ -100,17 +99,17 @@ export default function ReportsTab() {
 
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
           <button className="btn-primary" onClick={() => triggerJob('1h')}>
-            <Play size={13} /> Run 1H Context
+             Run 1H Context
           </button>
           <button className="btn-primary" onClick={() => triggerJob('1d')}>
-            <Play size={13} /> Run 1D Execution
+             Run 1D Execution
           </button>
           <button className="btn-primary" onClick={() => triggerJob('1w')}
             style={{ background: 'rgba(184,245,66,0.14)', borderColor: 'var(--lime)' }}>
-            <Play size={13} /> Run 1W + Weekly Synthesis
+             Run 1W + Weekly Synthesis
           </button>
           <button className="btn-danger" onClick={() => triggerJob('test')}>
-            <Play size={13} /> Run Diagnostic Backtest
+             Run Diagnostic Backtest
           </button>
         </div>
       </div>
@@ -127,7 +126,7 @@ export default function ReportsTab() {
         <div className="glass-panel animate-fade-in delay-2" style={{ width: '290px', display: 'flex', flexDirection: 'column', padding: '14px 0' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px 12px 14px', borderBottom: '1px solid rgba(184,245,66,0.06)' }}>
             <h3 style={{ margin: 0, fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              <DownloadCloud size={14} style={{ color: 'var(--text-muted)' }} /> Archive
+               Archive
             </h3>
             <button onClick={fetchReports} style={{ background: 'none', border: 'none', color: 'var(--lime-dim)', cursor: 'pointer', fontSize: '0.78rem', fontFamily: 'JetBrains Mono' }}>
               refresh
@@ -149,7 +148,7 @@ export default function ReportsTab() {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
-                  <FileText size={13} style={{ color: selectedReport === r.filename ? 'var(--lime)' : 'var(--text-muted)', flexShrink: 0 }} />
+                  
                   <span style={{ fontSize: '0.8rem', fontFamily: 'JetBrains Mono', wordBreak: 'break-word', color: selectedReport === r.filename ? 'var(--lime-soft)' : 'var(--text-main)' }}>
                     {r.filename.replace('updates/', '')}
                   </span>
@@ -173,7 +172,7 @@ export default function ReportsTab() {
           {selectedReport ? (
             <>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '18px', paddingBottom: '14px', borderBottom: '1px solid rgba(184,245,66,0.08)' }}>
-                <FileText size={20} style={{ color: 'var(--lime)' }} />
+                
                 <div>
                   <h2 style={{ margin: 0, fontSize: '0.9rem' }}>{selectedReport}</h2>
                   <span className="text-muted" style={{ fontSize: '0.78rem' }}>Raw Markdown Preview</span>

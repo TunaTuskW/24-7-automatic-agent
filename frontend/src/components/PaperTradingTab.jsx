@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign, PieChart, History, RefreshCw, Activity, TrendingUp, TrendingDown, BookOpen, Loader } from 'lucide-react';
 import { apiPost } from '../App';
 
 const TRADING_DISCLAIMER = `This module is for paper trading (simulated) and future live-order reference only.
@@ -41,14 +40,13 @@ function LivePriceTicker({ tickers = ['SPX', 'BTC', 'GLD', 'WTI'] }) {
         const chg = price && prev ? ((price - prev) / prev) * 100 : null;
         const up = chg === null ? null : chg >= 0;
         return (
-          <div key={t} style={{ flex: '1 1 110px', background: 'rgba(0,0,0,0.25)', borderRadius: '8px', padding: '10px 14px', border: `1px solid ${up === null ? 'rgba(184,245,66,0.08)' : up ? 'rgba(184,245,66,0.15)' : 'rgba(192,53,90,0.15)'}` }}>
-            <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px', fontFamily: 'Space Grotesk' }}>{t}</p>
-            <p style={{ fontFamily: 'JetBrains Mono', fontSize: '1rem', fontWeight: 700, color: up === null ? 'var(--text-main)' : up ? 'var(--lime)' : 'var(--pink)', margin: 0 }}>
+          <div key={t} style={{ flex: '1 1 110px', background: 'var(--bg-panel)', padding: '6px 10px', border: `1px solid ${up === null ? 'var(--border-color)' : up ? 'var(--term-green)' : 'var(--term-red)'}` }}>
+            <p style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '2px' }}>{t}</p>
+            <p style={{ fontSize: '14px', fontWeight: 700, color: up === null ? 'var(--text-main)' : up ? 'var(--term-green)' : 'var(--term-red)', margin: 0 }}>
               {price ? `$${price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
             </p>
             {chg !== null && (
-              <p style={{ fontFamily: 'JetBrains Mono', fontSize: '0.75rem', color: up ? 'var(--lime-dim)' : 'var(--pink-deep)', margin: '2px 0 0 0', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                {up ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
+              <p style={{ fontSize: '10px', color: up ? 'var(--term-green)' : 'var(--term-red)', margin: '2px 0 0 0', display: 'flex', alignItems: 'center', gap: '3px' }}>
                 {up ? '+' : ''}{chg.toFixed(2)}%
               </p>
             )}
@@ -115,11 +113,11 @@ export default function PaperTradingTab() {
     <div className="grid-layout">
 
       {/* Top bar */}
-      <div className="glass-panel col-span-12" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          {[['live', 'Real-Time Mock Trading'], ['backtest', '6-Month Backtest']].map(([val, label]) => (
+      <div className="data-panel col-span-12" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', padding: '4px 8px' }}>
+        <div style={{ display: 'flex', gap: '4px' }}>
+          {[['live', '[ REAL-TIME MOCK ]'], ['backtest', '[ 6-MONTH BACKTEST ]']].map(([val, label]) => (
             <button key={val} onClick={() => setViewType(val)}
-              style={{ padding: '8px 18px', borderRadius: '7px', border: `1px solid ${viewType === val ? 'var(--lime)' : 'rgba(184,245,66,0.12)'}`, background: viewType === val ? 'var(--gradient-primary)' : 'rgba(0,0,0,0.3)', color: viewType === val ? '#0a0b0f' : 'var(--lime)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700, fontFamily: 'Space Grotesk', transition: 'all 0.2s' }}>
+              style={{ padding: '4px 8px', border: `1px solid ${viewType === val ? 'var(--term-green)' : 'var(--border-color)'}`, background: viewType === val ? 'var(--term-green)' : 'var(--bg-color)', color: viewType === val ? '#000' : 'var(--text-muted)', cursor: 'pointer' }}>
               {label}
             </button>
           ))}
@@ -128,19 +126,18 @@ export default function PaperTradingTab() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {triggerStatus && (
             <span style={{ fontSize: '0.8rem', fontFamily: 'JetBrains Mono', color: triggerStatus.type === 'err' ? 'var(--pink)' : 'var(--lime)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              {triggerStatus.type === 'loading' && <Loader size={12} style={{ animation: 'spin 1s linear infinite' }} />}
+
               {triggerStatus.msg}
             </span>
           )}
 
-          <button className="btn-primary" onClick={() => fetchPortfolio(false)} disabled={refreshing}>
-            {refreshing ? <Loader size={13} style={{ animation: 'spin 1s linear infinite' }} /> : <RefreshCw size={13} />}
-            Refresh
+          <button onClick={() => fetchPortfolio(false)} disabled={refreshing}>
+            [ REFRESH ]
           </button>
 
           {viewType === 'backtest' && (
-            <button className="btn-danger" onClick={triggerBacktest} disabled={triggerStatus !== null}>
-              <Activity size={13} /> Re-run Backtest
+            <button onClick={triggerBacktest} disabled={triggerStatus !== null} style={{ color: 'var(--term-cyan)', borderColor: 'var(--term-cyan)' }}>
+              [ RE-RUN BACKTEST ]
             </button>
           )}
         </div>
@@ -150,7 +147,7 @@ export default function PaperTradingTab() {
       {viewType === 'live' && (
         <div className="glass-panel col-span-12 animate-fade-in delay-1">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-            <h2 style={{ margin: 0 }}><TrendingUp size={17} style={{ color: 'var(--lime)' }} /> Live Price Feed</h2>
+            <h2 style={{ margin: 0 }}> Live Price Feed</h2>
             {nextUpdate && (
               <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontFamily: 'JetBrains Mono' }}>
                 Daily update at {nextUpdate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -162,47 +159,114 @@ export default function PaperTradingTab() {
       )}
 
       {/* Portfolio Summary */}
-      <div className="glass-panel col-span-12 animate-fade-in delay-1">
-        <h2><DollarSign size={17} style={{ color: 'var(--lime)' }} /> Portfolio Summary</h2>
-        <div style={{ display: 'flex', gap: '36px', flexWrap: 'wrap' }}>
+      <div className="data-panel col-span-12">
+        <h2>[ PORTFOLIO SUMMARY ]</h2>
+        <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', marginTop: '8px' }}>
           <div>
             <p className="stat-label">Total Equity</p>
             <p className="stat-value">${portfolio.total_equity.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
           </div>
           <div>
             <p className="stat-label">Available Cash</p>
-            <p style={{ fontFamily: 'JetBrains Mono', fontSize: '2.4rem', fontWeight: 700, color: 'var(--lime)', marginTop: '4px' }}>
+            <p className="stat-value text-green">
               ${portfolio.cash.toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </p>
           </div>
           <div>
             <p className="stat-label">Total PnL</p>
-            <p style={{ fontFamily: 'JetBrains Mono', fontSize: '2.4rem', fontWeight: 700, color: pnl >= 0 ? 'var(--lime)' : 'var(--pink-deep)', marginTop: '4px', textShadow: `0 0 12px ${pnl >= 0 ? 'rgba(184,245,66,0.3)' : 'rgba(192,53,90,0.3)'}` }}>
-              {pnl >= 0 ? '+' : ''}${Math.abs(pnl).toLocaleString(undefined, { minimumFractionDigits: 2 })} <span style={{ fontSize: '1.2rem' }}>({pnlPct.toFixed(2)}%)</span>
+            <p className={`stat-value ${pnl >= 0 ? 'text-green' : 'text-red'}`}>
+              {pnl >= 0 ? '+' : ''}${Math.abs(pnl).toLocaleString(undefined, { minimumFractionDigits: 2 })} <span style={{ fontSize: '10px' }}>({pnlPct.toFixed(2)}%)</span>
             </p>
           </div>
+          {portfolio.realized_pnl !== undefined && (
+            <div>
+              <p className="stat-label">Realized PnL</p>
+              <p className={`stat-value ${portfolio.realized_pnl >= 0 ? 'text-green' : 'text-red'}`}>
+                {portfolio.realized_pnl >= 0 ? '+' : ''}${Math.abs(portfolio.realized_pnl).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+          )}
+          {portfolio.unrealized_pnl !== undefined && (
+            <div>
+              <p className="stat-label">Unrealized PnL</p>
+              <p className={`stat-value ${portfolio.unrealized_pnl >= 0 ? 'text-green' : 'text-red'}`}>
+                {portfolio.unrealized_pnl >= 0 ? '+' : ''}${Math.abs(portfolio.unrealized_pnl).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+          )}
           {portfolio.win_rate !== undefined && (
             <div>
-              <p className="stat-label">Win Rate</p>
-              <p style={{ fontFamily: 'JetBrains Mono', fontSize: '2.4rem', fontWeight: 700, color: portfolio.win_rate >= 50 ? 'var(--lime)' : 'var(--plasma-amber)', marginTop: '4px' }}>
+              <p className="stat-label">Active Win Rate</p>
+              <p className={`stat-value ${portfolio.win_rate >= 50 ? 'text-green' : 'text-amber'}`}>
                 {portfolio.win_rate.toFixed(1)}%
               </p>
+              {portfolio.active_wins !== undefined && (
+                <p style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                  {portfolio.active_wins}W / {portfolio.active_losses}L / {portfolio.preservation_events}P
+                </p>
+              )}
             </div>
           )}
           {portfolio.total_fees_paid !== undefined && (
             <div>
               <p className="stat-label">Slippage + Fees</p>
-              <p style={{ fontFamily: 'JetBrains Mono', fontSize: '2.4rem', fontWeight: 700, color: 'var(--plasma-amber)', marginTop: '4px' }}>
+              <p className="stat-value text-amber">
                 ${portfolio.total_fees_paid.toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </p>
             </div>
           )}
         </div>
+
+        {/* New metrics row: Sharpe, Alpha, Max Drawdown, Benchmark */}
+        {portfolio.sharpe_ratio !== undefined && (
+          <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--border-color)' }}>
+            <div>
+              <p className="stat-label">Sharpe Ratio</p>
+              <p className={`stat-value ${portfolio.sharpe_ratio >= 1.0 ? 'text-green' : portfolio.sharpe_ratio >= 0.5 ? 'text-amber' : 'text-red'}`}>
+                {portfolio.sharpe_ratio.toFixed(2)}
+              </p>
+            </div>
+            <div>
+              <p className="stat-label">Alpha vs SPX</p>
+              <p className={`stat-value ${portfolio.alpha_vs_spx >= 0 ? 'text-green' : 'text-red'}`}>
+                {portfolio.alpha_vs_spx >= 0 ? '+' : ''}{portfolio.alpha_vs_spx.toFixed(2)}%
+              </p>
+            </div>
+            <div>
+              <p className="stat-label">Max Drawdown</p>
+              <p className={`stat-value ${portfolio.max_drawdown <= 10 ? 'text-green' : portfolio.max_drawdown <= 20 ? 'text-amber' : 'text-red'}`}>
+                {portfolio.max_drawdown.toFixed(1)}%
+              </p>
+            </div>
+            <div>
+              <p className="stat-label">SPX Benchmark</p>
+              <p className="stat-value text-muted">
+                {portfolio.benchmark_return >= 0 ? '+' : ''}{portfolio.benchmark_return.toFixed(2)}%
+              </p>
+            </div>
+            {portfolio.circuit_breaker_count > 0 && (
+              <div>
+                <p className="stat-label">Circuit Breakers</p>
+                <p className="stat-value text-red">
+                  {portfolio.circuit_breaker_count}x
+                </p>
+              </div>
+            )}
+            {portfolio.conviction_blocks > 0 && (
+              <div>
+                <p className="stat-label">Conviction Blocks</p>
+                <p className="stat-value text-purple">
+                  {portfolio.conviction_blocks} bars
+                </p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Open Positions */}
-      <div className="data-panel col-span-6 animate-fade-in delay-2">
-        <h2><PieChart size={17} style={{ color: 'var(--pink-soft)' }} /> Open Positions</h2>
+      <div className="data-panel col-span-6">
+        <h2>[ OPEN POSITIONS ]</h2>
         {Object.keys(portfolio.positions).length === 0 ? (
           <p className="text-muted" style={{ marginTop: '14px', fontFamily: 'JetBrains Mono', fontSize: '0.85rem' }}>No open positions — 100% Cash.</p>
         ) : (
@@ -215,7 +279,7 @@ export default function PaperTradingTab() {
             </thead>
             <tbody>
               {Object.entries(portfolio.positions).map(([sym, shares]) => (
-                <tr key={sym} className="data-item">
+                <tr key={sym} className="table-row-item">
                   <td style={{ padding: '10px 14px', fontWeight: 700, color: '#fff' }}>{sym}</td>
                   <td style={{ padding: '10px 14px', color: 'var(--lime)' }}>{parseFloat(shares).toFixed(4)}</td>
                 </tr>
@@ -226,14 +290,14 @@ export default function PaperTradingTab() {
       </div>
 
       {/* Real Trading Reference Module */}
-      <div className="data-panel col-span-6 animate-fade-in delay-2">
-        <h2><BookOpen size={17} style={{ color: 'var(--lime-dim)' }} /> Live Trading Reference</h2>
-        <div style={{ padding: '14px', background: 'rgba(184,245,66,0.04)', border: '1px solid rgba(184,245,66,0.1)', borderRadius: '8px', marginBottom: '14px' }}>
-          <p style={{ fontFamily: 'JetBrains Mono', fontSize: '0.78rem', color: 'var(--lime-dim)', lineHeight: '1.65', whiteSpace: 'pre-wrap' }}>
+      <div className="data-panel col-span-6">
+        <h2>[ LIVE TRADING REFERENCE ]</h2>
+        <div style={{ padding: '8px', border: '1px solid var(--term-amber)', marginBottom: '14px' }}>
+          <p style={{ color: 'var(--term-amber)', lineHeight: '1.2', whiteSpace: 'pre-wrap', fontSize: '10px' }}>
             {TRADING_DISCLAIMER}
           </p>
         </div>
-        <div style={{ fontFamily: 'JetBrains Mono', fontSize: '0.82rem' }}>
+        <div>
           {[
             ['Mode', 'Paper Simulation (No Real Orders)'],
             ['Live Broker API', 'Not configured'],
@@ -243,37 +307,37 @@ export default function PaperTradingTab() {
           ].map(([k, v]) => (
             <div className="data-item" key={k}>
               <span className="text-muted">{k}</span>
-              <span style={{ color: v.includes('Not') ? 'var(--plasma-amber)' : 'var(--lime-soft)' }}>{v}</span>
+              <span className={v.includes('Not') ? 'text-amber' : 'text-main'}>{v}</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Trade Ledger */}
-      <div className="data-panel col-span-12 animate-fade-in delay-3">
-        <h2><History size={17} style={{ color: 'var(--plasma-amber)' }} /> Mock Execution Ledger</h2>
+      {/* Mock Execution Ledger */}
+      <div className="data-panel col-span-12" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+        <h2>[ MOCK EXECUTION LEDGER ]</h2>
         {ledger.length === 0 ? (
           <p className="text-muted" style={{ marginTop: '14px', fontFamily: 'JetBrains Mono', fontSize: '0.85rem' }}>No mock trades executed yet.</p>
         ) : (
           <div style={{ marginTop: '14px', overflowX: 'auto', maxHeight: '420px' }}>
-            <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', fontFamily: 'JetBrains Mono', fontSize: '0.82rem' }}>
-              <thead style={{ position: 'sticky', top: 0, background: 'rgba(10,11,15,0.96)', backdropFilter: 'blur(10px)', zIndex: 10 }}>
-                <tr style={{ borderBottom: '1px solid rgba(184,245,66,0.1)' }}>
-                  {['Time', 'Action', 'Asset', 'Shares', 'Price', 'Value', 'Stats'].map(col => (
-                    <th key={col} style={{ padding: '10px 14px', color: 'var(--lime)', fontWeight: 600, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{col}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
+            <table>
+            <thead style={{ position: 'sticky', top: 0, background: 'var(--bg-hover)', zIndex: 10 }}>
+              <tr>
+                {['Time', 'Action', 'Asset', 'Shares', 'Price', 'Value', 'Stats'].map(col => (
+                  <th key={col}>{col}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
                 {ledger.map((trade, i) => (
-                  <tr key={i} className="data-item">
-                    <td style={{ padding: '10px 14px', color: 'var(--text-muted)', fontSize: '0.78rem' }}>{new Date(trade.timestamp).toLocaleString()}</td>
-                    <td style={{ padding: '10px 14px', fontWeight: 700, color: trade.action === 'BUY' ? 'var(--lime)' : 'var(--pink-deep)' }}>{trade.action}</td>
-                    <td style={{ padding: '10px 14px', fontWeight: 700, color: '#fff' }}>{trade.ticker}</td>
-                    <td style={{ padding: '10px 14px' }}>{parseFloat(trade.shares).toFixed(4)}</td>
-                    <td style={{ padding: '10px 14px' }}>${parseFloat(trade.price).toFixed(2)}</td>
-                    <td style={{ padding: '10px 14px' }}>${parseFloat(trade.value).toFixed(2)}</td>
-                    <td style={{ padding: '10px 14px', color: 'var(--text-muted)', fontSize: '0.75rem' }}>{trade.stats || '—'}</td>
+                  <tr key={i} className="table-row-item">
+                    <td className="text-muted">{new Date(trade.timestamp).toLocaleString()}</td>
+                    <td className={trade.action === 'BUY' ? 'text-green' : 'text-red'}>{trade.action}</td>
+                    <td className="text-bright">{trade.ticker}</td>
+                    <td>{parseFloat(trade.shares).toFixed(4)}</td>
+                    <td>${parseFloat(trade.price).toFixed(2)}</td>
+                    <td className="text-main">${parseFloat(trade.value).toFixed(2)}</td>
+                    <td className="text-muted">Fee: ${parseFloat(trade.fee).toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
