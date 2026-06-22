@@ -130,7 +130,7 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
     bar_pnl_history = []  # Track per-bar PnL for accurate win rate
     
     # Fix 3: Adaptive MIN_HOLD_BARS by interval
-    MIN_HOLD_MAP = {"1h": 6, "4h": 3, "1d": 5, "1wk": 2}
+    MIN_HOLD_MAP = {"1h": 6, "4h": 3, "1d": 1, "1wk": 2}
     MIN_HOLD_BARS = MIN_HOLD_MAP.get(interval, 5)
     last_rebalance_i = -MIN_HOLD_BARS  # Initialize so first bar can trade
     
@@ -141,11 +141,11 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
     
     # Fix 2: Conviction gate thresholds per regime
     CONVICTION_GATE = {
-        "RISK_ON_EXPANSION":      0.40,
-        "LIQUIDITY_DRIVEN_RALLY": 0.45,
-        "NEUTRAL_TRANSITIONAL":   0.60,
-        "DEFENSIVE_RISK_OFF":     0.75,
-        "VOLATILITY_EXPANSION":   0.85,
+        "RISK_ON_EXPANSION":      0.30,
+        "LIQUIDITY_DRIVEN_RALLY": 0.35,
+        "NEUTRAL_TRANSITIONAL":   0.45,
+        "DEFENSIVE_RISK_OFF":     0.60,
+        "VOLATILITY_EXPANSION":   0.70,
     }
         
     for i, current_date in enumerate(q1_trading_days):
