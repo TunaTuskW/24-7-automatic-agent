@@ -72,7 +72,7 @@ class PaperBroker:
                 'fee': round(fee, 2)
             })
 
-    def _send_discord_alert(self, action, ticker, shares, price, total_equity):
+    def _send_discord_alert(self, action, ticker, shares, price, total_equity, reason="Rebalancing to match new target allocations."):
         webhook_url = get_webhook_url()
         if not webhook_url:
             return
@@ -90,7 +90,7 @@ class PaperBroker:
                 },
                 {
                     "name": "Reasoning",
-                    "value": "Rebalancing to match new 1-hour HMM targets.",
+                    "value": reason,
                     "inline": False
                 },
                 {
@@ -158,8 +158,9 @@ class PaperBroker:
         self.portfolio["total_equity"] = total_equity
         logger.info(f"Current Total Equity: ${total_equity:,.2f} | Cash: ${self.portfolio['cash']:,.2f}")
         
-        # 2. Determine target values
+        # 2. Determine target values and reasons
         target_values = {}
+        trade_reasons = {}
         for ticker, target_frac in target_allocations.items():
             target_values[ticker] = total_equity * target_frac
             
@@ -183,6 +184,7 @@ class PaperBroker:
                     logger.warning(f"TRAILING STOP TRIGGERED for {ticker}: Drawdown {drawdown:.2%} >= limit {stop_threshold:.2%} (Peak: {peak}, Spot: {spot}). Forcing liquidation.")
                     target_values[ticker] = 0.0
                     target_allocations[ticker] = 0.0
+                    trade_reasons[ticker] = f"Trailing stop triggered (Drawdown: {drawdown:.2%} >= Limit: {stop_threshold:.2%}). Liquidating."
 
         # 3. Process SELLS first (to free up cash)
         for ticker, target_val in target_values.items():
@@ -220,7 +222,8 @@ class PaperBroker:
                     
                 self._log_trade(ticker, "SELL", shares_to_sell, exec_price, val_to_sell, fee)
                 logger.info(f"PAPER SELL: {shares_to_sell:.4f} {ticker} @ ${exec_price:.2f}")
-                self._send_discord_alert("SELL", ticker, shares_to_sell, exec_price, total_equity)
+                reason = trade_reasons.get(ticker, f"Rebalancing to match optimal targets for {hmm_regime.replace('_', ' ').title()} regime.")
+                self._send_discord_alert("SELL", ticker, shares_to_sell, exec_price, total_equity, reason)
 
         # 4. Process BUYS next (using freed up cash)
         for ticker, target_val in target_values.items():
@@ -258,7 +261,8 @@ class PaperBroker:
                     
                     self._log_trade(ticker, "BUY", shares_to_buy, exec_price, val_to_buy, fee)
                     logger.info(f"PAPER BUY: {shares_to_buy:.4f} {ticker} @ ${exec_price:.2f}")
-                    self._send_discord_alert("BUY", ticker, shares_to_buy, exec_price, total_equity)
+                    reason = trade_reasons.get(ticker, f"Rebalancing to match optimal targets for {hmm_regime.replace('_', ' ').title()} regime.")
+                    self._send_discord_alert("BUY", ticker, shares_to_buy, exec_price, total_equity, reason)
 
         # 5. Final update
         self._save_portfolio()
