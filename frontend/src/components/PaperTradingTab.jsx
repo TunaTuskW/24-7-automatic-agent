@@ -337,7 +337,11 @@ export default function PaperTradingTab() {
                     <td>{parseFloat(trade.shares).toFixed(4)}</td>
                     <td>${parseFloat(trade.price).toFixed(2)}</td>
                     <td className="text-main">${parseFloat(trade.value).toFixed(2)}</td>
-                    <td className="text-muted">Fee: ${parseFloat(trade.fee).toFixed(2)}</td>
+                    <td className="text-muted">
+                      {trade.pnl !== undefined 
+                        ? <span className={trade.pnl > 0 ? 'text-green' : trade.pnl < 0 ? 'text-red' : ''}>PnL: {trade.pnl > 0 ? '+' : ''}${parseFloat(trade.pnl).toFixed(2)}</span>
+                        : trade.stats ? trade.stats : trade.fee ? `Fee: $${parseFloat(trade.fee).toFixed(2)}` : '-'}
+                    </td>
                   </tr>
                 ))}
               </tbody>

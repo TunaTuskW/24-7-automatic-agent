@@ -238,6 +238,9 @@ def get_portfolio(type: str = "live"):
                         fraction_sold = min(1.0, fraction_sold)
                         cost_of_sold = cost_basis[ticker]['cost'] * fraction_sold
                         
+                        trade_pnl = value - cost_of_sold
+                        row['pnl'] = round(trade_pnl, 2)
+                        
                         cost_basis[ticker]['qty'] -= shares
                         cost_basis[ticker]['cost'] -= cost_of_sold
             
