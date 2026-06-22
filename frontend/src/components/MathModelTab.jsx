@@ -1,3 +1,4 @@
+import { formatTimeToggle } from "../utils/timeFormatter";
 import React, { useState, useEffect } from 'react';
 import ErrorBoundary from './ErrorBoundary';
 
@@ -79,7 +80,7 @@ function MathModelTabContent() {
           <h2> Data Science Layer — Input Vector</h2>
           {lastUpdate && (
             <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontFamily: 'JetBrains Mono' }}>
-              Refreshed {lastUpdate.toLocaleTimeString()}
+              Refreshed {formatTimeToggle(lastUpdate, timeZone, false)}
             </span>
           )}
         </div>
@@ -242,7 +243,7 @@ function MathModelTabContent() {
   );
 }
 
-export default function MathModelTab() {
+export default function MathModelTab({ timeZone }) {
   return (
     <ErrorBoundary>
       <MathModelTabContent />

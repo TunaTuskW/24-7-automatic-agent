@@ -1,6 +1,7 @@
+import { formatTimeToggle } from "../utils/timeFormatter";
 import React from 'react';
 
-export default function OverviewTab({ data }) {
+export default function OverviewTab({ data, timeZone }) {
   return (
     <div className="grid-layout">
       {/* Top Row: Core State & Allocation */}
@@ -129,7 +130,7 @@ export default function OverviewTab({ data }) {
         <ul className="data-list" style={{ marginTop: '16px', listStyle: 'none' }}>
           <li className="data-item">
             <span className="stat-label">Last 1H Inference</span>
-            <span className="text-bright">{new Date(data.lastUpdate).toLocaleTimeString()}</span>
+            <span className="text-bright">{formatTimeToggle(data.lastUpdate, timeZone, false)}</span>
           </li>
           <li className="data-item">
             <span className="stat-label">Next Execution</span>

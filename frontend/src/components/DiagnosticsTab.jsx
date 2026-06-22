@@ -1,6 +1,7 @@
+import { formatTimeToggle } from "../utils/timeFormatter";
 import React, { useState, useEffect, useRef } from 'react';
 
-export default function DiagnosticsTab() {
+export default function DiagnosticsTab({ timeZone }) {
   const [logs, setLogs] = useState([]);
   const [isAutoScroll, setIsAutoScroll] = useState(true);
   const terminalEndRef = useRef(null);
@@ -78,7 +79,7 @@ export default function DiagnosticsTab() {
             logs.map((log, i) => (
               <div key={i} className="terminal-log" style={{ display: 'flex', gap: '12px' }}>
                 <span style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                  {new Date(log.timestamp).toLocaleTimeString([], {hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit'})}
+                  {formatTimeToggle(log.timestamp, timeZone, false)}
                 </span>
                 <span style={{ color: getLogColor(log.level), width: '60px', fontWeight: 'bold' }}>
                   {log.level}

@@ -19,25 +19,15 @@ export function apiPost(path, body = {}) {
   });
 }
 
-function formatClock(d, isLocal) {
-  if (isLocal) {
-    return [
-      String(d.getHours()).padStart(2, '0'),
-      String(d.getMinutes()).padStart(2, '0'),
-      String(d.getSeconds()).padStart(2, '0')
-    ].join(':');
-  }
-  return [
-    String(d.getUTCHours()).padStart(2, '0'),
-    String(d.getUTCMinutes()).padStart(2, '0'),
-    String(d.getUTCSeconds()).padStart(2, '0')
-  ].join(':');
+import { formatTimeToggle } from "./utils/timeFormatter";
+function formatClock(d, tz) {
+  return formatTimeToggle(d, tz, false);
 }
 
 function App() {
   const [activeTab, setActiveTab] = useState('overview');
-  const [isLocalTime, setIsLocalTime] = useState(true);
-  const [clock, setClock] = useState(() => formatClock(new Date(), true));
+  const [timeZone, setTimeZone] = useState('Local');
+  const [clock, setClock] = useState(() => formatClock(new Date(), 'Local'));
   const [data, setData] = useState({
     status: 'Syncing',
     regime: 'UNKNOWN',
@@ -73,9 +63,9 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const tick = setInterval(() => setClock(formatClock(new Date(), isLocalTime)), 1000);
+    const tick = setInterval(() => setClock(formatClock(new Date(), timeZone)), 1000);
     return () => clearInterval(tick);
-  }, [isLocalTime]);
+  }, [timeZone]);
 
   return (
     <div className="dashboard-container">
@@ -92,14 +82,20 @@ function App() {
         </div>
 
         <div className="header-right">
-          <span 
+          <select 
             className="text-muted" 
-            onClick={() => setIsLocalTime(!isLocalTime)}
-            title="Click to toggle timezone"
-            style={{ cursor: 'pointer', borderBottom: '1px dashed #666' }}
+            value={timeZone}
+            onChange={(e) => setTimeZone(e.target.value)}
+            title="Select Timezone"
+            style={{ cursor: 'pointer', background: 'transparent', border: 'none', borderBottom: '1px dashed #666', color: 'var(--text-muted)', fontFamily: 'JetBrains Mono', outline: 'none', appearance: 'none', paddingRight: '0' }}
           >
-            {isLocalTime ? 'LOCAL' : 'UTC'} {clock}
-          </span>
+            <option value="Local">LOCAL TIME</option>
+            <option value="UTC">UTC TIME</option>
+            <option value="America/New_York">EST (New York)</option>
+            <option value="Europe/London">GMT (London)</option>
+            <option value="Asia/Tokyo">JST (Tokyo)</option>
+            <option value="Asia/Ho_Chi_Minh">ICT (Ho Chi Minh)</option>
+          </select><span className="text-muted" style={{marginLeft: "8px"}}>{clock}</span>
           <div className="status-beacon">
             <div className="status-dot"></div>
             {data.status.toUpperCase()}
@@ -121,13 +117,13 @@ function App() {
 
       {/* Main Tab Content */}
       <main>
-        {activeTab === 'overview' && <OverviewTab data={data} />}
-        {activeTab === 'terminal' && <TradingTerminal />}
-        {activeTab === 'trading' && <PaperTradingTab />}
-        {activeTab === 'macro' && <MacroTab />}
-        {activeTab === 'model' && <MathModelTab />}
-        {activeTab === 'logs' && <DiagnosticsTab />}
-        {activeTab === 'reports' && <ReportsTab />}
+        {activeTab === 'overview' && <OverviewTab data={data} timeZone={timeZone} />}
+        {activeTab === 'terminal' && <TradingTerminal timeZone={timeZone} />}
+        {activeTab === 'trading' && <PaperTradingTab timeZone={timeZone} />}
+        {activeTab === 'macro' && <MacroTab timeZone={timeZone} />}
+        {activeTab === 'model' && <MathModelTab timeZone={timeZone} />}
+        {activeTab === 'logs' && <DiagnosticsTab timeZone={timeZone} />}
+        {activeTab === 'reports' && <ReportsTab timeZone={timeZone} />}
         {activeTab === 'settings' && <SettingsTab />}
       </main>
     </div>

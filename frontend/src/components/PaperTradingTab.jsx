@@ -1,3 +1,4 @@
+import { formatTimeToggle } from "../utils/timeFormatter";
 import React, { useState, useEffect } from 'react';
 import { apiPost } from '../App';
 
@@ -57,7 +58,7 @@ function LivePriceTicker({ tickers = ['SPX', 'BTC', 'GLD', 'WTI'] }) {
   );
 }
 
-export default function PaperTradingTab() {
+export default function PaperTradingTab({ timeZone }) {
   const [viewType, setViewType] = useState('live');
   const [triggerStatus, setTriggerStatus] = useState(null);
   const [data, setData] = useState({ portfolio: { cash: 10000.0, total_equity: 10000.0, positions: {} }, ledger: [] });
@@ -150,7 +151,7 @@ export default function PaperTradingTab() {
             <h2 style={{ margin: 0 }}> Live Price Feed</h2>
             {nextUpdate && (
               <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontFamily: 'JetBrains Mono' }}>
-                Daily update at {nextUpdate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                Daily update at {formatTimeToggle(nextUpdate, timeZone, false)}
               </span>
             )}
           </div>
@@ -331,7 +332,9 @@ export default function PaperTradingTab() {
             <tbody>
                 {ledger.map((trade, i) => (
                   <tr key={i} className="table-row-item">
-                    <td className="text-muted">{new Date(trade.timestamp).toLocaleString()}</td>
+                    <td className="text-muted">
+                      {trade.timestamp ? formatTimeToggle(trade.timestamp, timeZone) : '-'}
+                    </td>
                     <td className={trade.action === 'BUY' ? 'text-green' : 'text-red'}>{trade.action}</td>
                     <td className="text-bright">{trade.ticker}</td>
                     <td>{parseFloat(trade.shares).toFixed(4)}</td>

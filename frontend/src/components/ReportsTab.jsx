@@ -1,9 +1,10 @@
+import { formatTimeToggle } from "../utils/timeFormatter";
 import React, { useState, useEffect } from 'react';
 import PipelineVisualizer from './PipelineVisualizer';
 import ErrorBoundary from './ErrorBoundary';
 import { apiPost } from '../App';
 
-export default function ReportsTab() {
+export default function ReportsTab({ timeZone }) {
   const [reports, setReports] = useState([]);
   const [selectedReport, setSelectedReport] = useState(null);
   const [reportContent, setReportContent] = useState('');
@@ -155,7 +156,7 @@ export default function ReportsTab() {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-muted)', paddingLeft: '21px' }}>
                   <span>{formatSize(r.size)}</span>
-                  <span>{new Date(r.mtime * 1000).toLocaleDateString()}</span>
+                  <span>{formatTimeToggle(r.mtime * 1000, timeZone, true)}</span>
                 </div>
               </div>
             ))}

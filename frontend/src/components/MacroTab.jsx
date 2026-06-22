@@ -1,3 +1,4 @@
+import { formatTimeToggle } from "../utils/timeFormatter";
 import React, { useState, useEffect } from 'react';
 import ErrorBoundary from './ErrorBoundary';
 import { apiPost } from '../App';
@@ -94,7 +95,7 @@ function MacroTabContent() {
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
               {lastFetch && (
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'JetBrains Mono' }}>
-                  Updated {lastFetch.toLocaleTimeString()}
+                  Updated {formatTimeToggle(lastFetch, timeZone, false)}
                 </span>
               )}
               <button className="btn-primary" style={{ padding: '5px 12px', fontSize: '0.78rem' }} onClick={fetchMacro}>
@@ -196,7 +197,7 @@ function MacroTabContent() {
                   return (
                     <tr key={i} className="table-row-item" style={{ borderBottom: '1px solid rgba(184,245,66,0.04)' }}>
                       <td style={{ padding: '14px 12px', color: 'var(--text-main)' }}>
-                        {d.toLocaleDateString()} <span className="text-muted">{d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        {formatTimeToggle(d, timeZone)}
                       </td>
                       <td style={{ padding: '14px 12px', fontWeight: 700, color: 'var(--pink-soft)' }}>{evt.country}</td>
                       <td style={{ padding: '14px 12px', color: 'var(--text-main)' }}>{evt.title}</td>
@@ -215,7 +216,7 @@ function MacroTabContent() {
   );
 }
 
-export default function MacroTab() {
+export default function MacroTab({ timeZone }) {
   return (
     <ErrorBoundary>
       <MacroTabContent />
