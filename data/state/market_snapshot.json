@@ -1,5 +1,5 @@
 {
-    "generated_utc": "2026-06-21T00:00:42.351434+00:00",
+    "generated_utc": "2026-06-22T00:00:33.422754+00:00",
     "raw_indicators": {
         "SPX": {
             "current": 7497.8599,
@@ -83,13 +83,13 @@
             "momentum": "up"
         },
         "TASI": {
-            "current": 11109.0703,
-            "prev": 11117.6299,
-            "delta": -8.5596,
-            "delta_pct": -0.077,
-            "mean_60d": 11053.5955,
-            "std_60d": 69.923,
-            "z_score": -0.397,
+            "current": 11070.6504,
+            "prev": 11078.7402,
+            "delta": -8.0898,
+            "delta_pct": -0.073,
+            "mean_60d": 11060.2055,
+            "std_60d": 68.9137,
+            "z_score": -0.392,
             "momentum": "up"
         },
         "DFM": {
@@ -103,43 +103,43 @@
             "momentum": "up"
         },
         "ES": {
-            "current": 7536.75,
-            "prev": 7546.25,
-            "delta": -9.5,
-            "delta_pct": -0.126,
-            "mean_60d": 7572.5958,
-            "std_60d": 27.6932,
-            "z_score": -0.635,
+            "current": 7515.25,
+            "prev": 7538.25,
+            "delta": -23.0,
+            "delta_pct": -0.305,
+            "mean_60d": 7569.5917,
+            "std_60d": 27.6737,
+            "z_score": -1.66,
             "momentum": "down"
         },
         "NQ": {
-            "current": 30506.5,
-            "prev": 30593.75,
-            "delta": -87.25,
-            "delta_pct": -0.285,
-            "mean_60d": 30467.7792,
-            "std_60d": 146.5603,
-            "z_score": -1.021,
+            "current": 30360.25,
+            "prev": 30522.25,
+            "delta": -162.0,
+            "delta_pct": -0.531,
+            "mean_60d": 30459.0,
+            "std_60d": 139.2639,
+            "z_score": -2.008,
             "momentum": "up"
         },
         "YM": {
-            "current": 51875.0,
-            "prev": 51888.0,
-            "delta": -13.0,
-            "delta_pct": -0.025,
-            "mean_60d": 52299.65,
-            "std_60d": 231.4998,
-            "z_score": -0.074,
+            "current": 51763.0,
+            "prev": 51846.0,
+            "delta": -83.0,
+            "delta_pct": -0.16,
+            "mean_60d": 52279.5833,
+            "std_60d": 247.0889,
+            "z_score": -0.813,
             "momentum": "down"
         },
         "RTY": {
-            "current": 2976.3,
-            "prev": 2982.3999,
-            "delta": -6.0999,
-            "delta_pct": -0.205,
-            "mean_60d": 2976.5383,
-            "std_60d": 12.1008,
-            "z_score": -0.647,
+            "current": 2972.3,
+            "prev": 2983.3,
+            "delta": -11.0,
+            "delta_pct": -0.369,
+            "mean_60d": 2976.1267,
+            "std_60d": 11.5748,
+            "z_score": -1.328,
             "momentum": "up"
         },
         "NVDA": {
@@ -183,23 +183,23 @@
             "momentum": "down"
         },
         "WTI": {
-            "current": 75.26,
-            "prev": 75.61,
-            "delta": -0.35,
-            "delta_pct": -0.463,
-            "mean_60d": 75.1842,
-            "std_60d": 0.7815,
-            "z_score": -0.728,
+            "current": 77.75,
+            "prev": 77.46,
+            "delta": 0.29,
+            "delta_pct": 0.374,
+            "mean_60d": 75.2185,
+            "std_60d": 0.8606,
+            "z_score": 0.483,
             "momentum": "down"
         },
         "Brent": {
-            "current": 79.17,
-            "prev": 79.52,
-            "delta": -0.35,
-            "delta_pct": -0.44,
-            "mean_60d": 78.9033,
-            "std_60d": 0.7511,
-            "z_score": -0.753,
+            "current": 80.59,
+            "prev": 80.59,
+            "delta": 0.0,
+            "delta_pct": 0.0,
+            "mean_60d": 78.9133,
+            "std_60d": 0.77,
+            "z_score": -0.022,
             "momentum": "down"
         },
         "TTF": {
@@ -213,93 +213,93 @@
             "momentum": "down"
         },
         "Gold": {
-            "current": 4167.5,
-            "prev": 4193.8999,
-            "delta": -26.3999,
-            "delta_pct": -0.629,
-            "mean_60d": 4310.0584,
-            "std_60d": 56.3498,
-            "z_score": -1.337,
+            "current": 4154.2998,
+            "prev": 4172.7998,
+            "delta": -18.5,
+            "delta_pct": -0.443,
+            "mean_60d": 4303.8917,
+            "std_60d": 61.7765,
+            "z_score": -0.902,
             "momentum": "down"
         },
         "Silver": {
-            "current": 64.09,
-            "prev": 64.66,
-            "delta": -0.57,
-            "delta_pct": -0.882,
-            "mean_60d": 68.639,
-            "std_60d": 1.9176,
-            "z_score": -0.926,
+            "current": 64.37,
+            "prev": 64.865,
+            "delta": -0.495,
+            "delta_pct": -0.763,
+            "mean_60d": 68.4569,
+            "std_60d": 2.0302,
+            "z_score": -0.816,
             "momentum": "down"
         },
         "Copper": {
-            "current": 6.304,
-            "prev": 6.3285,
-            "delta": -0.0245,
-            "delta_pct": -0.387,
-            "mean_60d": 6.4418,
-            "std_60d": 0.0668,
-            "z_score": -0.905,
+            "current": 6.327,
+            "prev": 6.3455,
+            "delta": -0.0185,
+            "delta_pct": -0.292,
+            "mean_60d": 6.4358,
+            "std_60d": 0.068,
+            "z_score": -0.643,
             "momentum": "down"
         },
         "DXY": {
-            "current": 100.949,
-            "prev": 100.849,
-            "delta": 0.1,
-            "delta_pct": 0.099,
-            "mean_60d": 100.1419,
-            "std_60d": 0.536,
-            "z_score": 0.788,
+            "current": 100.885,
+            "prev": 100.85,
+            "delta": 0.035,
+            "delta_pct": 0.035,
+            "mean_60d": 100.1866,
+            "std_60d": 0.5387,
+            "z_score": 0.127,
             "momentum": "up"
         },
         "EURUSD": {
-            "current": 1.1469,
-            "prev": 1.1473,
+            "current": 1.1465,
+            "prev": 1.1469,
             "delta": -0.0004,
             "delta_pct": -0.034,
-            "mean_60d": 1.1495,
-            "std_60d": 0.0047,
-            "z_score": -0.135,
+            "mean_60d": 1.1493,
+            "std_60d": 0.0045,
+            "z_score": -0.138,
             "momentum": "down"
         },
         "GBPUSD": {
-            "current": 1.3237,
+            "current": 1.3207,
             "prev": 1.3237,
-            "delta": 0.0,
-            "delta_pct": 0.0,
-            "mean_60d": 1.3264,
-            "std_60d": 0.0068,
-            "z_score": 0.182,
+            "delta": -0.003,
+            "delta_pct": -0.226,
+            "mean_60d": 1.3261,
+            "std_60d": 0.0065,
+            "z_score": -1.586,
             "momentum": "down"
         },
         "JPYUSD": {
             "current": 0.0062,
             "prev": 0.0062,
             "delta": 0.0,
-            "delta_pct": 0.0,
+            "delta_pct": 0.002,
             "mean_60d": 0.0062,
             "std_60d": 0.0,
-            "z_score": 0.157,
+            "z_score": 0.192,
             "momentum": "down"
         },
         "CHFUSD": {
-            "current": 1.2401,
-            "prev": 1.2399,
-            "delta": 0.0002,
-            "delta_pct": 0.012,
-            "mean_60d": 1.2464,
-            "std_60d": 0.0076,
-            "z_score": 0.32,
+            "current": 1.2377,
+            "prev": 1.2375,
+            "delta": 0.0001,
+            "delta_pct": 0.01,
+            "mean_60d": 1.2456,
+            "std_60d": 0.0072,
+            "z_score": 0.3,
             "momentum": "down"
         },
         "USDCAD": {
-            "current": 1.4149,
+            "current": 1.4175,
             "prev": 1.4149,
-            "delta": 0.0,
-            "delta_pct": 0.0,
-            "mean_60d": 1.412,
-            "std_60d": 0.0044,
-            "z_score": -0.216,
+            "delta": 0.0026,
+            "delta_pct": 0.182,
+            "mean_60d": 1.4123,
+            "std_60d": 0.0042,
+            "z_score": 2.049,
             "momentum": "up"
         },
         "VIX9D": {
@@ -353,13 +353,13 @@
             "momentum": "down"
         },
         "BTC": {
-            "current": 64229.6719,
-            "prev": 64208.4688,
-            "delta": 21.2031,
-            "delta_pct": 0.033,
-            "mean_60d": 63237.1368,
-            "std_60d": 525.825,
-            "z_score": 0.081,
+            "current": 63235.6289,
+            "prev": 64143.9219,
+            "delta": -908.293,
+            "delta_pct": -1.416,
+            "mean_60d": 63657.3356,
+            "std_60d": 505.4559,
+            "z_score": -4.497,
             "momentum": "up"
         },
         "IBIT": {
@@ -423,9 +423,9 @@
             "institutional_heat_index": 0.984
         },
         "gold_to_silver_ratio": {
-            "current": 65.026,
-            "prev": 64.861,
-            "delta_pct": 0.254
+            "current": 64.538,
+            "prev": 64.331,
+            "delta_pct": 0.322
         },
         "institutional_crypto_mfi": {
             "composite_z": 0.446,
@@ -474,96 +474,96 @@
             "VOLATILITY_EXPANSION": 0.1
         },
         "transition_risk": 0.060000000000000026,
-        "start_utc": "2026-06-20T19:00:41.855522+00:00",
-        "duration_days": 0.2083265522800926
+        "start_utc": "2026-06-22T00:00:32.587439+00:00",
+        "duration_days": 0.0
     },
     "kalman_state": {
-        "dominant_prob": 0.82,
+        "dominant_prob": 0.829,
         "dominant_state": "transitional",
-        "tvd": 0.8712,
-        "brier_score_calibration": 0.291,
+        "tvd": 0.8732,
+        "brier_score_calibration": 0.2091,
         "structural_ambiguity_index": 0.0,
         "probabilities": [
-            0.04787868344581005,
-            0.13234192112680723,
-            0.8197793954273828
+            0.07576846484963352,
+            0.09515515934429586,
+            0.8290763758060705
         ],
         "covariance_matrix": [
             [
-                0.021738895449797017,
-                0.0007136762268784909,
-                0.000713676226878491
+                0.02173889544979701,
+                0.0007136762268784905,
+                0.0007136762268784906
             ],
             [
-                0.0007136762268784907,
+                0.0007136762268784906,
                 0.02173889544979702,
                 0.000713676226878491
             ],
             [
-                0.0007136762268784909,
+                0.0007136762268784906,
                 0.000713676226878491,
                 0.02173889544979702
             ]
         ],
         "is_ambiguous": false,
-        "risk_on": 0.048,
-        "risk_off": 0.132,
-        "transitional": 0.82
+        "risk_on": 0.076,
+        "risk_off": 0.095,
+        "transitional": 0.829
     },
     "mlp_deep_state": {
         "spx": {
-            "bull_probability": 0.463,
-            "bear_probability": 0.428,
-            "neutral_probability": 0.109,
-            "predicted_class": 1,
+            "bull_probability": 0.443,
+            "bear_probability": 0.45,
+            "neutral_probability": 0.107,
+            "predicted_class": 0,
             "consensus_score": 0.0
         },
         "gld": {
-            "bull_probability": 0.189,
-            "bear_probability": 0.114,
-            "neutral_probability": 0.697,
+            "bull_probability": 0.188,
+            "bear_probability": 0.119,
+            "neutral_probability": 0.693,
             "predicted_class": 1,
             "consensus_score": 1.0
         },
         "wti": {
-            "bull_probability": 0.095,
+            "bull_probability": 0.097,
             "bear_probability": 0.076,
-            "neutral_probability": 0.829,
+            "neutral_probability": 0.827,
             "predicted_class": 1,
             "consensus_score": 1.0
         },
         "nvda": {
-            "bull_probability": 0.202,
-            "bear_probability": 0.185,
-            "neutral_probability": 0.613,
-            "predicted_class": 1,
+            "bull_probability": 0.182,
+            "bear_probability": 0.296,
+            "neutral_probability": 0.522,
+            "predicted_class": 0,
             "consensus_score": 1.0
         },
         "tsla": {
-            "bull_probability": 0.135,
-            "bear_probability": 0.198,
-            "neutral_probability": 0.667,
+            "bull_probability": 0.139,
+            "bear_probability": 0.203,
+            "neutral_probability": 0.658,
             "predicted_class": 0,
             "consensus_score": 1.0
         },
         "dell": {
             "bull_probability": 0.111,
-            "bear_probability": 0.096,
-            "neutral_probability": 0.793,
+            "bear_probability": 0.099,
+            "neutral_probability": 0.79,
             "predicted_class": 1,
             "consensus_score": 1.0
         },
         "spce": {
-            "bull_probability": 0.675,
-            "bear_probability": 0.255,
-            "neutral_probability": 0.071,
+            "bull_probability": 0.67,
+            "bear_probability": 0.25,
+            "neutral_probability": 0.08,
             "predicted_class": 1,
             "consensus_score": 0.0
         },
         "btc": {
-            "bull_probability": 0.112,
-            "bear_probability": 0.11,
-            "neutral_probability": 0.778,
+            "bull_probability": 0.114,
+            "bear_probability": 0.113,
+            "neutral_probability": 0.773,
             "predicted_class": 1,
             "consensus_score": 1.0
         }
@@ -590,14 +590,14 @@
         ],
         "features_vector": [
             0.107,
-            0.099,
+            0.035,
             -0.48668487477482747,
             0.984,
-            -0.463,
-            0.254,
+            0.374,
+            0.322,
             0.06,
             0.29,
-            0.033,
+            -1.416,
             0.179,
             1.152,
             -1.519,
@@ -609,14 +609,14 @@
         ],
         "features_dict": {
             "spx_ret": 0.107,
-            "dxy_ret": 0.099,
+            "dxy_ret": 0.035,
             "vix_zscore": -0.48668487477482747,
             "Inst_Heat_Index": 0.984,
-            "wti_ret": -0.463,
-            "gsr_ret": 0.254,
+            "wti_ret": 0.374,
+            "gsr_ret": 0.322,
             "us10y_delta": 0.06,
             "spread_level": 0.29,
-            "btc_ret": 0.033,
+            "btc_ret": -1.416,
             "nvda_ret": 0.179,
             "tsla_ret": 1.152,
             "dell_ret": -1.519,
@@ -630,27 +630,27 @@
             "shannon_entropy": 1.361,
             "kelly_exposure_fraction": {
                 "SPX_Kelly": 0.0,
-                "Short_Kelly": 0.118,
+                "Short_Kelly": 0.129,
                 "BTC_Kelly": 0.0,
-                "GLD_Kelly": 0.047,
+                "GLD_Kelly": 0.052,
                 "WTI_Kelly": 0.0,
                 "NVDA_Kelly": 0.0,
                 "TSLA_Kelly": 0.0,
                 "DELL_Kelly": 0.0,
                 "SPCE_Kelly": 0.0,
-                "Cash": 0.835
+                "Cash": 0.819
             },
             "is_high_risk_edge": true,
             "is_capitulation_override_active": false
         }
     },
     "mcs": {
-        "score": 25.28,
+        "score": 18.8,
         "label": "NEUTRAL",
         "components": {
-            "equity_momentum": 0.387,
+            "equity_momentum": 0.389,
             "rate_pressure": -5.125,
-            "energy_stress": 6.171,
+            "energy_stress": -1.921,
             "cross_asset_coherence": 25.0
         }
     },
@@ -665,156 +665,84 @@
     "economic_calendar": {
         "events": [
             {
-                "title": "BOJ Policy Rate",
-                "country": "JPY",
-                "date": "2026-06-15T23:19:00-04:00",
+                "title": "CPI m/m",
+                "country": "CAD",
+                "date": "2026-06-22T08:30:00-04:00",
                 "impact": "High",
-                "forecast": "<1.00%",
-                "previous": "<0.75%"
+                "forecast": "0.7%",
+                "previous": "0.4%"
             },
             {
-                "title": "Monetary Policy Statement",
-                "country": "JPY",
-                "date": "2026-06-15T23:19:00-04:00",
+                "title": "Median CPI y/y",
+                "country": "CAD",
+                "date": "2026-06-22T08:30:00-04:00",
                 "impact": "High",
-                "forecast": "",
-                "previous": ""
+                "forecast": "2.1%",
+                "previous": "2.1%"
             },
             {
-                "title": "Cash Rate",
+                "title": "Trimmed CPI y/y",
+                "country": "CAD",
+                "date": "2026-06-22T08:30:00-04:00",
+                "impact": "High",
+                "forecast": "2.0%",
+                "previous": "2.0%"
+            },
+            {
+                "title": "CPI m/m",
                 "country": "AUD",
-                "date": "2026-06-16T00:30:00-04:00",
+                "date": "2026-06-23T21:30:00-04:00",
                 "impact": "High",
-                "forecast": "4.35%",
-                "previous": "4.35%"
-            },
-            {
-                "title": "RBA Rate Statement",
-                "country": "AUD",
-                "date": "2026-06-16T00:30:00-04:00",
-                "impact": "High",
-                "forecast": "",
-                "previous": ""
-            },
-            {
-                "title": "RBA Press Conference",
-                "country": "AUD",
-                "date": "2026-06-16T01:30:00-04:00",
-                "impact": "High",
-                "forecast": "",
-                "previous": ""
-            },
-            {
-                "title": "BOJ Press Conference",
-                "country": "JPY",
-                "date": "2026-06-16T02:30:00-04:00",
-                "impact": "High",
-                "forecast": "",
-                "previous": ""
+                "forecast": "-0.4%",
+                "previous": "0.4%"
             },
             {
                 "title": "CPI y/y",
-                "country": "GBP",
-                "date": "2026-06-17T02:00:00-04:00",
+                "country": "AUD",
+                "date": "2026-06-23T21:30:00-04:00",
                 "impact": "High",
-                "forecast": "3.0%",
-                "previous": "2.8%"
+                "forecast": "4.3%",
+                "previous": "4.2%"
             },
             {
-                "title": "Federal Funds Rate",
+                "title": "Trimmed Mean CPI m/m",
+                "country": "AUD",
+                "date": "2026-06-23T21:30:00-04:00",
+                "impact": "High",
+                "forecast": "0.3%",
+                "previous": "0.3%"
+            },
+            {
+                "title": "Employment Change",
+                "country": "AUD",
+                "date": "2026-06-24T21:30:00-04:00",
+                "impact": "High",
+                "forecast": "30.3K",
+                "previous": "-18.6K"
+            },
+            {
+                "title": "Unemployment Rate",
+                "country": "AUD",
+                "date": "2026-06-24T21:30:00-04:00",
+                "impact": "High",
+                "forecast": "4.4%",
+                "previous": "4.5%"
+            },
+            {
+                "title": "Core PCE Price Index m/m",
                 "country": "USD",
-                "date": "2026-06-17T14:00:00-04:00",
+                "date": "2026-06-25T08:30:00-04:00",
                 "impact": "High",
-                "forecast": "3.75%",
-                "previous": "3.75%"
-            },
-            {
-                "title": "FOMC Economic Projections",
-                "country": "USD",
-                "date": "2026-06-17T14:00:00-04:00",
-                "impact": "High",
-                "forecast": "",
-                "previous": ""
-            },
-            {
-                "title": "FOMC Statement",
-                "country": "USD",
-                "date": "2026-06-17T14:00:00-04:00",
-                "impact": "High",
-                "forecast": "",
-                "previous": ""
-            },
-            {
-                "title": "FOMC Press Conference",
-                "country": "USD",
-                "date": "2026-06-17T14:30:00-04:00",
-                "impact": "High",
-                "forecast": "",
-                "previous": ""
-            },
-            {
-                "title": "GDP q/q",
-                "country": "NZD",
-                "date": "2026-06-17T18:45:00-04:00",
-                "impact": "High",
-                "forecast": "0.8%",
+                "forecast": "0.3%",
                 "previous": "0.2%"
             },
             {
-                "title": "Claimant Count Change",
-                "country": "GBP",
-                "date": "2026-06-18T02:00:00-04:00",
+                "title": "Final GDP q/q",
+                "country": "USD",
+                "date": "2026-06-25T08:30:00-04:00",
                 "impact": "High",
-                "forecast": "25.8K",
-                "previous": "26.5K"
-            },
-            {
-                "title": "SNB Monetary Policy Assessment",
-                "country": "CHF",
-                "date": "2026-06-18T03:30:00-04:00",
-                "impact": "High",
-                "forecast": "",
-                "previous": ""
-            },
-            {
-                "title": "SNB Policy Rate",
-                "country": "CHF",
-                "date": "2026-06-18T03:30:00-04:00",
-                "impact": "High",
-                "forecast": "0.00%",
-                "previous": "0.00%"
-            },
-            {
-                "title": "SNB Press Conference",
-                "country": "CHF",
-                "date": "2026-06-18T04:00:00-04:00",
-                "impact": "High",
-                "forecast": "",
-                "previous": ""
-            },
-            {
-                "title": "Monetary Policy Summary",
-                "country": "GBP",
-                "date": "2026-06-18T07:00:00-04:00",
-                "impact": "High",
-                "forecast": "",
-                "previous": ""
-            },
-            {
-                "title": "MPC Official Bank Rate Votes",
-                "country": "GBP",
-                "date": "2026-06-18T07:00:00-04:00",
-                "impact": "High",
-                "forecast": "1-0-8",
-                "previous": "1-0-8"
-            },
-            {
-                "title": "Official Bank Rate",
-                "country": "GBP",
-                "date": "2026-06-18T07:00:00-04:00",
-                "impact": "High",
-                "forecast": "3.75%",
-                "previous": "3.75%"
+                "forecast": "1.6%",
+                "previous": "1.6%"
             }
         ]
     },
@@ -833,13 +761,13 @@
     "session_state": {
         "current_session": "ASIA",
         "session_bias": "RANGE",
-        "asia_high": 7568.25,
-        "asia_low": 7530.75,
-        "london_swept_asia_high": true,
+        "asia_high": 0.0,
+        "asia_low": 0.0,
+        "london_swept_asia_high": false,
         "london_swept_asia_low": false,
         "favorable_for_entry": false,
         "orb_signal": -1,
-        "orb_strength": 0.17543859649122806,
+        "orb_strength": 0.35537190082644626,
         "td9_exhaustion": false,
         "td9_direction": 1,
         "td9_count": 6,

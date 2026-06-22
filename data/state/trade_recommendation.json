@@ -1,5 +1,5 @@
 {
-    "timestamp_utc": "2026-06-21T00:00:42.351434+00:00",
+    "timestamp_utc": "2026-06-22T00:00:33.422754+00:00",
     "regime": "DEFENSIVE_RISK_OFF",
     "regime_confidence": 0.5,
     "entry_score": 0.55,
@@ -13,8 +13,8 @@
     "recommended_action": "HOLD",
     "recommended_allocations": {
         "SPX": 0.0,
-        "Short": 0.0,
-        "Gold": 0.0,
+        "Short": 0.129,
+        "Gold": 0.052,
         "BTC": 0.0,
         "WTI": 0.0,
         "NVDA": 0.0,
