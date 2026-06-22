@@ -19,7 +19,14 @@ export function apiPost(path, body = {}) {
   });
 }
 
-function formatUtcClock(d) {
+function formatClock(d, isLocal) {
+  if (isLocal) {
+    return [
+      String(d.getHours()).padStart(2, '0'),
+      String(d.getMinutes()).padStart(2, '0'),
+      String(d.getSeconds()).padStart(2, '0')
+    ].join(':');
+  }
   return [
     String(d.getUTCHours()).padStart(2, '0'),
     String(d.getUTCMinutes()).padStart(2, '0'),
@@ -29,7 +36,8 @@ function formatUtcClock(d) {
 
 function App() {
   const [activeTab, setActiveTab] = useState('overview');
-  const [utcClock, setUtcClock] = useState(() => formatUtcClock(new Date()));
+  const [isLocalTime, setIsLocalTime] = useState(true);
+  const [clock, setClock] = useState(() => formatClock(new Date(), true));
   const [data, setData] = useState({
     status: 'Syncing',
     regime: 'UNKNOWN',
@@ -65,9 +73,9 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const tick = setInterval(() => setUtcClock(formatUtcClock(new Date())), 1000);
+    const tick = setInterval(() => setClock(formatClock(new Date(), isLocalTime)), 1000);
     return () => clearInterval(tick);
-  }, []);
+  }, [isLocalTime]);
 
   return (
     <div className="dashboard-container">
@@ -84,7 +92,14 @@ function App() {
         </div>
 
         <div className="header-right">
-          <span className="text-muted">UTC {utcClock}</span>
+          <span 
+            className="text-muted" 
+            onClick={() => setIsLocalTime(!isLocalTime)}
+            title="Click to toggle timezone"
+            style={{ cursor: 'pointer', borderBottom: '1px dashed #666' }}
+          >
+            {isLocalTime ? 'LOCAL' : 'UTC'} {clock}
+          </span>
           <div className="status-beacon">
             <div className="status-dot"></div>
             {data.status.toUpperCase()}

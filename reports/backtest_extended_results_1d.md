@@ -4,23 +4,23 @@
 **Samples:** 116 Trading Periods
 
 ## Performance Summary
-- **Active Win Rate:** 54.7% (47 wins / 39 losses)
-- **Overall Win Rate (incl. preservation):** 40.5%
+- **Active Win Rate:** 52.5% (53 wins / 48 losses)
+- **Overall Win Rate (incl. preservation):** 45.7%
 - **Crash Protection Rate:** 66.7% (2/3 major dips avoided)
 - **Average Kelly Allocation:** 0.123
-- **Sharpe Ratio (Annualized):** 3.01
-- **Alpha vs SPX:** +59.53%
-- **Max Drawdown:** 4.6%
+- **Sharpe Ratio (Annualized):** 1.90
+- **Alpha vs SPX:** +37.04%
+- **Max Drawdown:** 17.5%
 
 ## Benchmark Comparison
 | Metric | Portfolio | SPX Buy-and-Hold |
 |--------|-----------|------------------|
-| Total Return | 68.89% | 9.36% |
-| Alpha vs SPX | +59.53% | -- |
-| Sharpe Ratio (Ann.) | 3.01 | -- |
-| Max Drawdown | 4.6% | -- |
-| Active Win Rate | 54.7% (47/86) | -- |
-| Preservation Events | 30 | -- |
+| Total Return | 46.40% | 9.36% |
+| Alpha vs SPX | +37.04% | -- |
+| Sharpe Ratio (Ann.) | 1.90 | -- |
+| Max Drawdown | 17.5% | -- |
+| Active Win Rate | 52.5% (53/101) | -- |
+| Preservation Events | 15 | -- |
 | Crash Protection | 66.7% (2/3) | -- |
 
 
@@ -29,17 +29,17 @@
 |--------------------|-------------|----------|--------------------|
 | 0-20% | 0 | 0.0% | 0.000% |
 | 20-40% | 56 | 23.2% | -0.327% |
-| 40-60% | 18 | 33.3% | -0.347% |
+| 40-60% | 18 | 33.3% | -0.343% |
 | 60-80% | 42 | 33.3% | -0.193% |
 | 80-100% | 0 | 0.0% | 0.000% |
 
 
 ## Simulated Trading Ledger Analysis (Continuous Compounding)
-- **Mock Execution PnL:** 68.89% (Total Equity: $16,889.39)
-- **Total Executed Rotations:** 22
-- **Total Slippage/Fees Paid:** $121.91
-- **Circuit Breaker Activations:** 0
-- **Conviction Gate Blocks:** 15 bars
+- **Mock Execution PnL:** 46.40% (Total Equity: $14,639.74)
+- **Total Executed Rotations:** 102
+- **Total Slippage/Fees Paid:** $190.67
+- **Circuit Breaker Activations:** 1
+- **Conviction Gate Blocks:** 1 bars
 
 
 ## Detailed Daily Log
@@ -158,6 +158,6 @@
 | 2026-06-11 | 7394.2998046875 | VOLATILITY_EXPANSION | transitional | 0.702 | 0.0 | 0.155 | 0.0 | 0.0 | 0.0 | 0.0 | 0.845 | 0.167% |
 | 2026-06-12 | 7431.4599609375 | VOLATILITY_EXPANSION | transitional | 0.694 | 0.0 | 0.379 | 0.0 | 0.0 | 0.0 | 0.0 | 0.621 | 0.000% |
 | 2026-06-15 | 7554.2900390625 | DEFENSIVE_RISK_OFF | transitional | 0.732 | 0.0 | 0.419 | 0.0 | 0.105 | 0.0 | 0.0 | 0.245 | -0.218% |
-| 2026-06-16 | 7511.35009765625 | VOLATILITY_EXPANSION | transitional | 0.435 | 0.0 | 0.0 | 0.243 | 0.279 | 0.252 | 0.0 | 0.226 | -1.009% |
+| 2026-06-16 | 7511.35009765625 | VOLATILITY_EXPANSION | transitional | 0.435 | 0.0 | 0.0 | 0.243 | 0.279 | 0.252 | 0.0 | 0.226 | -0.936% |
 | 2026-06-17 | 7420.10009765625 | VOLATILITY_EXPANSION | risk_off | 0.274 | 0.0 | 0.0 | 0.453 | 0.074 | 0.226 | 0.247 | 0.0 | 0.000% |
 | 2026-06-18 | 7500.580078125 | VOLATILITY_EXPANSION | risk_off | 0.647 | 0.0 | 0.329 | 0.0 | 0.085 | 0.0 | 0.0 | 0.586 | 0.000% |
