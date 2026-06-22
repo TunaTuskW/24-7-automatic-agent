@@ -50,7 +50,8 @@ def run_monitor():
             position_details = portfolio.get("position_details", {})
 
             # Fetch live prices
-            prices = detector.fetch_current_prices()
+            active_assets = list(positions.keys())
+            prices = detector.fetch_current_prices(active_tickers=active_assets)
             if not prices:
                 time.sleep(POLL_INTERVAL_SECONDS)
                 continue
@@ -70,11 +71,26 @@ def run_monitor():
                 # Write events to event log for frontend WebSocket
                 event_log_path = os.path.join(STATE_PATH, '..', 'logs', 'system_events.jsonl')
                 os.makedirs(os.path.dirname(event_log_path), exist_ok=True)
+                
+                # Import webhook logic locally to avoid circular dependencies if any
+                from src.push_to_discord import get_webhook_url, post_with_retry
+                webhook_url = get_webhook_url()
+                
                 with open(event_log_path, 'a') as f:
                     for event in events:
                         event["timestamp"] = now.isoformat()
                         event["source"] = "market_monitor"
                         f.write(json.dumps(event) + "\n")
+                        
+                        if webhook_url and event.get("severity") in ["CRITICAL", "ELEVATED"]:
+                            color = 16711680 if event.get("severity") == "CRITICAL" else 16753920
+                            embed = {
+                                "title": f"🚨 {event.get('type')} Detected",
+                                "description": event.get('detail'),
+                                "color": color,
+                                "timestamp": now.isoformat()
+                            }
+                            post_with_retry(webhook_url, json={"embeds": [embed]})
 
                 # Check cooldown before triggering pipeline
                 should_run, interval, reason = detector.should_trigger_pipeline(events)

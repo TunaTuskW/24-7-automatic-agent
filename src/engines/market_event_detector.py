@@ -25,31 +25,36 @@ class MarketEventDetector:
         self._last_check_utc = None
         self._last_entry_score = 0.5
 
-    def fetch_current_prices(self) -> dict:
-        """Fetches current SPX and VIX prices using minimal yfinance call."""
+    def fetch_current_prices(self, active_tickers: list = None) -> dict:
+        """Fetches current SPX and VIX prices, plus tracked assets."""
+        if active_tickers is None:
+            active_tickers = []
+            
+        tickers_to_fetch = list(set(["^GSPC", "^VIX"] + active_tickers))
         try:
             data = yf.download(
-                ["^GSPC", "^VIX"],
+                tickers_to_fetch,
                 period="1d",
                 interval="5m",
                 progress=False,
                 threads=False
             )
-            # If multiple tickers, columns are MultiIndex: (Price, Ticker) -> data["Close"]["^GSPC"]
             if isinstance(data.columns, pd.MultiIndex):
                 spx_close = data["Close"]["^GSPC"].dropna()
                 vix_close = data["Close"]["^VIX"].dropna()
+                volume_data = data["Volume"]
             else:
-                # If only one ticker somehow, or flattened
                 spx_close = data["Close"].dropna()
                 vix_close = data["Close"].dropna()
+                volume_data = pd.DataFrame()
                 
             return {
                 "spx_now": float(spx_close.iloc[-1]) if len(spx_close) > 0 else None,
                 "spx_30m_ago": float(spx_close.iloc[-7]) if len(spx_close) >= 7 else None,
                 "vix_now": float(vix_close.iloc[-1]) if len(vix_close) > 0 else None,
                 "vix_60m_ago": float(vix_close.iloc[-13]) if len(vix_close) >= 13 else None,
-                "vix_series": vix_close
+                "vix_series": vix_close,
+                "volume_data": volume_data
             }
         except Exception as e:
             logger.error(f"MarketEventDetector price fetch failed: {e}")
@@ -69,8 +74,6 @@ class MarketEventDetector:
         """
         events = []
         
-        # If no live prices were fetched (network failure), skip all event detection.
-        # Prevents stale snapshot vix_zscore from spamming REGIME_STRESS triggers.
         if not prices:
             logger.warning("detect() called with empty prices dict. Skipping all event detection.")
             return []
@@ -79,6 +82,7 @@ class MarketEventDetector:
         spx_30m_ago  = prices.get("spx_30m_ago")
         vix_now      = prices.get("vix_now")
         vix_60m_ago  = prices.get("vix_60m_ago")
+        volume_data  = prices.get("volume_data")
 
         # 1. Price Shock
         if spx_now and spx_30m_ago and spx_30m_ago > 0:
@@ -121,9 +125,7 @@ class MarketEventDetector:
             logger.info(f"ENTRY_FLIP detected: score {self._last_entry_score:.2f} -> {current_entry_score:.2f}")
         self._last_entry_score = current_entry_score
 
-        # 5. Stop Approach — only valid for SPX position, not individual stocks
-        # Individual stock stops are handled correctly in paper_broker.py
-        # This detector only has spx_now available; using it for DELL/SPCE stops is wrong.
+        # 5. Stop Approach
         if "SPX" in portfolio_positions and portfolio_positions["SPX"] > 0 and spx_now:
             peak = portfolio_position_details.get("SPX", {}).get("peak_price", spx_now)
             if peak > 0:
@@ -135,6 +137,21 @@ class MarketEventDetector:
                         "severity": "ELEVATED",
                         "detail": f"SPX within {self.STOP_APPROACH_BUFFER:.1%} of trailing stop (drawdown: {drawdown:.2%})"
                     })
+
+        # 6. Volume Spike
+        if volume_data is not None and not volume_data.empty:
+            for ticker in volume_data.columns:
+                vol_s = volume_data[ticker].dropna()
+                if len(vol_s) >= 13: # need at least 1 hour of 5m bars
+                    current_vol = vol_s.iloc[-1]
+                    avg_vol = vol_s.iloc[-13:-1].mean()
+                    if avg_vol > 0 and current_vol > (avg_vol * 3.0): # 300% spike
+                        events.append({
+                            "type": "VOLUME_SPIKE",
+                            "severity": "ELEVATED",
+                            "detail": f"Abnormal volume on {ticker}: {current_vol:,.0f} (3x > avg {avg_vol:,.0f})"
+                        })
+                        logger.warning(f"VOLUME_SPIKE detected for {ticker}: {current_vol:,.0f} vs {avg_vol:,.0f}")
 
         return events
 

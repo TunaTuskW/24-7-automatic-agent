@@ -5,9 +5,9 @@ const ALL_TICKERS = ["SPX", "BTC", "GLD", "WTI", "NVDA", "TSLA", "DELL", "SPCE"]
 
 const getSymbol = (ticker) => {
     const map = {
-        "SPX": "AMEX:SPY",
-        "BTC": "BINANCE:BTCUSD",
-        "GLD": "AMEX:GLD",
+        "SPX": "OKX:SPXUSDT.P",
+        "BTC": "OKX:BTCUSDT",
+        "GLD": "OKX:XAUUSDT.P",
         "WTI": "NYMEX:CL1!",
         "NVDA": "NASDAQ:NVDA",
         "TSLA": "NASDAQ:TSLA",
