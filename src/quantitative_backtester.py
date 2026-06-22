@@ -523,7 +523,8 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
             target_allocations["cash"] = cash_kelly + blocked_sum
         
         if use_rl_agent and rl_agent_instance:
-            rl_allocs = rl_agent_instance.predict_allocations(features_vector_clipped, current_allocations)
+            rl_features = features_vector_clipped[:9] + [0.0, 0.0, 0.0] + features_vector_clipped[9:]
+            rl_allocs = rl_agent_instance.predict_allocations(rl_features, current_allocations)
             if rl_allocs:
                 target_allocations = {
                     "spx": rl_allocs.get("SPX_Kelly", 0.0),
