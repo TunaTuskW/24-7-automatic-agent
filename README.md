@@ -230,3 +230,15 @@ docker logs -f quant_backend
 ```
 
 If you encounter any front-end React crashes, the UI is protected by **React Error Boundaries**. Rather than displaying a blank white screen, the tab will safely catch the error and present a styled "Component Crashed" card with a reload button.
+
+---
+
+## 6. Dynamic System Toggles
+
+The v6.5.0 dashboard introduces sophisticated control mechanisms for live data interactions:
+
+### Global Timezone Dropdown
+By clicking the clock in the top-right corner of the UI, you can select your preferred Timezone (e.g., LOCAL, UTC, EST, JST, ICT). This globally transforms all timestamp strings instantly across the entire dashboard (Macro Events, Mock Executions, Reports) without refreshing.
+
+### Universe Configuration
+Inside the **[ LEDGER ]** tab, there is a **[ UNIVERSE CONFIGURATION ]** module. This allows you to dynamically enable or disable the 8 traded assets on the fly. When an asset is toggled OFF, the quantitative engine Mathematically Diverts 100% of the capital allocated to that specific asset directly into your `Cash` reserves, preserving mathematical integrity while completely neutralizing execution risk on that ticker. After toggling assets, you can click **[ RE-RUN BACKTEST ]** to recalculate portfolio PnL.
