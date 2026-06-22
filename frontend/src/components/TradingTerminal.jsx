@@ -7,12 +7,12 @@ const getSymbol = (ticker) => {
     const map = {
         "SPX": "AMEX:SPY",
         "BTC": "OKX:BTCUSDT",
-        "GLD": "AMEX:GLD",
-        "WTI": "NYMEX:CL1!",
+        "GLD": "OKX:XAUTUSDT",
+        "WTI": "OKX:CLUSDT.P",
         "NVDA": "NASDAQ:NVDA",
         "TSLA": "NASDAQ:TSLA",
         "DELL": "NYSE:DELL",
-        "SPCE": "NYSE:SPCE"
+        "SPCE": "OKX:SPCXUSDT.P"
     };
     return map[ticker] || `NASDAQ:${ticker}`;
 };
