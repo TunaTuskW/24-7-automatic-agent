@@ -538,6 +538,11 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
                     "spce": rl_allocs.get("SPCE_Kelly", 0.0),
                     "cash": rl_allocs.get("Cash", 0.0)
                 }
+        
+        # User override: Do not trade "Short", divert its allocation to cash
+        if target_allocations.get("short", 0.0) > 0.0:
+            target_allocations["cash"] += target_allocations["short"]
+            target_allocations["short"] = 0.0
             
         bars_since_rebalance = i - last_rebalance_i
         
