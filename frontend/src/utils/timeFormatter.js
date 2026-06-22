@@ -8,8 +8,10 @@ export function formatTimeToggle(dateInput, timeZone, includeDate = true) {
     d = new Date(dateInput);
   } else {
     let str = String(dateInput);
-    if (!str.includes('Z') && !str.includes('+') && str.includes(' ')) {
-      str += 'Z'; // Append Z to standard database strings to force UTC parsing
+    if (!str.includes('Z') && !str.includes('+')) {
+      if (str.includes(' ') || str.includes('T')) {
+        str += 'Z'; // Append Z to standard database strings to force UTC parsing
+      }
     }
     d = new Date(str);
   }
