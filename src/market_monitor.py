@@ -49,8 +49,19 @@ def run_monitor():
             positions = portfolio.get("positions", {})
             position_details = portfolio.get("position_details", {})
 
-            # Fetch live prices
-            active_assets = list(positions.keys())
+            # Map portfolio keys to yfinance tickers
+            yf_map = {
+                "SPX": "^GSPC",
+                "Short": "SH",
+                "Gold": "GLD",  # Or GC=F
+                "BTC": "BTC-USD",
+                "WTI": "CL=F",
+                "NVDA": "NVDA",
+                "TSLA": "TSLA",
+                "DELL": "DELL",
+                "SPCE": "SPCE"
+            }
+            active_assets = [yf_map.get(k, k) for k in positions.keys()]
             prices = detector.fetch_current_prices(active_tickers=active_assets)
             if not prices:
                 time.sleep(POLL_INTERVAL_SECONDS)
