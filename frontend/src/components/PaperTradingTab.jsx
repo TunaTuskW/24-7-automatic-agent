@@ -60,6 +60,30 @@ function LivePriceTicker({ tickers = ['SPX', 'BTC', 'GLD', 'WTI'] }) {
 
 export default function PaperTradingTab({ timeZone }) {
   const [viewType, setViewType] = useState('live');
+  const [disabledTickers, setDisabledTickers] = useState([]);
+
+  useEffect(() => {
+    fetch('http://localhost:8000/api/trading_config')
+      .then(r => r.json())
+      .then(d => {
+        if (d.disabled_tickers) setDisabledTickers(d.disabled_tickers);
+      })
+      .catch(e => console.error(e));
+  }, []);
+
+  const toggleTicker = async (ticker) => {
+    const isCurrentlyDisabled = disabledTickers.includes(ticker);
+    const updated = isCurrentlyDisabled
+      ? disabledTickers.filter(t => t !== ticker)
+      : [...disabledTickers, ticker];
+    
+    setDisabledTickers(updated);
+    try {
+      await apiPost('/api/trading_config', { disabled_tickers: updated });
+    } catch (e) {
+      console.error(e);
+    }
+  };
   const [triggerStatus, setTriggerStatus] = useState(null);
   const [data, setData] = useState({ portfolio: { cash: 10000.0, total_equity: 10000.0, positions: {} }, ledger: [] });
   const [nextUpdate, setNextUpdate] = useState(null);
@@ -266,7 +290,7 @@ export default function PaperTradingTab({ timeZone }) {
       </div>
 
       {/* Open Positions */}
-      <div className="data-panel col-span-6">
+      <div className="data-panel col-span-4">
         <h2>[ OPEN POSITIONS ]</h2>
         {Object.keys(portfolio.positions).length === 0 ? (
           <p className="text-muted" style={{ marginTop: '14px', fontFamily: 'JetBrains Mono', fontSize: '0.85rem' }}>No open positions — 100% Cash.</p>
@@ -290,8 +314,37 @@ export default function PaperTradingTab({ timeZone }) {
         )}
       </div>
 
+      {/* Universe Configuration Module */}
+      <div className="data-panel col-span-4">
+        <h2>[ UNIVERSE CONFIGURATION ]</h2>
+        <div style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {['SPX', 'BTC', 'GLD', 'WTI', 'NVDA', 'TSLA', 'DELL', 'SPCE'].map(ticker => {
+            const isEnabled = !disabledTickers.includes(ticker.toLowerCase());
+            return (
+              <div key={ticker} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span className="text-bright">{ticker}</span>
+                <button 
+                  onClick={() => toggleTicker(ticker.toLowerCase())}
+                  style={{ 
+                    padding: '2px 8px', 
+                    fontSize: '0.75rem',
+                    background: isEnabled ? 'var(--term-green)' : 'transparent',
+                    color: isEnabled ? '#000' : 'var(--text-muted)',
+                    border: `1px solid ${isEnabled ? 'var(--term-green)' : 'var(--text-muted)'}`,
+                    cursor: 'pointer',
+                    width: '60px'
+                  }}
+                >
+                  {isEnabled ? 'ON' : 'OFF'}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Real Trading Reference Module */}
-      <div className="data-panel col-span-6">
+      <div className="data-panel col-span-4">
         <h2>[ LIVE TRADING REFERENCE ]</h2>
         <div style={{ padding: '8px', border: '1px solid var(--term-amber)', marginBottom: '14px' }}>
           <p style={{ color: 'var(--term-amber)', lineHeight: '1.2', whiteSpace: 'pre-wrap', fontSize: '10px' }}>

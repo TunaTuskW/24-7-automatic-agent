@@ -20,6 +20,17 @@ from src.engines.rl_agent import RLAgent
 def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_date: str = None):
     print(f"=== Starting Dynamic Quantitative Backtest ({interval}) | RL Agent: {use_rl_agent} ===")
     
+    import json
+    import os
+    disabled_tickers = []
+    config_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'state', 'trading_config.json')
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, 'r') as f:
+                disabled_tickers = [t.lower() for t in json.load(f).get('disabled_tickers', [])]
+        except Exception:
+            pass
+
     from datetime import datetime, timedelta
     _today = datetime.today()
 
@@ -539,10 +550,11 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
                     "cash": rl_allocs.get("Cash", 0.0)
                 }
         
-        # User override: Do not trade "Short", divert its allocation to cash
-        if target_allocations.get("short", 0.0) > 0.0:
-            target_allocations["cash"] += target_allocations["short"]
-            target_allocations["short"] = 0.0
+        # User override: Divert disabled ticker allocations to cash
+        for dticker in disabled_tickers:
+            if target_allocations.get(dticker, 0.0) > 0.0:
+                target_allocations["cash"] += target_allocations[dticker]
+                target_allocations[dticker] = 0.0
             
         bars_since_rebalance = i - last_rebalance_i
         

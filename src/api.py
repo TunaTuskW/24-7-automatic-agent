@@ -521,6 +521,29 @@ def get_reports_list():
     
     return {"reports": files}
 
+from pydantic import BaseModel
+class TradingConfigPayload(BaseModel):
+    disabled_tickers: list[str]
+
+@app.get("/api/trading_config")
+def get_trading_config():
+    config_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'state', 'trading_config.json')
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, 'r') as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {"disabled_tickers": []}
+
+@app.post("/api/trading_config")
+def update_trading_config(payload: TradingConfigPayload):
+    config_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'state', 'trading_config.json')
+    os.makedirs(os.path.dirname(config_path), exist_ok=True)
+    with open(config_path, 'w') as f:
+        json.dump({"disabled_tickers": payload.disabled_tickers}, f)
+    return {"status": "ok"}
+
 # Mount the static reports directory
 reports_path = os.path.join(os.path.dirname(__file__), '..', 'reports')
 if os.path.exists(reports_path):
