@@ -262,9 +262,8 @@ def get_portfolio(type: str = "live"):
             portfolio['realized_pnl'] = realized_pnl
             portfolio['unrealized_pnl'] = unrealized_pnl
 
-            # Return last 50 trades, reversed (newest first)
-            ledger = full_ledger[-50:]
-            ledger.reverse()
+            # Return all trades, reversed (newest first)
+            ledger = full_ledger[::-1]
         except Exception as e:
             print(f"Error processing ledger: {e}")
             pass
