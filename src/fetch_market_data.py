@@ -796,11 +796,11 @@ class Conductor:
         news_signal = self.snapshot.news_signal
         
         CONVICTION_GATE = {
-            "RISK_ON_EXPANSION":      0.40,
-            "LIQUIDITY_DRIVEN_RALLY": 0.45,
-            "NEUTRAL_TRANSITIONAL":   0.60,
-            "DEFENSIVE_RISK_OFF":     0.75,
-            "VOLATILITY_EXPANSION":   0.85,
+            "RISK_ON_EXPANSION":      0.30,
+            "LIQUIDITY_DRIVEN_RALLY": 0.35,
+            "NEUTRAL_TRANSITIONAL":   0.45,
+            "DEFENSIVE_RISK_OFF":     0.60,
+            "VOLATILITY_EXPANSION":   0.70,
         }
         
         entry_threshold = CONVICTION_GATE.get(dominant_regime, 0.60)
@@ -894,16 +894,22 @@ class Conductor:
         
         try:
             if should_rebalance:
+                # Safely extract prices, falling back to None if data is entirely missing
+                def safe_get_price(ticker_key):
+                    if not self.clean_daily: return None
+                    val = self.clean_daily.get(ticker_key, {}).get("current", None)
+                    return val if val != 0.0 else None
+
                 current_prices = {
-                    "SPX":   self.clean_daily.get("SPX",   {}).get("current", 0.0),
-                    "Short": self.clean_daily.get("SH",    {}).get("current", 0.0),
-                    "Gold":  self.clean_daily.get("Gold",  {}).get("current", 0.0),
-                    "BTC":   self.clean_daily.get("BTC",   {}).get("current", 0.0),
-                    "WTI":   self.clean_daily.get("WTI",   {}).get("current", 0.0),
-                    "NVDA":  self.clean_daily.get("NVDA",  {}).get("current", 0.0),
-                    "TSLA":  self.clean_daily.get("TSLA",  {}).get("current", 0.0),
-                    "DELL":  self.clean_daily.get("DELL",  {}).get("current", 0.0),
-                    "SPCE":  self.clean_daily.get("SPCE",  {}).get("current", 0.0)
+                    "SPX":   safe_get_price("SPX"),
+                    "Short": safe_get_price("SH"),
+                    "Gold":  safe_get_price("Gold"),
+                    "BTC":   safe_get_price("BTC"),
+                    "WTI":   safe_get_price("WTI"),
+                    "NVDA":  safe_get_price("NVDA"),
+                    "TSLA":  safe_get_price("TSLA"),
+                    "DELL":  safe_get_price("DELL"),
+                    "SPCE":  safe_get_price("SPCE")
                 }
                 self.paper_broker.execute_rebalance(target_allocs, current_prices, vix_zscore=self.snapshot.market_extremes_insight.temperature_zscore, hmm_regime=self.snapshot.regime.current)
                 self.last_rebalance_bar = self.bar_count

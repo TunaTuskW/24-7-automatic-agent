@@ -4,6 +4,7 @@ import requests
 from typing import List
 from src.interfaces.data_broker import DataBroker
 from src.observability.logger import get_logger
+import time
 
 logger = get_logger("yahoo-adapter")
 
@@ -13,49 +14,64 @@ class YahooAdapter(DataBroker):
 
     def fetch_ohlcv_daily(self, tickers: List[str], period: str = "30d", interval: str = "1d") -> pd.DataFrame:
         logger.info(f"Fetching OHLCV for {len(tickers)} tickers over {period} (interval: {interval})")
-        try:
-            raw_data = yf.download(tickers, period=period, interval=interval, group_by="ticker", progress=False, threads=True)
-            return raw_data
-        except Exception as e:
-            logger.error(f"Failed to fetch daily OHLCV: {e}")
-            return pd.DataFrame()
+        for attempt in range(3):
+            try:
+                raw_data = yf.download(tickers, period=period, interval=interval, group_by="ticker", progress=False, threads=True)
+                if not raw_data.empty:
+                    return raw_data
+            except Exception as e:
+                logger.warning(f"Attempt {attempt+1} failed to fetch daily OHLCV: {e}")
+            time.sleep(2 ** attempt)
+        logger.error(f"All retries failed to fetch daily OHLCV for {tickers}")
+        return None
             
     def fetch_ohlcv_hourly(self, tickers: List[str], period: str = "5d") -> pd.DataFrame:
         logger.info(f"Fetching hourly OHLCV for {len(tickers)} tickers over {period}")
-        try:
-            raw_data = yf.download(tickers, period=period, interval="1h", group_by="ticker", progress=False, threads=True)
-            return raw_data
-        except Exception as e:
-            logger.error(f"Failed to fetch hourly OHLCV: {e}")
-            return pd.DataFrame()
+        for attempt in range(3):
+            try:
+                raw_data = yf.download(tickers, period=period, interval="1h", group_by="ticker", progress=False, threads=True)
+                if not raw_data.empty:
+                    return raw_data
+            except Exception as e:
+                logger.warning(f"Attempt {attempt+1} failed to fetch hourly OHLCV: {e}")
+            time.sleep(2 ** attempt)
+        logger.error(f"All retries failed to fetch hourly OHLCV for {tickers}")
+        return None
             
     def fetch_yield(self, series_id: str) -> float:
         if not self.fred_key:
             logger.info(f"No FRED key. Falling back to Yahoo Finance for {series_id}")
             yf_ticker = "^TNX" if series_id == "DGS10" else "^FVX"
-            try:
-                tk = yf.Ticker(yf_ticker)
-                hist = tk.history(period="1d")
-                if not hist.empty:
-                    return float(hist['Close'].iloc[-1])
-            except Exception as e:
-                logger.error(f"Yahoo fallback failed for {yf_ticker}: {e}")
-            return 0.0
+            for attempt in range(3):
+                try:
+                    tk = yf.Ticker(yf_ticker)
+                    hist = tk.history(period="1d")
+                    if not hist.empty:
+                        return float(hist['Close'].iloc[-1])
+                except Exception as e:
+                    logger.warning(f"Attempt {attempt+1} Yahoo fallback failed for {yf_ticker}: {e}")
+                time.sleep(2 ** attempt)
+            logger.error(f"All retries failed for Yahoo fallback yield {yf_ticker}")
+            return None
             
         logger.info(f"Fetching FRED yield for {series_id}")
         url = f"https://api.stlouisfed.org/fred/series/observations?series_id={series_id}&api_key={self.fred_key}&file_type=json"
-        try:
-            resp = requests.get(url, timeout=10)
-            data = resp.json()
-            obs = data.get("observations", [])
-            for ob in reversed(obs):
-                val = ob.get("value", ".")
-                if val != ".":
-                    return float(val)
-            return 0.0
-        except Exception as e:
-            logger.error(f"FRED fetch failed for {series_id}: {e}")
-            return 0.0
+        for attempt in range(3):
+            try:
+                resp = requests.get(url, timeout=10)
+                resp.raise_for_status()
+                data = resp.json()
+                obs = data.get("observations", [])
+                for ob in reversed(obs):
+                    val = ob.get("value", ".")
+                    if val != ".":
+                        return float(val)
+                return None
+            except Exception as e:
+                logger.warning(f"Attempt {attempt+1} FRED fetch failed for {series_id}: {e}")
+            time.sleep(2 ** attempt)
+        logger.error(f"All retries failed for FRED yield {series_id}")
+        return None
 
     def fetch_yield_history(self, series_id: str, period: str = "90d") -> pd.Series:
         if not self.fred_key:
