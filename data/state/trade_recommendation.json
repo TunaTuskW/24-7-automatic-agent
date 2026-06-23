@@ -1,20 +1,20 @@
 {
-    "timestamp_utc": "2026-06-23T17:34:56.789495+00:00",
+    "timestamp_utc": "2026-06-23T18:20:38.309873+00:00",
     "regime": "DEFENSIVE_RISK_OFF",
     "regime_confidence": 0.5,
-    "entry_score": 0.2,
+    "entry_score": 0.0,
     "entry_bias": "SHORT",
     "kelly_fraction": 0.0,
     "conviction_gate_passed": false,
     "macro_signal": "MIXED",
-    "macro_conviction": 0.675,
+    "macro_conviction": 0.65,
     "signal_conflict": false,
     "conflict_detail": "",
-    "recommended_action": "LIQUIDATE_ALL",
+    "recommended_action": "HOLD",
     "recommended_allocations": {
         "SPX": 0.0,
         "SH": 0.0,
-        "GLD": 0.0,
+        "GLD": 0.257,
         "BTC": 0.0,
         "WTI": 0.0,
         "NVDA": 0.0,
@@ -22,6 +22,6 @@
         "DELL": 0.0,
         "SPCE": 0.0
     },
-    "decision_rationale": "Regime is DEFENSIVE_RISK_OFF. Entry score is 0.20 (SHORT). Gate blocked (needed 0.60).",
+    "decision_rationale": "Regime is DEFENSIVE_RISK_OFF. Entry score is 0.00 (SHORT). Gate blocked (needed 0.60).",
     "risk_flags": []
 }
