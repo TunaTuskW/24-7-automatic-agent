@@ -17,9 +17,10 @@ scheduler = BackgroundScheduler()
 current_frequency = "4h"
 
 def run_1h():
-    logger.info("Running 1H Context + Entry Scoring...")
+    logger.info("Running 1H Context Layer (entry scoring + state write — no execution)...")
     subprocess.run(["python3", "src/fetch_market_data.py", "--interval", "1h"])
-    subprocess.run(["python3", "src/build_report.py"])
+    # No build_report call here — 1H doesn't need an execution report
+    # (Optionally: build a 1H context-only diagnostic report)
     _apply_adaptive_frequency()
 
 def run_4h():

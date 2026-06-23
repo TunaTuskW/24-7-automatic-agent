@@ -14,11 +14,25 @@ from src.engines.session_engine import SessionEngine
 from src.engines.liquidity_engine import LiquidityEngine
 from src.engines.regime_ensemble import RegimeEnsemble
 from src.engines.risk_engine import RiskEngine
+from src.engines.entry_engine import EntryEngine
+from src.engines.opportunity_gate import OpportunityGate
 from src.engines.feature_engine import ALL_YF_TICKERS, compute_stats, compute_volume_heat, load_mlp_models, run_multi_mlp_inference, run_self_calibration
 from src.engines.rl_agent import RLAgent
 
 def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_date: str = None):
-    print(f"=== Starting Dynamic Quantitative Backtest ({interval}) | RL Agent: {use_rl_agent} ===")
+    is_opportunistic = (interval == "1h_opportunistic")
+    display_interval = interval
+    
+    if interval == "1h":
+        raise ValueError(
+            "1H execution backtest is disabled. 1H is context-only. "
+            "Use --interval 4h or --interval 1d for execution backtests, or --interval 1h_opportunistic to test OpportunityGate."
+        )
+
+    if is_opportunistic:
+        interval = "1h"
+
+    print(f"=== Starting Dynamic Quantitative Backtest ({display_interval}) | RL Agent: {use_rl_agent} ===")
     
     import json
     import os
@@ -84,6 +98,11 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
     liquidity_engine = LiquidityEngine()
     regime_ensemble = RegimeEnsemble()
     risk = RiskEngine()
+    entry_engine = EntryEngine()
+    opportunity_gate = OpportunityGate()
+    prev_entry_score = None
+    prev_regime = None
+    last_kelly_dict = {}
     mlp_packages_dict = load_mlp_models(interval)
     
     prior_k_state = None
@@ -323,6 +342,9 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
             "us10y_delta": us10y_delta,
             "spread_level": us_2s10s_spread,
             "btc_ret": get_ret("BTC"),
+            "es_ret": get_ret("ES"),
+            "nq_ret": get_ret("NQ"),
+            "rty_ret": get_ret("RTY"),
             "nvda_ret": get_ret("NVDA"),
             "tsla_ret": get_ret("TSLA"),
             "dell_ret": get_ret("DELL"),
@@ -336,6 +358,7 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
         ordered_keys = [
             "spx_ret", "dxy_ret", "vix_zscore", "Inst_Heat_Index", "wti_ret",
             "gsr_ret", "us10y_delta", "spread_level", "btc_ret",
+            "es_ret", "nq_ret", "rty_ret",
             "nvda_ret", "tsla_ret", "dell_ret", "spce_ret",
             "spx_rsi_14", "spx_macd_hist", "spx_bbw", "spx_vix_corr"
         ]
@@ -434,22 +457,81 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
         # Fix 4: Dynamic VIX-scaled slippage (matches live paper_broker)
         simulated_slippage_rate = min(0.005, max(0.0005, 0.0005 + (vix_zscore_val * 0.0002)))
 
-        kelly_dict = risk.compute_multi_asset_kelly(
-            mlp_predictions=mlp_predictions,
-            dominant_state=kalman_state.dominant_state,
-            brier_score=dynamic_brier_score,
-            duration_days=5,
-            is_capitulation_override=is_capitulation_override,
-            is_momentum_override=is_momentum_override,
-            is_black_swan=is_black_swan,
-            is_bull_trap=is_bull_trap,
-            hmm_regime=dom_regime,
-            current_ihi=ihi_val,
-            is_downtrend=is_downtrend,
-            max_kelly_cap=0.40 if interval == "4h" else 0.60,
-            equity_drawdown=equity_drawdown,
-            entry_score=1.0  # TODO: integrate EntryEngine for 1H context, see fetch_market_data.py:595
+        # Compute Entry Quality Score
+        spx_close_1h = historical_slice["^GSPC"]["Close"].dropna() if "^GSPC" in historical_slice.columns.levels[0] else pd.Series()
+        spx_vol_1h = historical_slice["^GSPC"]["Volume"].dropna() if "^GSPC" in historical_slice.columns.levels[0] else pd.Series()
+        spx_high_1h = historical_slice["^GSPC"]["High"].dropna() if "^GSPC" in historical_slice.columns.levels[0] else pd.Series()
+        spx_low_1h = historical_slice["^GSPC"]["Low"].dropna() if "^GSPC" in historical_slice.columns.levels[0] else pd.Series()
+        vix_1h = historical_slice["^VIX"]["Close"].dropna() if "^VIX" in historical_slice.columns.levels[0] else pd.Series()
+        
+        current_vix9d_1h = historical_slice["^VIX9D"]["Close"].dropna() if "^VIX9D" in historical_slice.columns.levels[0] else pd.Series()
+        
+        smc_val = smc_dict.get("smc_bias", 0)
+        if isinstance(smc_val, str):
+            smc_val = 1 if smc_val == "BULLISH" else -1 if smc_val == "BEARISH" else 0
+            
+        entry_result = entry_engine.score_entry(
+            spx_close_1h=spx_close_1h,
+            spx_vol_1h=spx_vol_1h,
+            spx_high_1h=spx_high_1h,
+            spx_low_1h=spx_low_1h,
+            vix_1h=vix_1h,
+            dominant_regime=dom_regime,
+            kalman_dominant_state=kalman_state.dominant_state,
+            smc_bias=smc_val,
+            trend_state=trend_state.get("trend_state", "NEUTRAL"),
+            trend_conviction=trend_state.get("trend_conviction", 0.0),
+            vix9d_1h=current_vix9d_1h
         )
+        entry_score_val = float(entry_result.get("entry_score", 0.5))
+
+        skip_execution = False
+        if is_opportunistic:
+            market_events = []
+            if is_capitulation_override: market_events.append({"type": "CAPITULATION_OVERRIDE"})
+            if is_momentum_override: market_events.append({"type": "MOMENTUM_IGNITION"})
+
+            decision = opportunity_gate.should_execute(
+                current_entry_score=entry_score_val,
+                prev_entry_score=prev_entry_score,
+                current_regime=dom_regime,
+                prev_regime=prev_regime,
+                mlp_prob=mlp_prob,
+                brier_score=dynamic_brier_score,
+                kalman_dominant_state=kalman_state.dominant_state,
+                market_events=market_events
+            )
+            prev_entry_score = entry_score_val
+            prev_regime = dom_regime
+            
+            if not decision.should_execute:
+                skip_execution = True
+
+        if skip_execution:
+            kelly_dict = last_kelly_dict.copy()
+        else:
+            kelly_dict = risk.compute_multi_asset_kelly(
+                mlp_predictions=mlp_predictions,
+                dominant_state=kalman_state.dominant_state,
+                brier_score=dynamic_brier_score,
+                duration_days=5,
+                is_capitulation_override=is_capitulation_override,
+                is_momentum_override=is_momentum_override,
+                is_black_swan=is_black_swan,
+                is_bull_trap=is_bull_trap,
+                hmm_regime=dom_regime,
+                current_ihi=ihi_val,
+                is_downtrend=is_downtrend,
+                max_kelly_cap=0.40 if interval == "4h" else 0.60,
+                equity_drawdown=equity_drawdown,
+                entry_score=entry_score_val
+            )
+            if is_opportunistic and 'decision' in locals():
+                for k in kelly_dict:
+                    if kelly_dict[k] > 0.0 and "Kelly" in k:
+                        kelly_dict[k] = min(1.0, kelly_dict[k] + decision.conviction_boost)
+
+            last_kelly_dict = kelly_dict.copy()
         spx_kelly = kelly_dict.get("SPX_Kelly", 0.0)
         
         # Track for self-calibration 5-bar delayed grading
@@ -573,21 +655,6 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
             if target_allocations.get(dticker, 0.0) > 0.0:
                 target_allocations["cash"] += target_allocations[dticker]
                 target_allocations[dticker] = 0.0
-                
-        # --- 1H Micro-Noise Filter (Entropy Penalty) ---
-        shannon_entropy = risk.compute_shannon_entropy(np.array(kalman_state.probabilities))
-        if shannon_entropy > 1.20:
-            for k in list(target_allocations.keys()):
-                if k != "cash":
-                    target_allocations["cash"] += target_allocations[k]
-                    target_allocations[k] = 0.0
-            circuit_breaker_active = True
-        elif shannon_entropy > 0.90:
-            for k in list(target_allocations.keys()):
-                if k != "cash":
-                    reduction = target_allocations[k] * 0.5
-                    target_allocations[k] -= reduction
-                    target_allocations["cash"] += reduction
             
         bars_since_rebalance = i - last_rebalance_i
         
@@ -846,7 +913,8 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
     for r in results:
         report += f"| {r['date']} | {r['spx_close']} | {r['dom_regime']} | {r['kalman_state']} | {r['mlp_prob']:.3f} | {r['consensus']:.1f} | {r['kelly_exposure']} | {r['short_exposure']} | {r['btc_exposure']} | {r['gld_exposure']} | {r['wti_exposure']} | {r['cash_exposure']} | {r['fwd_5d_ret']:.3f}% |\n"
         
-    report_path = os.path.join(os.path.dirname(__file__), "..", "reports", f"backtest_extended_results_{interval}.md")
+    import os
+    report_path = os.path.join(os.path.dirname(__file__), "..", "reports", f"backtest_extended_results_{display_interval}.md")
     with open(report_path, "w") as f:
         f.write(report)
         
@@ -901,7 +969,7 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--interval",   type=str, default="1d", choices=["1d", "1wk", "1h", "4h"])
+    parser.add_argument("--interval",   type=str, default="1d", choices=["1d", "1wk", "1h", "4h", "1h_opportunistic"])
     parser.add_argument("--use_rl", action="store_true", help="Enable RL Agent for allocations")
     parser.add_argument("--start-date", type=str, default=None,
                         help="Backtest start date (YYYY-MM-DD). Defaults to Jan 1 of current year.")

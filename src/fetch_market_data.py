@@ -5,6 +5,9 @@ import traceback
 import feedparser
 import numpy as np
 import pandas as pd
+import random
+import math
+import subprocess
 from datetime import datetime, timezone
 import src.config_loader
 import joblib
@@ -98,6 +101,19 @@ class Conductor:
         
         self.snapshot = MarketSnapshot()
         
+        self.opportunistic_1h_enabled = os.environ.get("OPPORTUNISTIC_1H", "false").lower() == "true"
+        self.opportunity_gate = OpportunityGate()
+        self.opportunity_state_path = os.path.join(os.path.dirname(__file__), "..", "data", "state", "opportunity_state.json")
+        self.prev_entry_score = None
+        self.prev_regime = None
+        if os.path.exists(self.opportunity_state_path):
+            try:
+                with open(self.opportunity_state_path, 'r') as f:
+                    st = json.load(f)
+                    self.prev_entry_score = st.get("prev_entry_score")
+                    self.prev_regime = st.get("prev_regime")
+            except Exception as e:
+                logger.error(f"Failed to load opportunity state: {e}")
         self.clean_daily = {}
         self.bonds = {}
         self.features_vector = []
@@ -119,6 +135,9 @@ class Conductor:
             ("us10y_delta", "bonds", "delta"),
             ("spread_level", "bonds", "spread_2s10s"),
             ("btc_ret", "BTC", "delta_pct"),
+            ("es_ret", "ES", "delta_pct"),
+            ("nq_ret", "NQ", "delta_pct"),
+            ("rty_ret", "RTY", "delta_pct"),
             ("nvda_ret", "NVDA", "delta_pct"),
             ("tsla_ret", "TSLA", "delta_pct"),
             ("dell_ret", "DELL", "delta_pct"),
@@ -596,8 +615,8 @@ class Conductor:
                 entry_score=entry_score
             )
 
-        # --- Entry Gating ---
-        if os.path.exists(self.entry_quality_path):
+        # --- Multi-Timeframe Entry Gating (4H and 1D only) ---
+        if self.interval in ("4h", "1d") and os.path.exists(self.entry_quality_path):
             try:
                 with open(self.entry_quality_path, "r") as f:
                     entry_quality = json.load(f)
@@ -911,22 +930,10 @@ class Conductor:
         with open(rec_path, "w") as f:
             json.dump(recommendation.model_dump(), f, indent=4)
 
-        # --- 1H Micro-Noise Filter (Entropy Penalty) ---
-        entropy = self.snapshot.data_science_layer.get("epistemic_metrics", {}).get("shannon_entropy", 1.58)
-        
-        if entropy > 1.20:
-            logger.warning(f"1H Entropy Penalty: {entropy:.2f} > 1.20 (High Chaos / Dead Market). Liquidating to cash.")
-            for k in target_allocs: target_allocs[k] = 0.0
-            recommended_action = "LIQUIDATE_ALL"
-        elif entropy > 0.90:
-            logger.info(f"1H Entropy Penalty: {entropy:.2f} > 0.90 (Choppy Market). Halving allocations to de-risk.")
-            for k in target_allocs: target_allocs[k] = round(target_allocs[k] * 0.5, 3)
-
         # Execute Rebalance in Paper Trading
         self.bar_count += 1
         bars_since_rebalance = self.bar_count - self.last_rebalance_bar
-        is_emergency = recommended_action == "LIQUIDATE_ALL" or (entropy > 1.20)
-        should_rebalance = bars_since_rebalance >= self.MIN_HOLD_BARS or is_emergency
+        should_rebalance = bars_since_rebalance >= self.MIN_HOLD_BARS
         
         try:
             if should_rebalance:
@@ -959,6 +966,48 @@ class Conductor:
                     if key.lower() in disabled_tickers:
                         logger.warning(f"Live Execution: {key} is globally disabled by user. Diverting allocation to cash.")
                         target_allocs[key] = 0.0
+
+                if self.interval == "1h":
+                    entry_score_now = 0.5
+                    if os.path.exists(self.entry_quality_path):
+                        with open(self.entry_quality_path, "r") as f:
+                            entry_score_now = float(json.load(f).get("entry_score", 0.5))
+                            
+                    market_events = self.event_bus.recent_events() if hasattr(self.event_bus, "recent_events") else []
+                    mlp_prob = mlp_state.get("spx", {}).get("bull_probability", 0.5) if 'mlp_state' in locals() and mlp_state else 0.5
+                    brier_s = brier_score if 'brier_score' in locals() else 0.5
+                    k_state = kalman_res.dominant_state if 'kalman_res' in locals() and kalman_res else "neutral"
+
+                    decision = self.opportunity_gate.should_execute(
+                        current_entry_score=entry_score_now,
+                        prev_entry_score=self.prev_entry_score,
+                        current_regime=self.snapshot.regime.current,
+                        prev_regime=self.prev_regime,
+                        mlp_prob=mlp_prob,
+                        brier_score=brier_s,
+                        kalman_dominant_state=k_state,
+                        market_events=market_events,
+                    )
+
+                    self.prev_entry_score = entry_score_now
+                    self.prev_regime = self.snapshot.regime.current
+                    
+                    with open(self.opportunity_state_path, "w") as f:
+                        json.dump({
+                            "prev_entry_score": self.prev_entry_score,
+                            "prev_regime": self.prev_regime,
+                            "evaluated_utc": datetime.now(timezone.utc).isoformat()
+                        }, f, indent=4)
+
+                    if not self.opportunistic_1h_enabled or not decision.should_execute:
+                        logger.info(f"1H OppGate: SKIP — {decision.reason}")
+                        return
+
+                    logger.info(f"1H OppGate: EXECUTE — {decision.event_type} — {decision.reason}")
+                    # Apply conviction boost
+                    for k in target_allocs:
+                        if target_allocs[k] > 0.0:
+                            target_allocs[k] = min(1.0, target_allocs[k] + decision.conviction_boost)
 
                 self.paper_broker.execute_rebalance(target_allocs, current_prices, vix_zscore=self.snapshot.market_extremes_insight.temperature_zscore, hmm_regime=self.snapshot.regime.current)
                 self.last_rebalance_bar = self.bar_count
