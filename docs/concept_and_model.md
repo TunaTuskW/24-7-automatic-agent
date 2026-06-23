@@ -20,9 +20,9 @@ The Risk Engine (`src/engines/risk_engine.py`) has been overhauled to apply per-
 
 If the neural network's `bull_probability` does not drastically exceed these base edges, the Kelly Allocator will return exactly `0.0`, sitting in cash rather than risking capital on low-conviction noise.
 
-## 2. Auto-Inversion & Calibration Penalties
+## 2. Dynamic Calibration Penalties
 To counteract overfitted mean-reversion during strong directional trends, the system actively monitors the `Brier Score` (a measure of model calibration). 
-If the Brier Score exceeds `0.60`, the Risk Engine triggers **Auto-Inversion** (`1.0 - prob`), recognizing that the neural networks are misaligned with the current regime and actively fading its primary signal.
+If the Brier Score indicates degraded performance, the Risk Engine applies proportional **Calibration Penalties**, scaling back allocations rather than naively inverting signals, protecting capital during transition phases.
 
 ## 3. Multi-Asset Trading Terminal & Short Leg Execution
 The frontend React architecture has been entirely restructured. The system runs entirely inside a Dockerized stack providing a professional Glassmorphism web dashboard on Port 80.
@@ -112,9 +112,7 @@ graph TD
         Ens -->|"Gradient Boosting"| ProbGB["Boosted Probabilities"]
         
         ProbMLP & ProbRF & ProbGB --> Calib["Brier Score Calibration"]
-        Calib -->|"Score > 0.60?"| Inv["Auto-Inversion (1.0 - P)"]
-        Calib -->|"Score <= 0.60"| Cons["Standard Deviation Consensus"]
-        Inv --> Cons
+        Calib --> Cons["Standard Deviation Consensus"]
     end
 
     %% 5. Risk & Execution

@@ -63,9 +63,7 @@ graph TD
         Ens -->|"Gradient Boosting"| ProbGB["Boosted Probabilities"]
         
         ProbMLP & ProbRF & ProbGB --> Calib["Brier Score Calibration"]
-        Calib -->|"Score > 0.60?"| Inv["Auto-Inversion (1.0 - P)"]
-        Calib -->|"Score <= 0.60"| Cons["Standard Deviation Consensus"]
-        Inv --> Cons
+        Calib --> Cons["Standard Deviation Consensus"]
     end
 
     %% 5. Risk & Execution
@@ -99,10 +97,10 @@ graph TD
 1. **Ingestion & Data Lake:** Every interval cycle, the orchestrator pulls live OHLCV data across 41 global tickers, macroeconomic yield data from FRED, and real-time news headlines. These are passed to the `LakeManager`, which safely persists the raw data partitioned by day in Parquet formats.
 2. **Feature Engineering:** The raw price tables are then translated into mathematical feature arrays. We compute momentum indices (RSI, MACD), Volatility surface stress (VIX Z-Scores), and Bond Yield spreads to map the physical state of the market.
 3. **Regime & Covariance:** The mathematical array is then evaluated by the **Regime Ensemble** (Random Forests & Gradient Boosters) to categorize the market state (e.g. `BULL_EXPANSION` or `CRISIS_DISLOCATION`). A Kalman Filter models covariance noise.
-4. **Predictive Ensembles:** A Multi-Layer Perceptron (MLP Neural Network) merges the statistical regimes and feature matrices to predict future cumulative returns. Brier scores ensure the model isn't overfitting—triggering active signal inversion if calibration degrades.
+4. **Predictive Ensembles:** A Multi-Layer Perceptron (MLP Neural Network) merges the statistical regimes and feature matrices to predict future cumulative returns. Brier scores ensure the model isn't overfitting and scales signal allocations accordingly.
 5. **Risk Allocation:** The raw predictions enter the `RiskEngine`, filtering out noise through "Dynamic Conviction Edges" (e.g. SPCE needs >72% conviction to trade, while SPX only needs >50%). Target Kelly weights are formulated.
 6. **LLM Chain-of-Thought Validation:** Gemini 2.5 Flash analyzes parallel economic news and central bank statements. A Quantitative Divergence Slasher ensures that if the LLM detects "Bullish" narratives while the mathematical VIX signals extreme fear, capital is defensively slashed in half before executing.
-7. **Unified Trade Synthesis & Conviction Gate:** The system evaluates Smart Money Concepts (SMC), Trend States, and the LLM Macro sentiment to generate a unified `TradeRecommendation`. A Regime-based Conviction Gate blocks execution (holding cash) if the quantitative Entry Score falls below a dynamically required threshold.
+7. **Unified Trade Synthesis & Conviction Gate:** The system evaluates Smart Money Concepts (SMC), Trend States, and the LLM Macro sentiment to generate a unified `TradeRecommendation`. A Regime-based Conviction Gate blocks execution if the quantitative Entry Score falls below a dynamically required threshold. Instead of suffering cash-drag, the system leverages Regime-Aware Baselines (e.g. holding 15% SPX during clear Bull Expansions) to maintain market tracking.
 8. **Paper Broker & Dashboard:** Finally, the target portfolio weights are executed by the simulated `PaperBroker` and instantly dispatched via WebSockets to the React frontend UI.
 
 ---

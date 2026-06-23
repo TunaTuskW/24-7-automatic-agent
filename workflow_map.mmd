@@ -54,9 +54,7 @@ graph TD
         Ens -->|"Gradient Boosting"| ProbGB["Boosted Probabilities"]
         
         ProbMLP & ProbRF & ProbGB --> Calib["Brier Score Calibration"]
-        Calib -->|"Score > 0.60?"| Inv["Auto-Inversion (1.0 - P)"]
-        Calib -->|"Score <= 0.60"| Cons["Standard Deviation Consensus"]
-        Inv --> Cons
+        Calib --> Cons["Standard Deviation Consensus"]
     end
 
     %% 5. Risk & Execution
