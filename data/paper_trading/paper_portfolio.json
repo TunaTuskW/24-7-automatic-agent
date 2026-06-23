@@ -1,14 +1,8 @@
 {
-    "cash": 7454.935079999999,
-    "positions": {
-        "GLD": 6.810242441205081
-    },
-    "position_details": {
-        "GLD": {
-            "peak_price": 378.63922499999995
-        }
-    },
-    "total_equity": 10033.56,
-    "last_update": "2026-06-24T01:20:38.863433",
+    "cash": 10027.136800662334,
+    "positions": {},
+    "position_details": {},
+    "total_equity": 10027.136800662334,
+    "last_update": "2026-06-23T19:00:41.701406",
     "peak_equity": 10033.56
 }
