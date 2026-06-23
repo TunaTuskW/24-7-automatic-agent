@@ -911,6 +911,19 @@ class Conductor:
                     "DELL":  safe_get_price("DELL"),
                     "SPCE":  safe_get_price("SPCE")
                 }
+                
+                # Dynamic User Config Toggles
+                disabled_tickers = []
+                config_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'state', 'trading_config.json')
+                if os.path.exists(config_path):
+                    with open(config_path, 'r') as f:
+                        disabled_tickers = [t.lower() for t in json.load(f).get('disabled_tickers', [])]
+                
+                for key in list(target_allocs.keys()):
+                    if key.lower() in disabled_tickers:
+                        logger.warning(f"Live Execution: {key} is globally disabled by user. Diverting allocation to cash.")
+                        target_allocs[key] = 0.0
+
                 self.paper_broker.execute_rebalance(target_allocs, current_prices, vix_zscore=self.snapshot.market_extremes_insight.temperature_zscore, hmm_regime=self.snapshot.regime.current)
                 self.last_rebalance_bar = self.bar_count
                 logger.info(f"Rebalance executed at bar {self.bar_count}.")
