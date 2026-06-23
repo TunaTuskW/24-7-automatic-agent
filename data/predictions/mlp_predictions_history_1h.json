@@ -362,14 +362,17 @@
     {
         "predicted_risk_on": 0.5,
         "spx_val_at_prediction": 7401.23,
-        "target_graded": false,
+        "target_graded": true,
         "spx_vals_window": [
             7385.7402,
             7367.4502,
             7365.9199,
             7365.9199,
+            7365.9199,
             7365.9199
-        ]
+        ],
+        "actual_outcome": 0,
+        "squared_error": 0.25
     },
     {
         "predicted_risk_on": 0.5,
@@ -379,12 +382,24 @@
             7367.4502,
             7365.9199,
             7365.9199,
+            7365.9199,
             7365.9199
         ]
     },
     {
         "predicted_risk_on": 0.5,
         "spx_val_at_prediction": 7367.4502,
+        "target_graded": false,
+        "spx_vals_window": [
+            7365.9199,
+            7365.9199,
+            7365.9199,
+            7365.9199
+        ]
+    },
+    {
+        "predicted_risk_on": 0.5,
+        "spx_val_at_prediction": 7365.9199,
         "target_graded": false,
         "spx_vals_window": [
             7365.9199,

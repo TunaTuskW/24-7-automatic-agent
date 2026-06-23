@@ -1,14 +1,14 @@
 {
     "recommended_frequency": "1d",
     "score": 0,
-    "reason": "Low confidence \u2014 reducing to daily cadence. Factors: high regime entropy (1.36); degraded model Brier score (0.275); regime too new (0.0 days).",
+    "reason": "Low confidence \u2014 reducing to daily cadence. Factors: high regime entropy (1.36); degraded model Brier score (0.274); regime too new (0.0 days).",
     "inputs": {
         "shannon_entropy": 1.361,
         "vix_zscore": -0.331,
         "dominant_regime": "DEFENSIVE_RISK_OFF",
-        "brier_score": 0.2749,
+        "brier_score": 0.2738,
         "duration_days": 0.0,
         "kalman_is_ambiguous": false
     },
-    "evaluated_utc": "2026-06-23T22:01:44.377829+00:00"
+    "evaluated_utc": "2026-06-23T23:01:52.438654+00:00"
 }

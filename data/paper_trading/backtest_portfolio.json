@@ -1,20 +1,22 @@
 {
-    "cash": 10806.45157159135,
-    "positions": {},
+    "cash": 8482.753016941066,
+    "positions": {
+        "SPX": 0.18127378225685795
+    },
     "position_details": {},
-    "total_equity": 10806.45157159135,
-    "peak_equity": 11001.512828811927,
-    "last_update": "2026-06-23T19:01:35.255688",
-    "total_fees_paid": 228.20011784513005,
-    "win_rate": 61.40350877192983,
-    "overall_win_rate": 29.914529914529915,
-    "active_wins": 35,
-    "active_losses": 22,
-    "preservation_events": 60,
-    "sharpe_ratio": 1.39,
-    "alpha_vs_spx": -0.89,
-    "benchmark_return": 8.96,
-    "max_drawdown": 6.2,
+    "total_equity": 9818.001177015123,
+    "peak_equity": 10000.606468902935,
+    "last_update": "2026-06-24T06:00:19.943001",
+    "total_fees_paid": 79.3332379195907,
+    "win_rate": 39.0625,
+    "overall_win_rate": 3.0599755201958385,
+    "active_wins": 25,
+    "active_losses": 39,
+    "preservation_events": 753,
+    "sharpe_ratio": -1.39,
+    "alpha_vs_spx": -9.35,
+    "benchmark_return": 7.53,
+    "max_drawdown": 1.8,
     "circuit_breaker_count": 0,
-    "conviction_blocks": 36
+    "conviction_blocks": 585
 }
