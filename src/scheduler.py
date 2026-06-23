@@ -54,21 +54,21 @@ def _apply_adaptive_frequency():
                         scheduler.remove_job('main_execution')
                         
                     if current_frequency == "1h":
-                        scheduler.add_job(run_1h, 'cron', minute=0, id='main_execution')
+                        scheduler.add_job(run_1h, 'cron', minute=0, id='main_execution', misfire_grace_time=3600)
                     elif current_frequency == "4h":
-                        scheduler.add_job(run_4h, 'cron', hour='0,4,8,12,16,20', minute=5, id='main_execution')
+                        scheduler.add_job(run_4h, 'cron', hour='0,4,8,12,16,20', minute=5, id='main_execution', misfire_grace_time=3600)
                     else:
-                        scheduler.add_job(run_1d, 'cron', hour=0, minute=0, id='main_execution')
+                        scheduler.add_job(run_1d, 'cron', hour=0, minute=0, id='main_execution', misfire_grace_time=3600)
     except Exception as e:
         logger.error(f"Failed to apply adaptive frequency: {e}")
 
 def start_scheduler():
     # Base jobs that always run
-    scheduler.add_job(run_1h, 'cron', minute=0, id='1h_context_scorer')
-    scheduler.add_job(run_weekly, 'cron', day_of_week='sun', hour=8, minute=0, id='weekly')
+    scheduler.add_job(run_1h, 'cron', minute=0, id='1h_context_scorer', misfire_grace_time=3600)
+    scheduler.add_job(run_weekly, 'cron', day_of_week='sun', hour=8, minute=0, id='weekly', misfire_grace_time=3600)
     
     # Adaptive execution job starts at 4H
-    scheduler.add_job(run_4h, 'cron', hour='0,4,8,12,16,20', minute=5, id='main_execution')
+    scheduler.add_job(run_4h, 'cron', hour='0,4,8,12,16,20', minute=5, id='main_execution', misfire_grace_time=3600)
     
     scheduler.start()
     logger.info("APScheduler started successfully with adaptive frequency.")

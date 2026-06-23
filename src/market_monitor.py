@@ -53,6 +53,7 @@ def run_monitor():
             yf_map = {
                 "SPX": "^GSPC",
                 "Short": "SH",
+                "SHORT": "SH",
                 "Gold": "GLD",  # Or GC=F
                 "BTC": "BTC-USD",
                 "WTI": "CL=F",
@@ -109,6 +110,7 @@ def run_monitor():
                 if should_run and (now_ts - last_event_trigger_time) > COOLDOWN_SECONDS:
                     logger.info(f"Event trigger firing pipeline (interval={interval}): {reason}")
                     subprocess.run(["python3", "src/fetch_market_data.py", "--interval", interval])
+                    subprocess.run(["python3", "src/build_report.py"])
                     last_event_trigger_time = now_ts
                 elif should_run:
                     cooldown_remaining = int(COOLDOWN_SECONDS - (now_ts - last_event_trigger_time))
