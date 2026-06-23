@@ -323,9 +323,6 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
             "us10y_delta": us10y_delta,
             "spread_level": us_2s10s_spread,
             "btc_ret": get_ret("BTC"),
-            "es_ret": get_ret("ES"),
-            "nq_ret": get_ret("NQ"),
-            "rty_ret": get_ret("RTY"),
             "nvda_ret": get_ret("NVDA"),
             "tsla_ret": get_ret("TSLA"),
             "dell_ret": get_ret("DELL"),
@@ -339,7 +336,6 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
         ordered_keys = [
             "spx_ret", "dxy_ret", "vix_zscore", "Inst_Heat_Index", "wti_ret",
             "gsr_ret", "us10y_delta", "spread_level", "btc_ret",
-            "es_ret", "nq_ret", "rty_ret",
             "nvda_ret", "tsla_ret", "dell_ret", "spce_ret",
             "spx_rsi_14", "spx_macd_hist", "spx_bbw", "spx_vix_corr"
         ]
@@ -577,6 +573,21 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
             if target_allocations.get(dticker, 0.0) > 0.0:
                 target_allocations["cash"] += target_allocations[dticker]
                 target_allocations[dticker] = 0.0
+                
+        # --- 1H Micro-Noise Filter (Entropy Penalty) ---
+        shannon_entropy = risk.compute_shannon_entropy(np.array(kalman_state.probabilities))
+        if shannon_entropy > 1.20:
+            for k in list(target_allocations.keys()):
+                if k != "cash":
+                    target_allocations["cash"] += target_allocations[k]
+                    target_allocations[k] = 0.0
+            circuit_breaker_active = True
+        elif shannon_entropy > 0.90:
+            for k in list(target_allocations.keys()):
+                if k != "cash":
+                    reduction = target_allocations[k] * 0.5
+                    target_allocations[k] -= reduction
+                    target_allocations["cash"] += reduction
             
         bars_since_rebalance = i - last_rebalance_i
         
