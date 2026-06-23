@@ -3,9 +3,9 @@ import pandas as pd
 
 def compute_linreg_candles(ohlcv: pd.DataFrame, period: int = 11) -> pd.DataFrame:
     """Replace OHLC with linear regression estimates to remove noise."""
-    lr = pd.DataFrame(index=ohlcv.index)
+    lr = pd.DataFrame(np.nan, index=ohlcv.index, columns=ohlcv.columns)
     if len(ohlcv) < period:
-        return ohlcv
+        return lr
         
     for col in ["Open", "High", "Low", "Close"]:
         # Use simple moving average as a fallback if polyfit is too slow, but sticking to polyfit for now
@@ -19,7 +19,7 @@ def compute_linreg_candles(ohlcv: pd.DataFrame, period: int = 11) -> pd.DataFram
             
         lr[col] = ohlcv[col].rolling(period).apply(apply_linreg, raw=True)
         
-    return lr.bfill()
+    return lr
 
 def compute_ut_bot_signal(close: pd.Series, atr: pd.Series, key_value: float = 1.5) -> pd.Series:
     """
@@ -69,6 +69,15 @@ class TrendEngine:
         lr = compute_linreg_candles(ohlcv, period=linreg_period)
         close = lr["Close"]
         
+        if close.dropna().empty:
+            return {
+                "trend_state": "FLAT",
+                "trend_conviction": 0.50,
+                "fast_signal": 0,
+                "slow_signal": 0,
+                "atr_stop_fast": 0.0,
+            }
+        
         # Approximate ATR using TR
         tr = np.maximum(
             ohlcv["High"] - ohlcv["Low"], 
@@ -77,7 +86,7 @@ class TrendEngine:
                 abs(ohlcv["Low"] - ohlcv["Close"].shift(1))
             )
         )
-        atr = tr.rolling(atr_period).mean().bfill()
+        atr = tr.rolling(atr_period, min_periods=1).mean()
 
         fast_signal = compute_ut_bot_signal(close, atr, key_value=fast_kv)
         slow_signal = compute_ut_bot_signal(close, atr, key_value=slow_kv)

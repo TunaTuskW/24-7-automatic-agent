@@ -13,7 +13,7 @@ services:
       - ./config:/app/config
       - ./logs:/app/logs
       - ./reports:/app/reports
-      - ./models:/app/models
+      - quant_models:/app/models
     ports:
       - "8000:8000"
     healthcheck:
@@ -31,3 +31,6 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+
+volumes:
+  quant_models:

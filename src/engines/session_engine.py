@@ -3,7 +3,7 @@ import numpy as np
 from datetime import datetime
 
 class SessionEngine:
-    def compute_orb_signal(self, ohlcv_1h: pd.DataFrame) -> dict:
+    def compute_orb_signal(self, ohlcv_1h: pd.DataFrame, today=None) -> dict:
         """
         Identify the ORB from the first 1H bar after session open.
         Returns breakout direction and strength.
@@ -11,7 +11,9 @@ class SessionEngine:
         if len(ohlcv_1h) < 2:
             return {"orb_signal": 0, "orb_strength": 0.0, "orb_high": 0.0, "orb_low": 0.0}
             
-        today = ohlcv_1h.index[-1].date()
+        if today is None:
+            tz = ohlcv_1h.index[-1].tzinfo
+            today = datetime.now(tz).date() if tz else datetime.now().date()
         session_bars = ohlcv_1h[ohlcv_1h.index.date == today]
         if len(session_bars) < 2:
             return {"orb_signal": 0, "orb_strength": 0.0, "orb_high": 0.0, "orb_low": 0.0}

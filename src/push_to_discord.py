@@ -13,9 +13,7 @@ logging.basicConfig(
 )
 
 ALLOWED_PATTERNS = [
-    r'^1 hour update \(\d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC\)\.md$',
-    r'^72 hours roll \(\d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC\)\.md$',
-    r'^macro weekly synthesis \(\d{4}-\d{2}-\d{2} UTC\)\.md$',
+    r'^.* \(\d{4}-\d{2}-\d{2}( \d{2}:\d{2})? UTC\)\.md$',
 ]
 
 VALID_TIERS = {"ROUTINE", "ELEVATED", "CRITICAL", "DAILY"}

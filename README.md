@@ -6,7 +6,94 @@ Welcome to the **Macro Briefing Agent (v6.5.0)**—a 24/7 autonomous containeriz
 
 The system operates continuously through a highly sophisticated, decoupled pipeline. 
 
-![Data Processing Workflow](docs/workflow_map.png)
+```mermaid
+graph TD
+    %% 1. Ingestion Phase
+    subgraph Ingestion["1. Multi-Timeframe Data Ingestion & Storage"]
+        YF["YahooAdapter (Dynamic OHLCV fetching for 41 global tickers)"]
+        FRED["FRED API (DGS2, DGS10 Yields)"]
+        FF["ForexFactoryAdapter (Global High-Impact Macro Events)"]
+        News["RSS / GeminiAdapter (Macro Headings)"]
+        LakeManager["LakeManager (data_lake/)"]
+        Parquet["Data Lake Partitioning: data/raw/YYYY/MM/DD/"]
+        
+        YF --> LakeManager
+        FRED --> LakeManager
+        FF --> LakeManager
+        News --> LakeManager
+        LakeManager -->|"Save as .parquet & .jsonl"| Parquet
+    end
+
+    %% 2. Feature Engineering
+    subgraph FeatureEngineering["2. Feature Engineering & Vectorization"]
+        Parquet --> FE["FeatureEngine (Dynamic Rolling Windows)"]
+        FE --> F_Spreads["Yield Spreads & Credit Stress"]
+        FE --> F_Vol["VIX Z-Scores & Volatility Expansion"]
+        FE --> F_Mom["Momentum (RSI, MACD_hist) & Moving Averages"]
+        FE --> F_Corr["SPX-VIX & Cross-Asset Correlations"]
+        F_Spreads & F_Vol & F_Mom & F_Corr --> Schema1["Pydantic Schema: 14-Feature Vector"]
+    end
+
+    %% 3. Quantitative Processing (Regimes & Trends)
+    subgraph QuantProcessing["3. Quantitative Processing & State Estimation"]
+        Schema1 --> Regime["RegimeEnsemble (Supervised ML Fusion)"]
+        Regime -->|"VIX Penalty Filter"| RegimeState["Regime State: BULL_EXPANSION, BEAR_VOLATILITY, etc."]
+        
+        Schema1 --> Trend["TrendEngine"]
+        Trend -->|"Linear Regressions & Supertrend ATR"| TrendState["Trend Signals"]
+        
+        Schema1 --> SMC["SMCEngine"]
+        SMC -->|"Order Blocks & FVG"| SMCState["Smart Money Concepts State"]
+
+        Schema1 --> Session["SessionEngine"]
+        Session -->|"London/NY Overlap"| SessionState["Session Liquidity"]
+        
+        Schema1 --> Liquidity["LiquidityEngine"]
+        Liquidity -->|"Volume Imbalance"| LiqState["Liquidity Voids"]
+        
+        Schema1 --> KF["KalmanFilter & Volatility Engine"]
+        KF -->|"Dynamic Measurement Noise"| VolState["State Covariance Matrices"]
+    end
+
+    %% 4. AI & Ensembles
+    subgraph AI["4. Predictive AI & Ensemble Classifiers"]
+        RegimeState & TrendState & VolState --> Ens["Ensemble Machine Learning"]
+        Ens -->|"MLP Deep Neural Net"| ProbMLP["Bull Probability (SPX, BTC, GLD, WTI)"]
+        Ens -->|"Random Forest"| ProbRF["Tree-based Probabilities"]
+        Ens -->|"Gradient Boosting"| ProbGB["Boosted Probabilities"]
+        
+        ProbMLP & ProbRF & ProbGB --> Calib["Brier Score Calibration"]
+        Calib -->|"Score > 0.60?"| Inv["Auto-Inversion (1.0 - P)"]
+        Calib -->|"Score <= 0.60"| Cons["Standard Deviation Consensus"]
+        Inv --> Cons
+    end
+
+    %% 5. Risk & Execution
+    subgraph Risk["5. Risk Management & Portfolio Construction"]
+        Cons --> RE["RiskEngine (Kelly Criterion Sizing)"]
+        
+        RE --> Edge["Dynamic Asset Conviction Edges"]
+        Edge -->|"SPX > 50%, BTC/GLD > 52%, NVDA > 53%"| TargetAlloc["Target Base Allocations"]
+        
+        TargetAlloc --> MacroLLM["Gemini LLM Macro Synthesizer"]
+        MacroLLM -->|"CoT Reasoning & News Sentiment"| LLMSignal["Bull/Bear/Flat Macro Bias"]
+        
+        LLMSignal & TargetAlloc --> ConsensusEng["ConsensusEngine (Final Validation)"]
+        ConsensusEng --> DivCheck{"Quantitative Divergence Slasher"}
+        DivCheck -->|"Bullish News BUT VIX Z-Score > 1.5"| Slash["Apply 0.5x Multiplier to all Longs (except GLD)"]
+        DivCheck -->|"No Divergence"| BlackLitterman["Black-Litterman Portfolio Balancer"]
+        Slash --> BlackLitterman
+    end
+
+    %% 6. Output
+    subgraph Out["6. Execution Output & Trading Terminal Delivery"]
+        BlackLitterman --> Snap["Validated market_snapshot.json"]
+        Snap --> PB["PaperBroker Execution (5bps slippage)"]
+        PB --> Ledger["paper_ledger.csv"]
+        Snap --> Terminal["React Trading Terminal UI via FastAPI WebSocket"]
+    end
+
+```
 
 ### Detailed Processing Explanation
 1. **Ingestion & Data Lake:** Every interval cycle, the orchestrator pulls live OHLCV data across 41 global tickers, macroeconomic yield data from FRED, and real-time news headlines. These are passed to the `LakeManager`, which safely persists the raw data partitioned by day in Parquet formats.

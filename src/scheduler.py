@@ -53,12 +53,19 @@ def _apply_adaptive_frequency():
                     if scheduler.get_job('main_execution'):
                         scheduler.remove_job('main_execution')
                         
+                    from datetime import datetime
                     if current_frequency == "1h":
-                        scheduler.add_job(run_1h, 'cron', minute=0, id='main_execution', misfire_grace_time=3600)
+                        if scheduler.get_job('1h_context_scorer'):
+                            scheduler.pause_job('1h_context_scorer')
+                        scheduler.add_job(run_1h, 'cron', minute=0, id='main_execution', misfire_grace_time=3600, next_run_time=datetime.now())
                     elif current_frequency == "4h":
-                        scheduler.add_job(run_4h, 'cron', hour='0,4,8,12,16,20', minute=5, id='main_execution', misfire_grace_time=3600)
+                        if scheduler.get_job('1h_context_scorer'):
+                            scheduler.resume_job('1h_context_scorer')
+                        scheduler.add_job(run_4h, 'cron', hour='0,4,8,12,16,20', minute=5, id='main_execution', misfire_grace_time=3600, next_run_time=datetime.now())
                     else:
-                        scheduler.add_job(run_1d, 'cron', hour=0, minute=0, id='main_execution', misfire_grace_time=3600)
+                        if scheduler.get_job('1h_context_scorer'):
+                            scheduler.resume_job('1h_context_scorer')
+                        scheduler.add_job(run_1d, 'cron', hour=0, minute=0, id='main_execution', misfire_grace_time=3600, next_run_time=datetime.now())
     except Exception as e:
         logger.error(f"Failed to apply adaptive frequency: {e}")
 

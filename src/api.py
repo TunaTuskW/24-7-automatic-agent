@@ -56,15 +56,19 @@ async def websocket_pipeline(websocket: WebSocket):
         async with aiofiles.open(log_file, mode='r') as f:
             # Seek to end
             await f.seek(0, 2)
+            import time
+            last_heartbeat = time.time()
             
             while True:
                 line = await f.readline()
                 if not line:
                     await asyncio.sleep(0.1)
-                    try:
-                        await websocket.send_json({"type": "heartbeat", "ts": datetime.utcnow().isoformat()})
-                    except Exception:
-                        break
+                    if time.time() - last_heartbeat > 10.0:
+                        try:
+                            await websocket.send_json({"type": "heartbeat", "ts": datetime.utcnow().isoformat()})
+                            last_heartbeat = time.time()
+                        except Exception:
+                            break
                     continue
                 
                 try:
@@ -135,7 +139,7 @@ def get_entry_quality():
         try:
             with open(path, 'r') as f:
                 return json.load(f)
-        except:
+        except Exception:
             pass
     return {"entry_score": None, "entry_bias": "FLAT", "computed_utc": None}
 
@@ -146,7 +150,7 @@ def get_frequency():
         try:
             with open(path, 'r') as f:
                 return json.load(f)
-        except:
+        except Exception:
             pass
     return {"recommended_frequency": "4h", "score": 0, "reason": "No data yet", "evaluated_utc": None}
 
@@ -319,7 +323,7 @@ def get_logs():
                 if line.strip():
                     try:
                         logs.append(json.loads(line))
-                    except:
+                    except Exception:
                         pass
         except Exception as e:
             return {"error": str(e)}
@@ -389,7 +393,7 @@ def get_trading_settings():
         try:
             with open(path, 'r') as f:
                 return json.load(f)
-        except:
+        except Exception:
             pass
     return {"active_tickers": ["spx", "btc", "gld", "wti", "nvda", "tsla", "dell", "spce"]}
 
@@ -406,9 +410,16 @@ import yfinance as yf
 @app.get("/api/chart/{ticker}")
 def get_chart_data(ticker: str, interval: str = "1d"):
     try:
-        # Map ticker to YF
+        from src.engines.feature_engine import ALL_YF_TICKERS
         yf_map = {"SPX": "^GSPC", "BTC": "BTC-USD", "GLD": "GC=F", "WTI": "CL=F", "SH": "SH"}
-        yf_ticker = yf_map.get(ticker.upper(), ticker.upper())
+        yf_ticker = yf_map.get(ticker.upper())
+        if not yf_ticker:
+            if ticker.lower() in ALL_YF_TICKERS:
+                yf_ticker = ALL_YF_TICKERS[ticker.lower()]["ticker"]
+            elif ticker.upper() in [v["ticker"] for v in ALL_YF_TICKERS.values()]:
+                yf_ticker = ticker.upper()
+            else:
+                return {"error": "Unauthorized ticker", "data": []}
         
         data = yf.Ticker(yf_ticker)
         
@@ -462,7 +473,7 @@ def run_job_background(job_type: str, start_date: str = None, end_date: str = No
             logger.info("Running 1D Execution Engine manually...")
             subprocess.run(["python3", "src/fetch_market_data.py", "--interval", "1d", "--use-1h-context"])
             subprocess.run(["python3", "src/build_report.py", "--title", "Daily Execution Report"])
-        elif job_type == "1w":
+        elif job_type in ["1w", "weekly"]:
             logger.info("Running 1W Execution Engine and Weekly Synthesis manually...")
             subprocess.run(["python3", "src/fetch_market_data.py", "--interval", "1wk"])
             subprocess.run(["python3", "src/build_report.py", "--title", "Weekly Execution Report"])
@@ -537,7 +548,7 @@ def get_trading_config():
             pass
     return {"disabled_tickers": []}
 
-@app.post("/api/trading_config")
+@app.post("/api/trading_config", dependencies=[Depends(require_auth)])
 def update_trading_config(payload: TradingConfigPayload):
     config_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'state', 'trading_config.json')
     os.makedirs(os.path.dirname(config_path), exist_ok=True)

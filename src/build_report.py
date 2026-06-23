@@ -66,18 +66,18 @@ def run_consensus_engine(kalman, volume_heat, extremes, mcs_score, epistemic, ne
     dominant_score = max(long_score, short_score) / total
     
     thresh = 0.60
-    n_flag = news_signal.get("event_flag", 0)
-    n_bias = news_signal.get("directional_bias", "normal")
+    n_bias = news_signal.get("signal", "FLAT").upper()
+    n_conviction = news_signal.get("conviction", 0.0)
     
     impact_str = "Neutral Impact (Threshold 0.60)"
     
-    if n_flag == 1 or n_bias == "shock":
+    if n_conviction > 0.8 and n_bias == "FLAT":
         thresh = 0.65
         impact_str = "High Event Uncertainty / Shock (Threshold Raised to 0.65)"
         
-    if (dominant_dir == "LONG" and n_bias == "bullish") or (dominant_dir == "SHORT" and n_bias == "bearish"):
+    if (dominant_dir == "LONG" and n_bias == "BULLISH") or (dominant_dir == "SHORT" and n_bias == "BEARISH"):
         thresh = 0.50
-        impact_str = f"Signal Confirmation ({n_bias.upper()}) (Threshold Lowered to 0.50)"
+        impact_str = f"Signal Confirmation ({n_bias}) (Threshold Lowered to 0.50)"
         
     if dominant_score >= thresh:
         return f"{dominant_dir} (Score: {dominant_score:.2f} >= Thresh: {thresh:.2f})", len(clean_models), impact_str
@@ -277,9 +277,6 @@ def main():
     direction, clean_count, news_impact = run_consensus_engine(kalman, vol_heat, ext, mcs_score, epistemic, news_signal, regime, tactical_alpha_regime)
     
     synth = compute_deterministic_synthesis(kalman, vol_heat, ext, epistemic, direction, news_impact)
-    
-    headlines = news_signal.get("top_headlines", [])
-    headlines_str = "\n".join(f"> {h}" for h in headlines) if headlines else "> No significant headlines detected."
         
     divergence_str = "DETECTED" if news_signal.get("quantitative_divergence_flag", False) else "NONE"
     reasoning_str = news_signal.get("reasoning", "No CoT reasoning available.")

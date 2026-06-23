@@ -339,6 +339,7 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
         ordered_keys = [
             "spx_ret", "dxy_ret", "vix_zscore", "Inst_Heat_Index", "wti_ret",
             "gsr_ret", "us10y_delta", "spread_level", "btc_ret",
+            "es_ret", "nq_ret", "rty_ret",
             "nvda_ret", "tsla_ret", "dell_ret", "spce_ret",
             "spx_rsi_14", "spx_macd_hist", "spx_bbw", "spx_vix_corr"
         ]
@@ -534,7 +535,7 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
             target_allocations["cash"] = cash_kelly + blocked_sum
         
         if use_rl_agent and rl_agent_instance:
-            rl_features = features_vector_clipped[:9] + [0.0, 0.0, 0.0] + features_vector_clipped[9:]
+            rl_features = features_vector_clipped
             rl_allocs = rl_agent_instance.predict_allocations(rl_features, current_allocations)
             if rl_allocs:
                 target_allocations = {
@@ -567,7 +568,7 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
                 total_mock_trades += 1
                 last_rebalance_i = i
                 
-                ticker_map = {"spx": "SPX", "short": "SPX", "btc": "BTC", "gld": "Gold", "wti": "WTI", "nvda": "NVDA", "tsla": "TSLA", "dell": "DELL", "spce": "SPCE"}
+                ticker_map = {"spx": "SPX", "short": "SH", "btc": "BTC", "gld": "GLD", "wti": "WTI", "nvda": "NVDA", "tsla": "TSLA", "dell": "DELL", "spce": "SPCE"}
                 
                 # Log mock trade to ledger
                 for k, target_alloc in target_allocations.items():
@@ -576,14 +577,12 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
                     if abs(target_alloc - current_alloc) > 0.05:
                         action = "BUY" if target_alloc > current_alloc else "SELL"
                         asset_name = k.upper()
+                        if asset_name == "SHORT": asset_name = "SH"
                         
                         mapped_key = ticker_map.get(k, "SPX")
                         actual_price = float(parsed_daily.get(mapped_key, {}).get("current", 100.0))
                         if actual_price <= 0: actual_price = 100.0
                         
-                        if asset_name == "SHORT":
-                            asset_name = "SH"  # ProShares Short S&P500 ETF
-                            
                         trade_value = abs(target_alloc - current_alloc) * simulated_equity
                         trade_shares = trade_value / actual_price
                         
@@ -810,7 +809,7 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
     # Overwrite the paper trading portfolio so the UI reflects the backtest's final simulated state
     final_cash = simulated_equity * current_allocations.get("cash", 1.0)
     # Fix 5: Use actual asset prices for share calculation instead of dividing by 100
-    ticker_map_final = {"spx": "SPX", "short": "SPX", "btc": "BTC", "gld": "Gold", "wti": "WTI", "nvda": "NVDA", "tsla": "TSLA", "dell": "DELL", "spce": "SPCE"}
+    ticker_map_final = {"spx": "SPX", "short": "SH", "btc": "BTC", "gld": "GLD", "wti": "WTI", "nvda": "NVDA", "tsla": "TSLA", "dell": "DELL", "spce": "SPCE"}
     final_positions = {}
     for k, alloc in current_allocations.items():
         if k != "cash" and alloc > 0:

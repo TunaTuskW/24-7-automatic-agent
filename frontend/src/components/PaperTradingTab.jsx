@@ -200,14 +200,14 @@ export default function PaperTradingTab({ timeZone }) {
           <div>
             <p className="stat-label">Total PnL</p>
             <p className={`stat-value ${pnl >= 0 ? 'text-green' : 'text-red'}`}>
-              {pnl >= 0 ? '+' : ''}${Math.abs(pnl).toLocaleString(undefined, { minimumFractionDigits: 2 })} <span style={{ fontSize: '10px' }}>({pnlPct.toFixed(2)}%)</span>
+              {pnl >= 0 ? '+' : '-'}${Math.abs(pnl).toLocaleString(undefined, { minimumFractionDigits: 2 })} <span style={{ fontSize: '10px' }}>({pnlPct.toFixed(2)}%)</span>
             </p>
           </div>
           {portfolio.realized_pnl !== undefined && (
             <div>
               <p className="stat-label">Realized PnL</p>
               <p className={`stat-value ${portfolio.realized_pnl >= 0 ? 'text-green' : 'text-red'}`}>
-                {portfolio.realized_pnl >= 0 ? '+' : ''}${Math.abs(portfolio.realized_pnl).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                {portfolio.realized_pnl >= 0 ? '+' : '-'}${Math.abs(portfolio.realized_pnl).toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </p>
             </div>
           )}
@@ -215,7 +215,7 @@ export default function PaperTradingTab({ timeZone }) {
             <div>
               <p className="stat-label">Unrealized PnL</p>
               <p className={`stat-value ${portfolio.unrealized_pnl >= 0 ? 'text-green' : 'text-red'}`}>
-                {portfolio.unrealized_pnl >= 0 ? '+' : ''}${Math.abs(portfolio.unrealized_pnl).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                {portfolio.unrealized_pnl >= 0 ? '+' : '-'}${Math.abs(portfolio.unrealized_pnl).toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </p>
             </div>
           )}
@@ -395,7 +395,7 @@ export default function PaperTradingTab({ timeZone }) {
                     <td className="text-main">${parseFloat(trade.value).toFixed(2)}</td>
                     <td className="text-muted">
                       {trade.pnl !== undefined 
-                        ? <span className={trade.pnl > 0 ? 'text-green' : trade.pnl < 0 ? 'text-red' : ''}>PnL: {trade.pnl > 0 ? '+' : ''}${parseFloat(trade.pnl).toFixed(2)}</span>
+                        ? <><span className={trade.pnl >= 0 ? 'text-green' : 'text-red'}>{trade.pnl >= 0 ? '+' : '-'}${Math.abs(trade.pnl).toFixed(2)}</span> {trade.stats ? ` | ${trade.stats}` : ''}</>
                         : trade.stats ? trade.stats : trade.fee ? `Fee: $${parseFloat(trade.fee).toFixed(2)}` : '-'}
                     </td>
                   </tr>

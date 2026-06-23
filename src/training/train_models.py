@@ -68,7 +68,7 @@ def fetch_training_data(interval="1d", period="10y"):
     
     # 7. us10y_delta & 8. spread_level
     us10y = safe_get("^TNX", "Close")
-    us2y = safe_get("^IRX", "Close")  # IRX is 13-week but used as short-term proxy in earlier code
+    us2y = safe_get("^FVX", "Close")  # 2-year Treasury, matches inference (FRED DGS2 / Yahoo ^FVX)
     us10y_delta = us10y.diff()
     spread_2s10s = us10y - us2y
     

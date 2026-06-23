@@ -168,7 +168,7 @@ def main():
     setup_name = tactical.get("matched_setup", "NONE")
     edge_prob = tactical.get("regime_conditioned_probability", 0.50) * 100
     
-    epistemic = data.get("epistemic_metrics", {})
+    epistemic = data.get("data_science_layer", {}).get("epistemic_metrics", {})
     news_signal = data.get("news_signal", {})
     
     direction, clean_count, news_impact = run_consensus_engine(kalman, vol_heat, ext, mcs_score, epistemic, news_signal, regime)

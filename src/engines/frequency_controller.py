@@ -17,6 +17,8 @@ class FrequencyController:
     REGIME_FREQ_CAPABLE = {
         "RISK_ON_EXPANSION",
         "LIQUIDITY_DRIVEN_RALLY",
+        "DEFENSIVE_RISK_OFF",
+        "VOLATILITY_EXPANSION"
     }
 
     def evaluate(

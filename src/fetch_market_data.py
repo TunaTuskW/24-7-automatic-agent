@@ -177,6 +177,8 @@ class Conductor:
                     if len(tk_df) > 1:
                         parsed[name] = compute_stats(tk_df["Close"])
                         parsed[name]["raw_series"] = tk_df["Close"]
+                        if "Volume" in tk_df.columns:
+                            parsed[name]["volume_series"] = tk_df["Volume"]
             return parsed
             
         parsed_daily = parse_assets(raw_daily_data)
@@ -186,7 +188,7 @@ class Conductor:
         
         clean_daily = {}
         for k, v in parsed_daily.items():
-            clean_daily[k] = {ik: iv for ik, iv in v.items() if ik != "raw_series"}
+            clean_daily[k] = {ik: iv for ik, iv in v.items() if ik not in ("raw_series", "volume_series")}
             
         # Calculate US10Y and spread z-scores
         us10y_hist = self.data_broker.fetch_yield_history("DGS10")
@@ -293,8 +295,8 @@ class Conductor:
         extremes_dict = compute_market_extremes(spx_s, vix_s, vvix_s, dxy_s, vix9d_s)
         self.snapshot.market_extremes_insight = MarketExtremes(**extremes_dict)
         
-        spx_series = raw_daily_data["^GSPC"]["Close"].dropna() if "^GSPC" in raw_daily_data.columns.levels[0] else pd.Series()
-        spx_vol = raw_daily_data["^GSPC"]["Volume"].dropna() if "^GSPC" in raw_daily_data.columns.levels[0] else pd.Series()
+        spx_series = parsed_daily.get("SPX", {}).get("raw_series", pd.Series())
+        spx_vol = parsed_daily.get("SPX", {}).get("volume_series", pd.Series())
         self.clean_daily["volume_activity_heat"] = compute_volume_heat(spx_series, spx_vol)
         
         gold = clean_daily.get("Gold")
@@ -402,7 +404,6 @@ class Conductor:
             # TD9 requires 1D closes for macro exhaustion
             td9_res = self.session_engine.td9_exhaustion_signal(spx_daily["Close"]) if not spx_daily.empty else {}
             # Session bias
-            from datetime import datetime, timezone
             sess_bias = self.session_engine.compute_session_state(spx_hourly, datetime.now(timezone.utc)) if not spx_hourly.empty else {}
             
             session_state = {**orb_res, **td9_res, **sess_bias}
@@ -637,6 +638,8 @@ class Conductor:
             "features_vector": self.features_vector,
             "features_dict": self.feature_metadata,
             "epistemic_metrics": {
+                "brier_score": brier_score,
+                "forecast_accuracy": 1.0 - brier_score,
                 "shannon_entropy": entropy,
                 "kelly_exposure_fraction": kelly,
                 "is_high_risk_edge": bool(kalman_res.dominant_prob >= 0.45),
@@ -654,6 +657,7 @@ class Conductor:
             spx_1h_high  = self.raw_hourly_data["^GSPC"]["High"].dropna()   if "^GSPC" in self.raw_hourly_data.columns.levels[0] else pd.Series()
             spx_1h_low   = self.raw_hourly_data["^GSPC"]["Low"].dropna()    if "^GSPC" in self.raw_hourly_data.columns.levels[0] else pd.Series()
             vix_1h       = self.raw_hourly_data["^VIX"]["Close"].dropna()   if "^VIX" in self.raw_hourly_data.columns.levels[0] else pd.Series()
+            vix9d_1h     = self.raw_hourly_data["^VIX9D"]["Close"].dropna() if "^VIX9D" in self.raw_hourly_data.columns.levels[0] else pd.Series()
 
             entry_result = self.entry_engine.score_entry(
                 spx_close_1h=spx_1h_close,
@@ -665,7 +669,8 @@ class Conductor:
                 kalman_dominant_state=self.snapshot.kalman_state.dominant_state,
                 smc_bias=self.snapshot.smc_state.smc_bias,
                 trend_state=self.snapshot.trend_state.trend_state,
-                trend_conviction=self.snapshot.trend_state.trend_conviction
+                trend_conviction=self.snapshot.trend_state.trend_conviction,
+                vix9d_1h=vix9d_1h
             )
             entry_result["computed_utc"] = datetime.now(timezone.utc).isoformat()
             entry_result["interval_used"] = "1h"
@@ -760,6 +765,19 @@ class Conductor:
         
         snapshot_dict = self.snapshot.model_dump()
         
+        import math
+        def sanitize_floats(obj):
+            if isinstance(obj, dict):
+                return {k: sanitize_floats(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [sanitize_floats(v) for v in obj]
+            elif isinstance(obj, float):
+                if math.isnan(obj) or math.isinf(obj):
+                    return None
+            return obj
+            
+        snapshot_dict = sanitize_floats(snapshot_dict)
+        
         with open(out_path, 'w') as f:
             json.dump(snapshot_dict, f, indent=4)
             
@@ -811,8 +829,8 @@ class Conductor:
         
         target_allocs = {
             "SPX":   kelly_obj.get("SPX_Kelly", 0.0),
-            "Short": kelly_obj.get("Short_Kelly", 0.0),
-            "Gold":  kelly_obj.get("GLD_Kelly", 0.0),
+            "SH":    kelly_obj.get("Short_Kelly", 0.0),
+            "GLD":   kelly_obj.get("GLD_Kelly", 0.0),
             "BTC":   kelly_obj.get("BTC_Kelly", 0.0),
             "WTI":   kelly_obj.get("WTI_Kelly", 0.0),
             "NVDA":  kelly_obj.get("NVDA_Kelly", 0.0),
@@ -905,8 +923,8 @@ class Conductor:
 
                 current_prices = {
                     "SPX":   safe_get_price("SPX"),
-                    "Short": safe_get_price("SH"),
-                    "Gold":  safe_get_price("Gold"),
+                    "SH":    safe_get_price("SH"),
+                    "GLD":   safe_get_price("GLD"),
                     "BTC":   safe_get_price("BTC"),
                     "WTI":   safe_get_price("WTI"),
                     "NVDA":  safe_get_price("NVDA"),

@@ -40,12 +40,18 @@ class MarketEventDetector:
                 threads=False
             )
             if isinstance(data.columns, pd.MultiIndex):
-                spx_close = data["Close"]["^GSPC"].dropna()
-                vix_close = data["Close"]["^VIX"].dropna()
+                spx_close = data["Close"]["^GSPC"].dropna() if "^GSPC" in data["Close"].columns else pd.Series(dtype=float)
+                vix_close = data["Close"]["^VIX"].dropna() if "^VIX" in data["Close"].columns else pd.Series(dtype=float)
                 volume_data = data["Volume"]
             else:
-                spx_close = data["Close"].dropna()
-                vix_close = data["Close"].dropna()
+                spx_close = pd.Series(dtype=float)
+                vix_close = pd.Series(dtype=float)
+                if len(tickers_to_fetch) == 1:
+                    tk = tickers_to_fetch[0]
+                    if tk == "^GSPC":
+                        spx_close = data["Close"].dropna()
+                    elif tk == "^VIX":
+                        vix_close = data["Close"].dropna()
                 volume_data = pd.DataFrame()
                 
             return {
@@ -116,14 +122,16 @@ class MarketEventDetector:
             })
 
         # 4. Entry Flip (opportunity opened)
-        if self._last_entry_score < self.ENTRY_FLIP_LOW and current_entry_score >= self.ENTRY_FLIP_HIGH:
-            events.append({
-                "type": "ENTRY_FLIP",
-                "severity": "ROUTINE",
-                "detail": f"Entry score flipped from {self._last_entry_score:.2f} to {current_entry_score:.2f}"
-            })
-            logger.info(f"ENTRY_FLIP detected: score {self._last_entry_score:.2f} -> {current_entry_score:.2f}")
-        self._last_entry_score = current_entry_score
+        if self._last_entry_score is not None and current_entry_score is not None:
+            if self._last_entry_score < self.ENTRY_FLIP_LOW and current_entry_score >= self.ENTRY_FLIP_HIGH:
+                events.append({
+                    "type": "ENTRY_FLIP",
+                    "severity": "ROUTINE",
+                    "detail": f"Entry score flipped from {self._last_entry_score:.2f} to {current_entry_score:.2f}"
+                })
+                logger.info(f"ENTRY_FLIP detected: score {self._last_entry_score:.2f} -> {current_entry_score:.2f}")
+        if current_entry_score is not None:
+            self._last_entry_score = current_entry_score
 
         # 5. Stop Approach
         if "SPX" in portfolio_positions and portfolio_positions["SPX"] > 0 and spx_now:

@@ -23,6 +23,7 @@ ALL_YF_TICKERS = {
     # Commodities & Safe Havens
     "WTI": "CL=F", "Brent": "BZ=F", "TTF": "TTF=F",
     "Gold": "GC=F", "Silver": "SI=F", "Copper": "HG=F",
+    "SH": "SH", "GLD": "GLD",
     # FX & Safe Havens
     "DXY": "DX-Y.NYB", "EURUSD": "EURUSD=X", "GBPUSD": "GBPUSD=X", 
     "JPYUSD": "JPYUSD=X", "CHFUSD": "CHFUSD=X", "USDCAD": "USDCAD=X",
@@ -217,7 +218,17 @@ def compute_market_extremes(spx_series, vix_series, vvix_series=None, dxy_series
             "fragility_score": 0.0,
             "vvix_vix_ratio": 0.0
         }
+_garch_cache = {}
+
 def compute_garch_volatility(ticker_symbol, lookback_days=250):
+    global _garch_cache
+    import time
+    now = time.time()
+    if ticker_symbol in _garch_cache:
+        cached_time, cached_result = _garch_cache[ticker_symbol]
+        if now - cached_time < 3600:
+            return cached_result
+            
     try:
         from arch import arch_model
         data = yf.Ticker(ticker_symbol)
@@ -226,14 +237,16 @@ def compute_garch_volatility(ticker_symbol, lookback_days=250):
             return None, None, None
         returns = hist["Close"].pct_change().dropna() * 100
         model = arch_model(returns, vol="Garch", p=1, q=1, mean="Zero", rescale=False)
-        result = model.fit(disp="off", show_warning=False)
+        result = model.fit(disp="off")
         cond_vol = float(result.conditional_volatility.iloc[-1])
         forecast = result.forecast(horizon=1, reindex=False)
         forecast_vol = float(forecast.variance.iloc[-1, 0] ** 0.5)
         vol_history = result.conditional_volatility.dropna()
         percentile = float((vol_history < cond_vol).mean() * 100)
         vol_regime = "LOW" if percentile < 33 else "NORMAL" if percentile < 67 else "ELEVATED"
-        return round(cond_vol, 4), vol_regime, round(forecast_vol, 4)
+        res = (round(cond_vol, 4), vol_regime, round(forecast_vol, 4))
+        _garch_cache[ticker_symbol] = (now, res)
+        return res
     except Exception as e:
         logger.error(f"GARCH error for {ticker_symbol}: {e}")
         return None, None, None

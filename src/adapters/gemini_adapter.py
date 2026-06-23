@@ -80,7 +80,7 @@ Output strictly valid JSON with no markdown. The JSON MUST contain exactly the f
 Recent Headlines:
 {headlines_text}
 
-Upcoming High-Impact Calendar Events (USD, EUR, JPY):
+Upcoming High-Impact Calendar Events (USD, EUR, JPY, GBP, CAD, CHF, AUD, NZD, CNY):
 {calendar_text}
 
 Current 2s10s Spread: {spread_2s10s}
@@ -94,11 +94,17 @@ Volume Activity Heat: {volume_heat}"""
                 raw_text = response.text.strip()
                 logger.info(f"Gemini raw response: {raw_text}")
                 
-                # Extract json using regex
-                import re
-                json_match = re.search(r'\{.*\}', raw_text, re.DOTALL)
-                if json_match:
-                    raw_text = json_match.group(0)
+                # Clean markdown
+                if "```json" in raw_text:
+                    raw_text = raw_text.split("```json")[1].split("```")[0]
+                elif "```" in raw_text:
+                    raw_text = raw_text.split("```")[1].split("```")[0]
+                    
+                raw_text = raw_text.strip()
+                if "{" in raw_text and "}" in raw_text:
+                    start = raw_text.find("{")
+                    end = raw_text.rfind("}") + 1
+                    raw_text = raw_text[start:end]
                     
                 return json.loads(raw_text)
             except Exception as e:
@@ -107,7 +113,10 @@ Volume Activity Heat: {volume_heat}"""
                     logger.warning(f"Provider: Gemini | API UNAVAILABLE/RATE_LIMIT. Retrying LLM Macro in {sleep_time} seconds (Attempt {attempt+1}/{max_retries})...")
                     time.sleep(sleep_time)
                 else:
-                    logger.error(f"Provider: Gemini | LLM Macro failed after {attempt+1} attempts: {e}")
+                    if attempt == 0:
+                        logger.error(f"Provider: Gemini | LLM Macro failed: {e}")
+                    else:
+                        logger.error(f"Provider: Gemini | LLM Macro failed after {attempt+1} attempts: {e}")
                     
                     reasoning_text = f"Fallback to neutral. LLM Macro Provider error: {str(e)[:100]}..."
                     if "API key not valid" in str(e) or "400" in str(e) or "API_KEY_INVALID" in str(e):

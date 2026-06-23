@@ -14,9 +14,9 @@ class EntryEngine:
 
     def _compute_rsi(self, series: pd.Series, period: int = 14) -> pd.Series:
         delta = series.diff()
-        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
-        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
-        rs = gain / loss
+        gain = delta.where(delta > 0, 0).ewm(alpha=1/period, adjust=False).mean()
+        loss = (-delta.where(delta < 0, 0)).ewm(alpha=1/period, adjust=False).mean()
+        rs = gain / loss.replace(0, 0.0001)
         return 100 - (100 / (1 + rs))
 
     def _compute_macd(self, series: pd.Series) -> tuple:
@@ -38,7 +38,8 @@ class EntryEngine:
         kalman_dominant_state: str,
         smc_bias: int = 0,
         trend_state: str = "UNKNOWN",
-        trend_conviction: float = 0.5
+        trend_conviction: float = 0.5,
+        vix9d_1h: pd.Series = None
     ) -> dict:
         
         components = {
@@ -111,26 +112,23 @@ class EntryEngine:
 
             # 4. VIX Term Structure (0.15)
             try:
-                # yf.download can be noisy; silence it.
-                v9_data = yf.download("^VIX9D", period="5d", interval="1h", progress=False, threads=False)
-                if not v9_data.empty:
-                    if isinstance(v9_data.columns, pd.MultiIndex):
-                        vix9d_now = float(v9_data["Close"]["^VIX9D"].iloc[-1])
-                    else:
-                        vix9d_now = float(v9_data["Close"].iloc[-1])
+                if vix9d_1h is not None and not vix9d_1h.empty:
+                    vix9d_now = float(vix9d_1h.iloc[-1])
                     vix_now = float(vix_1h.iloc[-1]) if len(vix_1h) > 0 else vix9d_now + 1.0
                     
                     if is_long_bias and vix9d_now < vix_now:
                         components["vix_term_structure"] = 1.0
                     elif not is_long_bias and vix9d_now > vix_now:
                         components["vix_term_structure"] = 1.0
+                else:
+                    # Fallback if VIX9D fails
+                    if len(vix_1h) > 0:
+                        if is_long_bias and float(vix_1h.iloc[-1]) < 20:
+                            components["vix_term_structure"] = 0.5
+                        elif not is_long_bias and float(vix_1h.iloc[-1]) > 20:
+                            components["vix_term_structure"] = 1.0
             except Exception:
-                # Fallback if VIX9D fails
-                if len(vix_1h) > 0:
-                    if is_long_bias and float(vix_1h.iloc[-1]) < 20:
-                        components["vix_term_structure"] = 1.0
-                    elif not is_long_bias and float(vix_1h.iloc[-1]) > 20:
-                        components["vix_term_structure"] = 1.0
+                pass
 
             # 5. Price vs EMA-20 (0.10)
             ema20 = spx_close_1h.ewm(span=20, adjust=False).mean()

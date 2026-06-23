@@ -10,13 +10,16 @@ from src.push_to_discord import get_webhook_url, post_with_retry
 logger = get_logger(__name__)
 
 # Add file handler for dry execution
-log_path = os.path.join(os.path.dirname(__file__), "..", "..", "data", "logs", "paper_broker.log")
-os.makedirs(os.path.dirname(log_path), exist_ok=True)
-fh = logging.FileHandler(log_path)
-fh.setLevel(logging.INFO)
-formatter = logging.Formatter('%(asctime)s - [%(name)s] %(levelname)s - %(message)s')
-fh.setFormatter(formatter)
-logger.addHandler(fh)
+try:
+    log_path = os.path.join(os.path.dirname(__file__), "..", "..", "data", "logs", "paper_broker.log")
+    os.makedirs(os.path.dirname(log_path), exist_ok=True)
+    fh = logging.FileHandler(log_path)
+    fh.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s - [%(name)s] %(levelname)s - %(message)s')
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+except Exception as e:
+    logger.warning(f"Could not setup FileHandler for paper_broker (read-only FS?): {e}")
 
 class PaperBroker:
     def __init__(self, data_dir: str):
@@ -115,6 +118,7 @@ class PaperBroker:
         if current_eq > peak_eq:
             self.portfolio["peak_equity"] = current_eq
             peak_eq = current_eq
+            self._save_portfolio()
             
         if peak_eq > 0:
             return (peak_eq - current_eq) / peak_eq
@@ -161,7 +165,13 @@ class PaperBroker:
         # 2. Determine target values and reasons
         target_values = {}
         trade_reasons = {}
-        for ticker, target_frac in target_allocations.items():
+        for ticker in list(target_allocations.keys()):
+            target_frac = target_allocations[ticker]
+            spot = current_prices.get(ticker)
+            if spot is None or spot <= 0.0:
+                target_allocations[ticker] = 0.0
+                target_values[ticker] = 0.0
+                continue
             target_values[ticker] = total_equity * target_frac
             
         # Add tickers we own but aren't in target_allocations (target = 0)
@@ -225,8 +235,15 @@ class PaperBroker:
                 reason = trade_reasons.get(ticker, f"Rebalancing to match optimal targets for {hmm_regime.replace('_', ' ').title()} regime.")
                 self._send_discord_alert("SELL", ticker, shares_to_sell, exec_price, total_equity, reason)
 
+        # Recompute equity after sells to avoid allocating based on pre-slippage inflated equity
+        total_equity = self.portfolio["cash"] + sum(
+            shares * current_prices.get(t, 0) for t, shares in self.portfolio["positions"].items()
+        )
+        self.portfolio["total_equity"] = total_equity
+
         # 4. Process BUYS next (using freed up cash)
-        for ticker, target_val in target_values.items():
+        for ticker, target_frac in target_allocations.items():
+            target_val = total_equity * target_frac
             spot = current_prices.get(ticker)
             if spot is None or spot <= 0.0:
                 continue
