@@ -37,7 +37,7 @@ from src.engines.session_engine import SessionEngine
 from src.engines.liquidity_engine import LiquidityEngine
 from src.engines.regime_ensemble import RegimeEnsemble
 
-def run_backtest():
+def run_backtest(interval="1d"):
     logging.info("Initializing Sub-Engines for Chronological Simulation...")
     trend_engine = TrendEngine()
     smc_engine = SMCEngine()
@@ -45,7 +45,7 @@ def run_backtest():
     liquidity_engine = LiquidityEngine()
     ensemble = RegimeEnsemble()
 
-    df = fetch_training_data(years=2)
+    df = fetch_training_data(years=2, interval=interval)
     if df is None or df.empty:
         logging.error("Failed to fetch training data.")
         return
@@ -132,4 +132,8 @@ def run_backtest():
     logging.info(f"Backtest complete. Results saved to {out_path}")
 
 if __name__ == "__main__":
-    run_backtest()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--interval", type=str, default="1d", choices=["1d", "1h", "4h"])
+    args = parser.parse_args()
+    run_backtest(interval=args.interval)

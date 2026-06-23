@@ -599,8 +599,8 @@ class Conductor:
                 entry_score=entry_score
             )
 
-        # --- Multi-Timeframe Entry Gating (4H and 1D only) ---
-        if self.interval in ("4h", "1d") and os.path.exists(self.entry_quality_path):
+        # --- Entry Gating ---
+        if os.path.exists(self.entry_quality_path):
             try:
                 with open(self.entry_quality_path, "r") as f:
                     entry_quality = json.load(f)
@@ -914,10 +914,22 @@ class Conductor:
         with open(rec_path, "w") as f:
             json.dump(recommendation.model_dump(), f, indent=4)
 
+        # --- 1H Micro-Noise Filter (Entropy Penalty) ---
+        entropy = self.snapshot.data_science_layer.get("epistemic_metrics", {}).get("shannon_entropy", 1.58)
+        
+        if entropy > 1.20:
+            logger.warning(f"1H Entropy Penalty: {entropy:.2f} > 1.20 (High Chaos / Dead Market). Liquidating to cash.")
+            for k in target_allocs: target_allocs[k] = 0.0
+            recommended_action = "LIQUIDATE_ALL"
+        elif entropy > 0.90:
+            logger.info(f"1H Entropy Penalty: {entropy:.2f} > 0.90 (Choppy Market). Halving allocations to de-risk.")
+            for k in target_allocs: target_allocs[k] = round(target_allocs[k] * 0.5, 3)
+
         # Execute Rebalance in Paper Trading
         self.bar_count += 1
         bars_since_rebalance = self.bar_count - self.last_rebalance_bar
-        should_rebalance = bars_since_rebalance >= self.MIN_HOLD_BARS
+        is_emergency = recommended_action == "LIQUIDATE_ALL" or (entropy > 1.20)
+        should_rebalance = bars_since_rebalance >= self.MIN_HOLD_BARS or is_emergency
         
         try:
             if should_rebalance:

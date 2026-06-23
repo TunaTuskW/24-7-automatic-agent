@@ -317,35 +317,47 @@
     {
         "predicted_risk_on": 0.301,
         "spx_val_at_prediction": 7398.8599,
-        "target_graded": false,
+        "target_graded": true,
         "spx_vals_window": [
             7396.75,
             7387.7798,
             7401.23,
             7385.7402,
-            7367.4502
-        ]
+            7367.4502,
+            7365.9199
+        ],
+        "actual_outcome": 0,
+        "squared_error": 0.09060099999999999
     },
     {
         "predicted_risk_on": 0.297,
         "spx_val_at_prediction": 7396.75,
-        "target_graded": false,
+        "target_graded": true,
         "spx_vals_window": [
             7387.7798,
             7401.23,
             7385.7402,
-            7367.4502
-        ]
+            7367.4502,
+            7365.9199,
+            7365.9199
+        ],
+        "actual_outcome": 0,
+        "squared_error": 0.088209
     },
     {
         "predicted_risk_on": 0.288,
         "spx_val_at_prediction": 7387.7798,
-        "target_graded": false,
+        "target_graded": true,
         "spx_vals_window": [
             7401.23,
             7385.7402,
-            7367.4502
-        ]
+            7367.4502,
+            7365.9199,
+            7365.9199,
+            7365.9199
+        ],
+        "actual_outcome": 0,
+        "squared_error": 0.08294399999999999
     },
     {
         "predicted_risk_on": 0.5,
@@ -353,7 +365,10 @@
         "target_graded": false,
         "spx_vals_window": [
             7385.7402,
-            7367.4502
+            7367.4502,
+            7365.9199,
+            7365.9199,
+            7365.9199
         ]
     },
     {
@@ -361,12 +376,42 @@
         "spx_val_at_prediction": 7385.7402,
         "target_graded": false,
         "spx_vals_window": [
-            7367.4502
+            7367.4502,
+            7365.9199,
+            7365.9199,
+            7365.9199
         ]
     },
     {
         "predicted_risk_on": 0.5,
         "spx_val_at_prediction": 7367.4502,
+        "target_graded": false,
+        "spx_vals_window": [
+            7365.9199,
+            7365.9199,
+            7365.9199
+        ]
+    },
+    {
+        "predicted_risk_on": 0.5,
+        "spx_val_at_prediction": 7365.9199,
+        "target_graded": false,
+        "spx_vals_window": [
+            7365.9199,
+            7365.9199
+        ]
+    },
+    {
+        "predicted_risk_on": 0.5,
+        "spx_val_at_prediction": 7365.9199,
+        "target_graded": false,
+        "spx_vals_window": [
+            7365.9199
+        ]
+    },
+    {
+        "predicted_risk_on": 0.5,
+        "spx_val_at_prediction": 7365.9199,
         "target_graded": false
     }
 ]

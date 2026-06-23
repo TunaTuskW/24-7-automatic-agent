@@ -1,13 +1,13 @@
 {
-    "timestamp_utc": "2026-06-23T19:00:40.948655+00:00",
+    "timestamp_utc": "2026-06-23T22:01:44.364110+00:00",
     "regime": "DEFENSIVE_RISK_OFF",
     "regime_confidence": 0.5,
-    "entry_score": 0.1,
+    "entry_score": 0.3,
     "entry_bias": "SHORT",
     "kelly_fraction": 0.0,
     "conviction_gate_passed": false,
     "macro_signal": "MIXED",
-    "macro_conviction": 0.5,
+    "macro_conviction": 0.575,
     "signal_conflict": false,
     "conflict_detail": "",
     "recommended_action": "HOLD",
@@ -22,8 +22,6 @@
         "DELL": 0.0,
         "SPCE": 0.0
     },
-    "decision_rationale": "Regime is DEFENSIVE_RISK_OFF. Entry score is 0.10 (SHORT). Gate blocked (needed 0.60).",
-    "risk_flags": [
-        "SMC_STRUCTURE_FLIP"
-    ]
+    "decision_rationale": "Regime is DEFENSIVE_RISK_OFF. Entry score is 0.30 (SHORT). Gate blocked (needed 0.60).",
+    "risk_flags": []
 }
