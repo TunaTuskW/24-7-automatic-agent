@@ -40,7 +40,10 @@ export default function SettingsTab() {
     try {
       const res = await fetch('/api/settings', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Api-Key': localStorage.getItem('quantos_api_key') || ''
+        },
         body: JSON.stringify(payload)
       });
       

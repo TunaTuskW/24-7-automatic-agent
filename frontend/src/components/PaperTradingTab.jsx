@@ -63,7 +63,7 @@ export default function PaperTradingTab({ timeZone }) {
   const [disabledTickers, setDisabledTickers] = useState([]);
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/trading_config')
+    fetch('/api/trading_config')
       .then(r => r.json())
       .then(d => {
         if (d.disabled_tickers) setDisabledTickers(d.disabled_tickers);

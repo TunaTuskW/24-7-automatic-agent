@@ -226,7 +226,8 @@ Invalidation: {synth['invalidation']}
 
     # Call push_to_discord
     push_script = os.path.join(os.path.dirname(__file__), 'push_to_discord.py')
-    os.system(f'python3 "{push_script}" "{report_path}"')
+    import subprocess
+    subprocess.run(["python3", push_script, report_path], check=False)
 
 if __name__ == "__main__":
     main()

@@ -89,7 +89,6 @@ def get_latest_snapshot():
             except Exception as e:
                 pass
     return {"error": "Snapshot not found"}
-    return {"error": "Snapshot not found"}
 
 @app.get("/api/snapshot")
 def get_snapshot():
@@ -124,6 +123,8 @@ def get_snapshot():
         "allocations": allocations,
         "vix": data.get("raw_indicators", {}).get("VIX", {}).get("current", 0.0),
         "spread": ds_layer.get("features_vector", [0,0,0,0,0,0,0,0])[7],
+        "raw_indicators": data.get("raw_indicators", {}),
+        "features_dict": ds_layer.get("features_dict", {}),
         "lastUpdate": data.get("timestamp_utc", datetime.utcnow().isoformat())
     }
 

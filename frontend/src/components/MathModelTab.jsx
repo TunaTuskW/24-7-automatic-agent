@@ -69,7 +69,7 @@ function MathModelTabContent({ timeZone }) {
 
   const dominantRegime = regime?.dominant_regime || 'UNKNOWN';
   const regimeProbs = regime?.probabilities || {};
-  const regimeConf = regime?.dominant_prob || 0;
+  const regimeConf = regimeProbs[dominantRegime] || 0;
 
   return (
     <div className="grid-layout">

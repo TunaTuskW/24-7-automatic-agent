@@ -52,11 +52,11 @@ export default function OverviewTab({ data, timeZone }) {
         <h2>[ MARKET PULSE ]</h2>
         <table style={{ marginTop: '12px' }}>
           <tbody>
-            <tr><td>SPX 500</td><td className="text-plasma-green">+1.24%</td><td>5432.10</td></tr>
-            <tr><td>NDX 100</td><td className="text-plasma-green">+1.85%</td><td>19876.50</td></tr>
-            <tr><td>RUT 2000</td><td className="text-plasma-red">-0.42%</td><td>2011.45</td></tr>
-            <tr><td>DXY INDEX</td><td className="text-plasma-red">-0.15%</td><td>104.22</td></tr>
-            <tr><td>US 10Y YIELD</td><td className="text-muted">+0.02%</td><td>4.25%</td></tr>
+            <tr><td>SPX 500</td><td className={data.raw_indicators?.SPX?.delta_pct >= 0 ? "text-plasma-green" : "text-plasma-red"}>{(data.raw_indicators?.SPX?.delta_pct || 0).toFixed(2)}%</td><td>{(data.raw_indicators?.SPX?.current || 0).toFixed(2)}</td></tr>
+            <tr><td>NDX 100</td><td className={data.raw_indicators?.NDX?.delta_pct >= 0 ? "text-plasma-green" : "text-plasma-red"}>{(data.raw_indicators?.NDX?.delta_pct || 0).toFixed(2)}%</td><td>{(data.raw_indicators?.NDX?.current || 0).toFixed(2)}</td></tr>
+            <tr><td>RUT 2000</td><td className={data.raw_indicators?.RTY?.delta_pct >= 0 ? "text-plasma-green" : "text-plasma-red"}>{(data.raw_indicators?.RTY?.delta_pct || 0).toFixed(2)}%</td><td>{(data.raw_indicators?.RTY?.current || 0).toFixed(2)}</td></tr>
+            <tr><td>DXY INDEX</td><td className={data.raw_indicators?.DXY?.delta_pct >= 0 ? "text-plasma-green" : "text-plasma-red"}>{(data.raw_indicators?.DXY?.delta_pct || 0).toFixed(2)}%</td><td>{(data.raw_indicators?.DXY?.current || 0).toFixed(2)}</td></tr>
+            <tr><td>US 10Y YIELD</td><td className="text-muted">{(data.features_dict?.us10y_delta || 0).toFixed(2)} bps</td><td>N/A</td></tr>
           </tbody>
         </table>
       </div>
@@ -65,11 +65,11 @@ export default function OverviewTab({ data, timeZone }) {
         <h2>[ MACRO INDICATORS ]</h2>
         <table style={{ marginTop: '12px' }}>
           <tbody>
-            <tr><td>VIX INDEX</td><td className="text-plasma-amber">{typeof data.vix === 'number' ? data.vix.toFixed(2) : data.vix}</td><td>NORMAL</td></tr>
-            <tr><td>10Y-2Y SPREAD</td><td className="text-plasma-amber">{typeof data.spread === 'number' ? data.spread.toFixed(2) : data.spread}%</td><td>INVERTED</td></tr>
-            <tr><td>MOVE INDEX</td><td className="text-muted">112.4</td><td>ELEVATED</td></tr>
-            <tr><td>LIQUIDITY IDX</td><td className="text-plasma-green">8.4T</td><td>EXPANDING</td></tr>
-            <tr><td>SKEW IDX</td><td className="text-muted">142.1</td><td>TAIL RISK</td></tr>
+            <tr><td>VIX INDEX</td><td className="text-plasma-amber">{(data.vix || 0).toFixed(2)}</td><td>{data.vix > 20 ? "ELEVATED" : "NORMAL"}</td></tr>
+            <tr><td>10Y-2Y SPREAD</td><td className="text-plasma-amber">{(data.spread || 0).toFixed(2)}</td><td>{data.spread < 0 ? "INVERTED" : "NORMAL"}</td></tr>
+            <tr><td>MOVE INDEX</td><td className="text-muted">N/A</td><td>N/A</td></tr>
+            <tr><td>LIQUIDITY IDX</td><td className="text-plasma-green">{(data.features_dict?.Inst_Heat_Index || 0).toFixed(2)}</td><td>ACTIVE</td></tr>
+            <tr><td>SKEW IDX</td><td className="text-muted">N/A</td><td>N/A</td></tr>
           </tbody>
         </table>
       </div>
@@ -78,11 +78,11 @@ export default function OverviewTab({ data, timeZone }) {
         <h2>[ INSTITUTIONAL FLOWS ]</h2>
         <table style={{ marginTop: '12px' }}>
           <tbody>
-            <tr><td>DARK POOL IDX</td><td className="text-plasma-green">45.2%</td><td>BUY BIASED</td></tr>
-            <tr><td>RETAIL SENTIMENT</td><td className="text-plasma-red">-1.2</td><td>BEARISH</td></tr>
-            <tr><td>CTA POSITIONING</td><td className="text-plasma-green">+85%</td><td>MAX LONG</td></tr>
-            <tr><td>GAMMA EXPOSURE</td><td className="text-plasma-amber">$2.1B</td><td>FLIPPING</td></tr>
-            <tr><td>SHORT INTEREST</td><td className="text-muted">3.4%</td><td>STABLE</td></tr>
+            <tr><td>DARK POOL IDX</td><td className="text-plasma-green">N/A</td><td>N/A</td></tr>
+            <tr><td>RETAIL SENTIMENT</td><td className="text-plasma-red">N/A</td><td>N/A</td></tr>
+            <tr><td>CTA POSITIONING</td><td className="text-plasma-green">N/A</td><td>N/A</td></tr>
+            <tr><td>GAMMA EXPOSURE</td><td className="text-plasma-amber">N/A</td><td>N/A</td></tr>
+            <tr><td>SHORT INTEREST</td><td className="text-muted">N/A</td><td>N/A</td></tr>
           </tbody>
         </table>
       </div>
@@ -138,15 +138,15 @@ export default function OverviewTab({ data, timeZone }) {
           </li>
           <li className="data-item">
             <span className="stat-label">Latency</span>
-            <span className="text-plasma-green">42ms</span>
+            <span className="text-plasma-green">Live</span>
           </li>
           <li className="data-item">
             <span className="stat-label">Data Nodes</span>
-            <span className="text-plasma-green">8 / 8 SYNCED</span>
+            <span className="text-plasma-green">SYNCED</span>
           </li>
           <li className="data-item">
             <span className="stat-label">API Quota</span>
-            <span className="text-plasma-amber">84% REMAINING</span>
+            <span className="text-plasma-amber">OK</span>
           </li>
         </ul>
       </div>

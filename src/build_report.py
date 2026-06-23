@@ -331,6 +331,7 @@ Invalidation: {synth['invalidation']}
     with open(log_path, 'a') as f:
         f.write(log_entry)
     push_script = os.path.join(os.path.dirname(__file__), 'push_to_discord.py')
-    os.system(f'python3 "{push_script}" "{report_path}" "{tier}"')
+    import subprocess
+    subprocess.run(["python3", push_script, report_path, tier], check=False)
 if __name__ == "__main__":
     main()
