@@ -159,16 +159,10 @@ class RiskEngine:
             prob = preds.get("bull_probability", 0.5)
             consensus_score = preds.get("consensus_score", 0.0)
             
-            # AUTO-INVERSION MODULE
+            # P0-6 FIX: Removed Auto-Inversion Module
+            # The calibration penalty dynamically scales down exposure for poorly
+            # calibrated models, which is safer than blindly inverting bimodal outputs.
             effective_prob = prob
-            if brier_score > 0.60:
-                # The model is negatively calibrated (overfitted mean-reversion). Flip the probability.
-                effective_prob = round(1.0 - prob, 3)
-                logger.warning(
-                    f"[AUTO-INVERSION TRIGGERED] {asset.upper()} model is negatively "
-                    f"correlated (Brier: {brier_score:.3f}). Inverting probability: "
-                    f"{prob} -> {effective_prob}"
-                )
 
             # Apply bull trap logic ONLY to SPX
             asset_is_bull_trap = False
@@ -253,9 +247,9 @@ class RiskEngine:
         spx_prob = mlp_predictions.get("spx", {}).get("bull_probability", 0.5)
         
         # Safe Haven Diversity (Risk-Off / Short environment)
-        if short_kelly > 0.05:
+        if dominant_state == "risk_off" or hmm_regime in ("DEFENSIVE_RISK_OFF", "VOLATILITY_EXPANSION"):
             logger.info(f"Risk-Off environment detected. Allocating proportional safe-haven diversity.")
-            gld_kelly = max(gld_kelly, round(short_kelly * 0.40, 3)) # 40% of short exposure
+            gld_kelly = max(gld_kelly, 0.20) # 20% safe-haven baseline when defensive
             
         # Extreme Weakness Rotation (Defense / Alpha Rotation)
         if spx_prob < 0.35:

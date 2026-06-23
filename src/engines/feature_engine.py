@@ -474,8 +474,12 @@ def run_self_calibration(history, current_spx_val, current_ihi, grading_delay=5,
                 else:
                     ret = ((current_spx_val - forecast_to_grade["spx_val_at_prediction"]) / forecast_to_grade["spx_val_at_prediction"]) * 100
                 
-                # Baseline outcome uses interval-specific threshold to match training
-                actual_outcome = 1 if ret > threshold else 0
+                # P0-6 FIX: Directional Grading
+                # Brier score penalizes the model severely if it predicts 1.0 but the return
+                # is e.g. 0.5% (below threshold). This causes a huge variance in the Brier
+                # penalty. We grade purely on direction (ret > 0) to avoid falsifying
+                # correct directional conviction.
+                actual_outcome = 1 if ret > 0 else 0
                 
                 forecast_to_grade["actual_outcome"] = actual_outcome
                 forecast_to_grade["target_graded"] = True

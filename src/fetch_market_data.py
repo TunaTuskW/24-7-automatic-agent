@@ -829,7 +829,7 @@ class Conductor:
         
         target_allocs = {
             "SPX":   kelly_obj.get("SPX_Kelly", 0.0),
-            "SH":    kelly_obj.get("Short_Kelly", 0.0),
+            "SH":    0.0, # Short execution is universally disabled
             "GLD":   kelly_obj.get("GLD_Kelly", 0.0),
             "BTC":   kelly_obj.get("BTC_Kelly", 0.0),
             "WTI":   kelly_obj.get("WTI_Kelly", 0.0),
@@ -845,24 +845,30 @@ class Conductor:
             target_allocs = {k: 0.0 for k in target_allocs}
             recommended_action = "LIQUIDATE_ALL"
             gate_passed = False
-        elif not gate_passed:
-            logger.warning(f"Conviction gate blocked execution. Score {entry_score:.2f} < threshold {entry_threshold:.2f} for {dominant_regime}. Holding cash/safe havens.")
-            
-            # Only allow safe-haven allocations through the gate
-            blocked_sum = sum([target_allocs[k] for k in ["SPX", "BTC", "WTI", "NVDA", "TSLA", "DELL", "SPCE"]])
-            target_allocs["SPX"] = 0.0
-            target_allocs["BTC"] = 0.0
-            target_allocs["WTI"] = 0.0
-            target_allocs["NVDA"] = 0.0
-            target_allocs["TSLA"] = 0.0
-            target_allocs["DELL"] = 0.0
-            target_allocs["SPCE"] = 0.0
-            
-            # We don't have a direct target_allocs['cash'] key in this dict until later,
-            # but PaperBroker dynamically allocates remainder to cash, so zeroing them is sufficient.
-            recommended_action = "HOLD"
         else:
-            recommended_action = "BUY" if entry_bias == "LONG" else ("SELL" if entry_bias == "SHORT" else "HOLD")
+            # P2-9 FIX: Sync Live Conviction Gate to Backtester Option A
+            ASSET_THRESHOLDS = {
+                "spx": 0.50, "btc": 0.52, "gld": 0.52, "wti": 0.54,
+                "nvda": 0.53, "tsla": 0.56, "dell": 0.55, "spce": 0.72,
+            }
+            
+            mlp_deep_state = self.snapshot.mlp_deep_state
+            for asset_key, asset_threshold in ASSET_THRESHOLDS.items():
+                asset_prob = mlp_deep_state.get(asset_key, {}).get("bull_probability", 0.0)
+                if asset_prob < asset_threshold:
+                    target_allocs[asset_key.upper()] = 0.0
+                    
+            # Baseline Option A
+            if dominant_regime in ("RISK_ON_EXPANSION", "LIQUIDITY_DRIVEN_RALLY") and target_allocs.get("SPX", 0.0) == 0.0:
+                target_allocs["SPX"] = 0.15
+            elif dominant_regime == "NEUTRAL_TRANSITIONAL" and target_allocs.get("GLD", 0.0) == 0.0:
+                target_allocs["GLD"] = 0.05
+            
+            # Since gate logic is per-asset now, recommended_action represents the primary SPX signal
+            if target_allocs["SPX"] > 0.0:
+                recommended_action = "BUY"
+            else:
+                recommended_action = "HOLD"
 
         signal_conflict = (news_signal.signal == "LONG" and entry_bias == "SHORT") or \
                           (news_signal.signal == "SHORT" and entry_bias == "LONG")

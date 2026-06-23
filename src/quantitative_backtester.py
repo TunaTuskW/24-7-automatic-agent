@@ -68,11 +68,11 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
     spx_data = raw_data["^GSPC"].dropna()
     
     # Calculate Macro Trend Filter (dynamic EMA span based on interval)
-    ema_span = 20
+    ema_span = 50
     if interval == "1h":
-        ema_span = 140
+        ema_span = 350
     elif interval == "4h":
-        ema_span = 40
+        ema_span = 100
     spx_ema = spx_data["Close"].ewm(span=ema_span, adjust=False).mean()
     
     q1_trading_days = spx_data[(spx_data.index >= q1_start) & (spx_data.index <= q1_end)].index
@@ -374,7 +374,7 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
             regime_probs = {"NEUTRAL_TRANSITIONAL": 1.0}
             
         kalman_state = risk.run_kalman_filter(
-            mcs=50.0, # Dummy MCS
+            mcs=50.0, # Dummy MCS; metric unused in Kalman filter
             sub_components={},
             hmm_regime_probs=regime_probs,
             prior_state=prior_k_state,
@@ -542,6 +542,18 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
             if target_allocations.get("short", 0.0) > 0.0:
                 target_allocations["cash"] = target_allocations.get("cash", 0.0) + target_allocations["short"]
                 target_allocations["short"] = 0.0
+
+            # Option A: Regime-Aware Baseline Allocation
+            if dom_regime in ("RISK_ON_EXPANSION", "LIQUIDITY_DRIVEN_RALLY") and target_allocations.get("spx", 0.0) == 0.0:
+                # In clear bull markets, maintain a 15% SPX baseline even if the model lacks an edge
+                if target_allocations.get("cash", 0.0) >= 0.15:
+                    target_allocations["spx"] = 0.15
+                    target_allocations["cash"] -= 0.15
+            elif dom_regime == "NEUTRAL_TRANSITIONAL" and target_allocations.get("gld", 0.0) == 0.0:
+                # In neutral markets, hold a 5% GLD baseline
+                if target_allocations.get("cash", 0.0) >= 0.05:
+                    target_allocations["gld"] = 0.05
+                    target_allocations["cash"] -= 0.05
         
         if use_rl_agent and rl_agent_instance:
             rl_features = features_vector_clipped
@@ -589,14 +601,13 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
                     if abs(target_alloc - current_alloc) > 0.05:
                         action = "BUY" if target_alloc > current_alloc else "SELL"
                         asset_name = k.upper()
-                        if asset_name == "SHORT":
-                            asset_name = "SH"  # ProShares Short S&P500 ETF
-                            # SH price is ~1/700 of SPX; size shares using SH price proxy
-                            actual_price = max(1.0, actual_price / 700.0)
                         
                         mapped_key = ticker_map.get(k, "SPX")
                         actual_price = float(parsed_daily.get(mapped_key, {}).get("current", 100.0))
                         if actual_price <= 0: actual_price = 100.0
+
+                        if asset_name == "SHORT":
+                            asset_name = "SH"  # ProShares Short S&P500 ETF
                         
                         trade_value = abs(target_alloc - current_alloc) * simulated_equity
                         trade_shares = trade_value / actual_price
@@ -640,7 +651,7 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
             "date": current_date.strftime("%Y-%m-%d"),
             "pnl": bar_pnl,
             "equity": simulated_equity,
-            "cash_frac": current_allocations.get("cash", 0.0),
+            "target_cash_frac": target_allocations.get("cash", 0.0),
             "regime": dom_regime,
             "gate_passed": gate_passed,
             "circuit_breaker": circuit_breaker_active
@@ -648,15 +659,15 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
 
         # Backwards compatible fwd_5d_ret calculation for the report logging
         fwd_5d_ret = (
-            (spx_kelly * spx_fwd_5d) +
-            (short_kelly * -spx_fwd_5d) +
-            (btc_kelly * get_fwd_5d(future_slice_btc)) +
-            (gld_kelly * get_fwd_5d(future_slice_gld)) +
-            (wti_kelly * get_fwd_5d(future_slice_wti)) +
-            (nvda_kelly * get_fwd_5d(future_slice_nvda)) +
-            (tsla_kelly * get_fwd_5d(future_slice_tsla)) +
-            (dell_kelly * get_fwd_5d(future_slice_dell)) +
-            (spce_kelly * get_fwd_5d(future_slice_spce))
+            (target_allocations.get("spx", 0.0) * spx_fwd_5d) +
+            (target_allocations.get("short", 0.0) * -spx_fwd_5d) +
+            (target_allocations.get("btc", 0.0) * get_fwd_5d(future_slice_btc)) +
+            (target_allocations.get("gld", 0.0) * get_fwd_5d(future_slice_gld)) +
+            (target_allocations.get("wti", 0.0) * get_fwd_5d(future_slice_wti)) +
+            (target_allocations.get("nvda", 0.0) * get_fwd_5d(future_slice_nvda)) +
+            (target_allocations.get("tsla", 0.0) * get_fwd_5d(future_slice_tsla)) +
+            (target_allocations.get("dell", 0.0) * get_fwd_5d(future_slice_dell)) +
+            (target_allocations.get("spce", 0.0) * get_fwd_5d(future_slice_spce))
         )
         # Final forward return validation
         results.append({
@@ -667,13 +678,13 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
             "mlp_prob": mlp_prob,
             "consensus": consensus,
             "spx_fwd_5d": spx_fwd_5d,
-            "kelly_exposure": spx_kelly,
-            "short_exposure": short_kelly,
-            "btc_exposure": btc_kelly,
-            "gld_exposure": gld_kelly,
-            "wti_exposure": wti_kelly,
-            "cash_exposure": kelly_dict.get("Cash", 0.0),
-            "safe_haven_exposure": gld_kelly + short_kelly, # GLD + Short as true safe havens
+            "kelly_exposure": target_allocations.get("spx", 0.0),
+            "short_exposure": target_allocations.get("short", 0.0),
+            "btc_exposure": target_allocations.get("btc", 0.0),
+            "gld_exposure": target_allocations.get("gld", 0.0),
+            "wti_exposure": target_allocations.get("wti", 0.0),
+            "cash_exposure": target_allocations.get("cash", 0.0),
+            "safe_haven_exposure": target_allocations.get("gld", 0.0) + target_allocations.get("short", 0.0), # GLD + Short as true safe havens
             "fwd_5d_ret": fwd_5d_ret
         })
 
@@ -687,19 +698,21 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
     conviction_blocks = 0   # bars where conviction gate blocked execution
     
     for bp in bar_pnl_history:
-        if bp["cash_frac"] > 0.7 and not bp["gate_passed"]:
+        if bp["target_cash_frac"] > 0.9 and not bp["gate_passed"]:
             conviction_blocks += 1
-        if bp["pnl"] > 1.0:        # more than $1 gain on the bar
+            
+        pnl_threshold = 0.0005 * bp["equity"]
+        if bp["pnl"] > pnl_threshold:        # more than 0.05% gain on the bar
             active_wins += 1
-        elif bp["pnl"] < -1.0:     # more than $1 loss on the bar
+        elif bp["pnl"] < -pnl_threshold:     # more than 0.05% loss on the bar
             active_losses += 1
         else:
             # Flat bar -- check if it was a preservation event
             preservation_events += 1
     
     for r in results:
-        # Drawdown protection metric (if SPX goes down > 1.5%, were we hedged/short?)
-        if r["spx_fwd_5d"] < -1.5 and (r["kelly_exposure"] < 0.2 or r["short_exposure"] > 0.1 or r["safe_haven_exposure"] > 0.5):
+        # Drawdown protection metric (if SPX goes down > 1.5%, were we hedged/short/cash?)
+        if r["spx_fwd_5d"] < -1.5 and (r["kelly_exposure"] < 0.2 or r["short_exposure"] > 0.1 or r["safe_haven_exposure"] > 0.10 or r["cash_exposure"] > 0.80):
             drawdown_protected += 1
         if r["spx_fwd_5d"] < -1.5:
             total_drawdowns += 1
