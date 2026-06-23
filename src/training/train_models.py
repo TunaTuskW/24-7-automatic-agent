@@ -3,7 +3,7 @@ import joblib
 import pandas as pd
 import numpy as np
 import yfinance as yf
-from hmmlearn.hmm import GaussianHMM
+
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import StandardScaler
 from src.engines.feature_engine import ALL_YF_TICKERS, ROLLING_DAYS
@@ -181,50 +181,16 @@ def train(interval="1d"):
         "scaler": scaler_mlp
     }
     
-    scaler_hmm = StandardScaler()
-    X_hmm_scaled = scaler_hmm.fit_transform(X)
-    
-    # Enforce stable regimes by setting a strong prior on self-transitions
-    # This prevents the HMM from learning transient 1-day states and forces it to find persistent market regimes
-    n_states = 5
-    transmat_prior = np.full((n_states, n_states), 1.0 / n_states)
-    np.fill_diagonal(transmat_prior, 100.0) # Strong prior for staying in the same state
-    
-    hmm = GaussianHMM(
-        n_components=n_states, 
-        covariance_type="diag", 
-        n_iter=200, 
-        random_state=42, 
-        min_covar=0.01,
-        init_params="smc", # Initialize everything but transmat
-        params="smc"       # Update everything but transmat during EM
-    )
-    hmm.transmat_ = transmat_prior / transmat_prior.sum(axis=1, keepdims=True)
-    
-    hmm.fit(X_hmm_scaled)
-    
-    # Dynamically map state labels by sorting clusters based on SPX return mean (index 0)
-    spx_means = hmm.means_[:, 0]
-    sorted_indices = np.argsort(spx_means)
-    
-    state_labels_map = {
-        int(sorted_indices[0]): "CRISIS_DISLOCATION",
-        int(sorted_indices[1]): "RISK_OFF_STRESS",
-        int(sorted_indices[2]): "NEUTRAL_TRANSITIONAL",
-        int(sorted_indices[3]): "RISK_ON_EXPANSION",
-        int(sorted_indices[4]): "LIQUIDITY_DRIVEN_RALLY"
-    }
-
-    hmm_package = {
-        "hmm": hmm,
-        "scaler": scaler_hmm,
-        "state_labels": state_labels_map
-    }
-    
     os.makedirs(os.path.join(os.path.dirname(__file__), "..", "..", "models"), exist_ok=True)
-    joblib.dump(mlp_package, os.path.join(os.path.dirname(__file__), "..", "..", "models", f"mlp_model_{interval}.pkl"))
-    joblib.dump(hmm_package, os.path.join(os.path.dirname(__file__), "..", "..", "models", f"hmm_model_{interval}.pkl"))
-    logger.info(f"Retraining complete for {interval}. Models saved.")
+    shared_path = os.path.join(os.path.dirname(__file__), "..", "..", "models", f"mlp_model_{interval}.pkl")
+    joblib.dump(mlp_package, shared_path)
+    
+    # Also save under per-asset names so load_mlp_models can find them
+    for asset in ["spx", "btc", "gld", "wti", "nvda", "tsla", "dell", "spce"]:
+        asset_path = os.path.join(os.path.dirname(__file__), "..", "..", "models", f"mlp_model_{asset}_{interval}.pkl")
+        joblib.dump(mlp_package, asset_path)
+        
+    logger.info(f"Retraining complete for {interval}. Models saved (shared + per-asset).")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

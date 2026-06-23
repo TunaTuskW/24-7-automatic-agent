@@ -19,7 +19,7 @@ class RiskEngine:
             hmm_risk_on = hmm_regime_probs.get("RISK_ON_EXPANSION", 0.0) + hmm_regime_probs.get("LIQUIDITY_DRIVEN_RALLY", 0.0)
             
             # Map all known stress and shock states to risk_off
-            risk_off_states = ["STAGFLATION_STRESS", "RATE_SHOCK", "DEFLATION_FEAR", "CRISIS_DISLOCATION", "COMMODITY_SHOCK", "VOLATILITY_EXPANSION"]
+            risk_off_states = ["DEFENSIVE_RISK_OFF", "VOLATILITY_EXPANSION"]
             hmm_risk_off = sum(hmm_regime_probs.get(s, 0.0) for s in risk_off_states)
             
             # Add dynamic checking for indexed states like COMMODITY_SHOCK_4
@@ -114,9 +114,7 @@ class RiskEngine:
         # We relax the Brier penalty if the model correctly identified a Risk Off regime.
         if is_momentum_override:
             calibration_penalty = 1.0
-        # Calibration Penalty (Brier Score scaling)
-        calibration_penalty = 1.0
-        if dominant_state == "risk_off":
+        elif dominant_state == "risk_off":
             if brier_score > 0.45: calibration_penalty = 0.5
             elif brier_score > 0.35: calibration_penalty = 0.9
             else: calibration_penalty = 1.0
@@ -278,10 +276,7 @@ class RiskEngine:
 
         # HMM Coherence Gate
         # If HMM explicitly names a stress regime, single names are forbidden.
-        STRESS_REGIMES = {
-            "STAGFLATION_STRESS", "RATE_SHOCK", "DEFLATION_FEAR",
-            "CRISIS_DISLOCATION", "VOLATILITY_EXPANSION", "COMMODITY_SHOCK"
-        }
+        STRESS_REGIMES = {"DEFENSIVE_RISK_OFF", "VOLATILITY_EXPANSION"}
         if any(hmm_regime.startswith(s) for s in STRESS_REGIMES):
             nvda_kelly = 0.0
             tsla_kelly = 0.0

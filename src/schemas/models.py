@@ -19,6 +19,9 @@ class NewsSignal(BaseModel):
     impact: str = Field(default="Neutral Impact (Fallback)", description="Qualitative impact of the news")
     reasoning: str = Field(default="", description="Chain-of-Thought reasoning from the LLM")
     quantitative_divergence_flag: bool = Field(default=False, description="Flag indicating narrative diverges from quantitative reality")
+    credit_stress: float = Field(default=0.0, description="LLM-estimated credit stress 0..1")
+    liquidity_withdrawal: float = Field(default=0.0, description="LLM-estimated liquidity withdrawal 0..1")
+    kelly_multiplier: float = Field(default=1.0, description="LLM-suggested Kelly multiplier 0.5..1.5")
 
 class RegimeState(BaseModel):
     current: str = Field(default="UNKNOWN_TRANSITION", description="Current overarching regime")

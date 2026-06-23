@@ -55,6 +55,7 @@ class EntryEngine:
             logger.warning("Insufficient 1H data for entry scoring. Returning 0.5 FLAT.")
             return {"entry_score": 0.5, "entry_bias": "FLAT", "components": components}
 
+        is_long_bias = False
         try:
             # Current values
             close_now = float(spx_close_1h.iloc[-1])
