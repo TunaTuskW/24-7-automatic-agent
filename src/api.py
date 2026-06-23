@@ -245,6 +245,7 @@ def get_portfolio(type: str = "live"):
                         
                         trade_pnl = value - cost_of_sold
                         row['pnl'] = round(trade_pnl, 2)
+                        realized_pnl += trade_pnl
                         
                         cost_basis[ticker]['qty'] -= shares
                         cost_basis[ticker]['cost'] -= cost_of_sold
@@ -256,14 +257,16 @@ def get_portfolio(type: str = "live"):
             current_open_value = portfolio.get('total_equity', 10000.0) - portfolio.get('cash', 10000.0)
             
             unrealized_pnl = current_open_value - total_open_cost
-            total_pnl = portfolio.get('total_equity', 10000.0) - 10000.0
-            realized_pnl = total_pnl - unrealized_pnl
             
             # If no open positions, force unrealized to 0
             if abs(current_open_value) < 1.0:
                 unrealized_pnl = 0.0
-                realized_pnl = total_pnl
                 
+            total_pnl = realized_pnl + unrealized_pnl
+            
+            # Correct the portfolio total equity based on the ledger's actual profit/loss
+            portfolio['total_equity'] = 10000.0 + total_pnl
+            
             portfolio['realized_pnl'] = realized_pnl
             portfolio['unrealized_pnl'] = unrealized_pnl
 

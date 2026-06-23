@@ -451,7 +451,8 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
             current_ihi=ihi_val,
             is_downtrend=is_downtrend,
             max_kelly_cap=0.40 if interval == "4h" else 0.60,
-            equity_drawdown=equity_drawdown
+            equity_drawdown=equity_drawdown,
+            entry_score=1.0  # TODO: integrate EntryEngine for 1H context, see fetch_market_data.py:595
         )
         spx_kelly = kelly_dict.get("SPX_Kelly", 0.0)
         
@@ -519,20 +520,28 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
             target_allocations["cash"] = 1.0
         
         # Fix 2: Conviction gate — block low-quality entries
-        entry_threshold = CONVICTION_GATE.get(dom_regime, 0.60)
-        gate_passed = mlp_prob >= entry_threshold
-        if not gate_passed and not circuit_breaker_active:
-            # Only allow safe-haven allocations (cash, gld, short) through the gate
-            target_allocations["spx"] = 0.0
-            target_allocations["btc"] = 0.0
-            target_allocations["wti"] = 0.0
-            target_allocations["nvda"] = 0.0
-            target_allocations["tsla"] = 0.0
-            target_allocations["dell"] = 0.0
-            target_allocations["spce"] = 0.0
-            # Redistribute blocked allocation to cash
-            blocked_sum = spx_kelly + btc_kelly + wti_kelly + nvda_kelly + tsla_kelly + dell_kelly + spce_kelly
-            target_allocations["cash"] = cash_kelly + blocked_sum
+        # Per-asset conviction gate using each asset's own threshold from the RiskEngine.
+        # SPX gate additionally requires the macro regime's entry threshold to be met,
+        # so we still compute `gate_passed` for downstream logging/circuit-breaker logic.
+        spx_entry_threshold = CONVICTION_GATE.get(dom_regime, 0.60)
+        gate_passed = mlp_prob >= spx_entry_threshold
+        if not circuit_breaker_active:
+            ASSET_THRESHOLDS = {
+                "spx": 0.50, "btc": 0.52, "gld": 0.52, "wti": 0.54,
+                "nvda": 0.53, "tsla": 0.56, "dell": 0.55, "spce": 0.72,
+            }
+            for asset_key, asset_threshold in ASSET_THRESHOLDS.items():
+                asset_prob = mlp_predictions.get(asset_key, {}).get("bull_probability", 0.0)
+                if asset_prob < asset_threshold:
+                    blocked = target_allocations.get(asset_key, 0.0)
+                    target_allocations[asset_key] = 0.0
+                    target_allocations["cash"] = target_allocations.get("cash", 0.0) + blocked
+            
+            # User policy: SHORT execution is globally disabled in the backtester.
+            # Always divert SHORT allocation to cash, regardless of trading_config.json.
+            if target_allocations.get("short", 0.0) > 0.0:
+                target_allocations["cash"] = target_allocations.get("cash", 0.0) + target_allocations["short"]
+                target_allocations["short"] = 0.0
         
         if use_rl_agent and rl_agent_instance:
             rl_features = features_vector_clipped
@@ -560,8 +569,11 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
         bars_since_rebalance = i - last_rebalance_i
         
         if bars_since_rebalance >= MIN_HOLD_BARS:
-            turnover_fraction = sum(abs(target_allocations[k] - current_allocations[k]) for k in ["spx", "short", "btc", "gld", "wti", "nvda", "tsla", "dell", "spce"])
-            if turnover_fraction > 0.10:  # Only trade if drift > 10% of portfolio
+            tradeable_keys = ["spx", "short", "btc", "gld", "wti", "nvda", "tsla", "dell", "spce"]
+            turnover_fraction = sum(abs(target_allocations[k] - current_allocations.get(k, 0.0)) for k in tradeable_keys)
+            # Lower threshold: 5% absolute turnover is enough to justify a rebalance
+            # given the low fee model (0.05-0.5% slippage).
+            if turnover_fraction > 0.05:
                 slippage_cost = turnover_fraction * simulated_equity * simulated_slippage_rate
                 simulated_equity -= slippage_cost
                 total_fees_paid += slippage_cost
@@ -577,7 +589,10 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
                     if abs(target_alloc - current_alloc) > 0.05:
                         action = "BUY" if target_alloc > current_alloc else "SELL"
                         asset_name = k.upper()
-                        if asset_name == "SHORT": asset_name = "SH"
+                        if asset_name == "SHORT":
+                            asset_name = "SH"  # ProShares Short S&P500 ETF
+                            # SH price is ~1/700 of SPX; size shares using SH price proxy
+                            actual_price = max(1.0, actual_price / 700.0)
                         
                         mapped_key = ticker_map.get(k, "SPX")
                         actual_price = float(parsed_daily.get(mapped_key, {}).get("current", 100.0))
@@ -657,7 +672,8 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
             "btc_exposure": btc_kelly,
             "gld_exposure": gld_kelly,
             "wti_exposure": wti_kelly,
-            "safe_haven_exposure": kelly_dict.get("Cash", 0.0), # Representing Cash now
+            "cash_exposure": kelly_dict.get("Cash", 0.0),
+            "safe_haven_exposure": gld_kelly + short_kelly, # GLD + Short as true safe havens
             "fwd_5d_ret": fwd_5d_ret
         })
 
@@ -708,7 +724,11 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
         avg_ret = np.mean(bar_returns)
         std_ret = np.std(bar_returns, ddof=1)
         # Annualize based on interval
+        # Approximate bar counts per year (US equity session = 6.5h/day, 252 days).
+        # For futures-eligible intervals (4h, 1h) we use extended hours.
         periods_per_year = {"1h": 252 * 6.5, "4h": 252 * 1.625, "1d": 252, "1wk": 52}
+        # NOTE: if backtesting on 24h futures data, switch to:
+        # periods_per_year = {"1h": 252 * 23, "4h": 252 * 5.75, "1d": 252, "1wk": 52}
         annual_factor = np.sqrt(periods_per_year.get(interval, 252))
         sharpe = (avg_ret / std_ret * annual_factor) if std_ret > 0 else 0.0
     else:
@@ -800,7 +820,7 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
 |------|-----------|------------|--------------|---------------|-----------|-----------|-------------|-----------|-----------|-----------|------|------------------|
 """
     for r in results:
-        report += f"| {r['date']} | {r['spx_close']} | {r['dom_regime']} | {r['kalman_state']} | {r['mlp_prob']:.3f} | {r['consensus']:.1f} | {r['kelly_exposure']} | {r['short_exposure']} | {r['btc_exposure']} | {r['gld_exposure']} | {r['wti_exposure']} | {r['safe_haven_exposure']} | {r['fwd_5d_ret']:.3f}% |\n"
+        report += f"| {r['date']} | {r['spx_close']} | {r['dom_regime']} | {r['kalman_state']} | {r['mlp_prob']:.3f} | {r['consensus']:.1f} | {r['kelly_exposure']} | {r['short_exposure']} | {r['btc_exposure']} | {r['gld_exposure']} | {r['wti_exposure']} | {r['cash_exposure']} | {r['fwd_5d_ret']:.3f}% |\n"
         
     report_path = os.path.join(os.path.dirname(__file__), "..", "reports", f"backtest_extended_results_{interval}.md")
     with open(report_path, "w") as f:

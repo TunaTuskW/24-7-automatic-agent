@@ -449,7 +449,7 @@ def run_self_calibration(history, current_spx_val, current_ihi, grading_delay=5,
     brier_score = 0.15
     try:
         # Calculate threshold based on interval
-        threshold = 1.5
+        threshold = 0.75
         if interval == "1wk":
             threshold *= 2.0
         elif interval == "4h":
@@ -482,7 +482,7 @@ def run_self_calibration(history, current_spx_val, current_ihi, grading_delay=5,
                 forecast_to_grade["squared_error"] = float((forecast_to_grade["predicted_risk_on"] - actual_outcome) ** 2)
         
         # Limit history
-        history = history[-(grading_delay + 20):]
+        history = history[-(grading_delay + 60):]
         
         # Calculate Brier score
         graded = [p for p in history if p.get("target_graded", False)]

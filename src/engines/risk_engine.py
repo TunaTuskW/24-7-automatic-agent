@@ -112,6 +112,7 @@ class RiskEngine:
         
         # Baseline Risk Tolerance: High volatility regimes mathematically generate noise.
         # We relax the Brier penalty if the model correctly identified a Risk Off regime.
+        # Calibration Penalty (Brier Score scaling) - bypassed by momentum override
         if is_momentum_override:
             calibration_penalty = 1.0
         elif dominant_state == "risk_off":
@@ -159,12 +160,15 @@ class RiskEngine:
             consensus_score = preds.get("consensus_score", 0.0)
             
             # AUTO-INVERSION MODULE
+            effective_prob = prob
             if brier_score > 0.60:
                 # The model is negatively calibrated (overfitted mean-reversion). Flip the probability.
-                inverted_prob = round(1.0 - prob, 3)
-                logger.warning(f"[AUTO-INVERSION TRIGGERED] {asset.upper()} model is negatively correlated (Brier: {brier_score:.3f}). Inverting probability: {prob} -> {inverted_prob}")
-                prob = inverted_prob
-                mlp_predictions[asset]["bull_probability"] = prob
+                effective_prob = round(1.0 - prob, 3)
+                logger.warning(
+                    f"[AUTO-INVERSION TRIGGERED] {asset.upper()} model is negatively "
+                    f"correlated (Brier: {brier_score:.3f}). Inverting probability: "
+                    f"{prob} -> {effective_prob}"
+                )
 
             # Apply bull trap logic ONLY to SPX
             asset_is_bull_trap = False
@@ -198,7 +202,7 @@ class RiskEngine:
             asset_conviction_threshold = max(0.52, min(0.75, asset_conviction_threshold))
             
             raw_kelly = self.compute_kelly_sizing(
-                max_prob=prob, 
+                max_prob=effective_prob, 
                 dominant_state=dominant_state, 
                 brier_score=brier_score, 
                 duration_days=duration_days, 
@@ -218,14 +222,17 @@ class RiskEngine:
         spx_kelly = 0.0
         short_kelly = 0.0
         
+        # 0.0 means "no edge". A strictly negative value means "active bearish bet".
+        # Only the latter should produce a SHORT allocation; no-edge -> cash.
         if spx_raw > 0:
             spx_kelly = round(min(max_kelly_cap, spx_raw), 3)
             if is_downtrend:
                 spx_kelly = round(spx_kelly * 0.5, 3)
                 logger.warning("SPX is in a macro downtrend. Halving long Kelly allocation.")
-        else:
+        elif spx_raw < -0.05:  # require material bearish edge, not just "no bull edge"
             short_kelly = round(min(max_kelly_cap, abs(spx_raw)), 3)
             logger.info(f"Negative Edge Detected. Shorting enabled with allocation {short_kelly}.")
+        # else: spx_raw in [-0.05, 0] -> no actionable edge, leave both at 0 (cash)
 
         # Black Swan Circuit Breaker overrides SPX
         if is_black_swan:
