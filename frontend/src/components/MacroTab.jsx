@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import ErrorBoundary from './ErrorBoundary';
 import { apiPost } from '../App';
 
-function MacroTabContent() {
+function MacroTabContent({ timeZone }) {
   const [macroData, setMacroData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [lastFetch, setLastFetch] = useState(null);
@@ -219,7 +219,7 @@ function MacroTabContent() {
 export default function MacroTab({ timeZone }) {
   return (
     <ErrorBoundary>
-      <MacroTabContent />
+      <MacroTabContent timeZone={timeZone} />
     </ErrorBoundary>
   );
 }

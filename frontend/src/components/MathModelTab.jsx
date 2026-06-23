@@ -31,7 +31,7 @@ function RegimeBar({ label, value, color }) {
   );
 }
 
-function MathModelTabContent() {
+function MathModelTabContent({ timeZone }) {
   const [modelData, setModelData] = useState(null);
   const [lastUpdate, setLastUpdate] = useState(null);
 
@@ -246,7 +246,7 @@ function MathModelTabContent() {
 export default function MathModelTab({ timeZone }) {
   return (
     <ErrorBoundary>
-      <MathModelTabContent />
+      <MathModelTabContent timeZone={timeZone} />
     </ErrorBoundary>
   );
 }
