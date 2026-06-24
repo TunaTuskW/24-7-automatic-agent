@@ -527,9 +527,21 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
                 entry_score=entry_score_val
             )
             if is_opportunistic and 'decision' in locals():
-                for k in kelly_dict:
+                total_boost = 0.0
+                for k in list(kelly_dict.keys()):
                     if kelly_dict[k] > 0.0 and "Kelly" in k:
-                        kelly_dict[k] = min(1.0, kelly_dict[k] + decision.conviction_boost)
+                        boost_amount = min(1.0 - kelly_dict[k], decision.conviction_boost)
+                        kelly_dict[k] += boost_amount
+                        total_boost += boost_amount
+                
+                # Deduct the total boost from Cash to maintain 1.0 sum
+                kelly_dict["Cash"] = max(0.0, kelly_dict.get("Cash", 0.0) - total_boost)
+                
+                # Normalize if somehow still > 1.0
+                total_alloc = sum(v for k, v in kelly_dict.items() if k != "Short_Kelly")  # Short is usually disabled, but just to be safe let's normalize everything that uses equity
+                if total_alloc > 1.0:
+                    for k in kelly_dict:
+                        kelly_dict[k] /= total_alloc
 
             last_kelly_dict = kelly_dict.copy()
         spx_kelly = kelly_dict.get("SPX_Kelly", 0.0)
