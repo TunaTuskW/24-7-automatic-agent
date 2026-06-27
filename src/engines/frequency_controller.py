@@ -87,12 +87,12 @@ class FrequencyController:
             reason_parts.append(f"regime too new ({duration_days:.1f} days)")
 
         # Map score to frequency
-        if score >= 4:
-            freq = "1h"
-            reason = "High confidence regime with confirmed trend and clean volatility."
-        elif score >= 1:
+        if score >= 1:
             freq = "4h"
-            reason = "Moderate confidence. Standard 4H cadence."
+            if score >= 4:
+                reason = "High confidence regime with confirmed trend and clean volatility (Capped at 4H)."
+            else:
+                reason = "Moderate confidence. Standard 4H cadence."
         else:
             freq = "1d"
             reason = f"Low confidence — reducing to daily cadence. Factors: {'; '.join(reason_parts) or 'general uncertainty'}."
