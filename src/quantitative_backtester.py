@@ -103,7 +103,7 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
     prev_entry_score = None
     prev_regime = None
     decision = None
-    last_kelly_dict = {}
+    last_kelly_dict = {"Cash": 1.0}
     mlp_packages_dict = load_mlp_models(interval)
     
     prior_k_state = None
