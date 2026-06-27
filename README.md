@@ -1,6 +1,6 @@
-# Macro Briefing Agent Setup Guide (v6.5.0)
+# Macro Briefing Agent Setup Guide (v7.0.0)
 
-Welcome to the **Macro Briefing Agent (v6.5.0)**—a 24/7 autonomous containerized **Multi-Asset Trading Terminal & Dynamic Conviction Edge OS**. This project decouples data ingestion, economic calendars, LLM synthesis, consensus scaling, and pub-sub event dispatching into an enterprise-grade framework.
+Welcome to the **Macro Briefing Agent (v7.0.0)**—a 24/7 autonomous containerized **Multi-Asset Trading Terminal & Dynamic Conviction Edge OS**. This project decouples data ingestion, economic calendars, LLM synthesis, consensus scaling, and pub-sub event dispatching into an enterprise-grade framework.
 
 ## Data Processing Workflow
 
@@ -234,10 +234,17 @@ If you encounter any front-end React crashes, the UI is protected by **React Err
 
 ## 6. Dynamic System Toggles
 
-The v6.5.0 dashboard introduces sophisticated control mechanisms for live data interactions:
+The v7.0.0 dashboard introduces sophisticated control mechanisms for live data interactions:
 
 ### Global Timezone Dropdown
 By clicking the clock in the top-right corner of the UI, you can select your preferred Timezone (e.g., LOCAL, UTC, EST, JST, ICT). This globally transforms all timestamp strings instantly across the entire dashboard (Macro Events, Mock Executions, Reports) without refreshing.
 
 ### Universe Configuration
 Inside the **[ LEDGER ]** tab, there is a **[ UNIVERSE CONFIGURATION ]** module. This allows you to dynamically enable or disable the 8 traded assets on the fly. When an asset is toggled OFF, the quantitative engine Mathematically Diverts 100% of the capital allocated to that specific asset directly into your `Cash` reserves, preserving mathematical integrity while completely neutralizing execution risk on that ticker. After toggling assets, you can click **[ RE-RUN BACKTEST ]** to recalculate portfolio PnL.
+
+### Strict Allocation Invariant Engine
+To ensure strategy math translates perfectly to live execution without any phantom leverage leaks, the system enforces a strict mathematical invariant:
+*   Active assets are dynamically adjusted and normalized to remain within 100% portfolio equity.
+*   If total allocations exceed 100% (e.g. from conviction boosts or baseline overrides), the assets scale down proportionally and Cash is zeroed.
+*   Otherwise, Cash safely absorbs the remainder.
+*   This invariant is enforced on every cycle in both backtesting (`src/quantitative_backtester.py`) and live paper-trading (`src/fetch_market_data.py`).
