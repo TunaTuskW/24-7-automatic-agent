@@ -667,6 +667,16 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
                 target_allocations["cash"] += target_allocations[dticker]
                 target_allocations[dticker] = 0.0
 
+        # Force renormalize to guarantee sum is exactly 1.0 (Cash absorbs the difference)
+        sum_active = sum(v for k, v in target_allocations.items() if k != "cash")
+        if sum_active > 1.0:
+            for k in target_allocations:
+                if k != "cash":
+                    target_allocations[k] /= sum_active
+            target_allocations["cash"] = 0.0
+        else:
+            target_allocations["cash"] = round(1.0 - sum_active, 4)
+
         # --- INVARIANT: allocations must sum to 1.0 (within rounding tolerance) ---
         _alloc_sum = sum(target_allocations.values())
         if not (0.99 <= _alloc_sum <= 1.01):

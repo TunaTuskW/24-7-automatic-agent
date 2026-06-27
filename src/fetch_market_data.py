@@ -878,9 +878,13 @@ class Conductor:
                     
             # Baseline Option A
             if dominant_regime in ("RISK_ON_EXPANSION", "LIQUIDITY_DRIVEN_RALLY") and target_allocs.get("SPX", 0.0) == 0.0:
-                target_allocs["SPX"] = 0.15
+                headroom = 1.0 - sum(target_allocs.values())
+                if headroom >= 0.15:
+                    target_allocs["SPX"] = 0.15
             elif dominant_regime == "NEUTRAL_TRANSITIONAL" and target_allocs.get("GLD", 0.0) == 0.0:
-                target_allocs["GLD"] = 0.05
+                headroom = 1.0 - sum(target_allocs.values())
+                if headroom >= 0.05:
+                    target_allocs["GLD"] = 0.05
             
             # Since gate logic is per-asset now, recommended_action represents the primary SPX signal
             if target_allocs["SPX"] > 0.0:
@@ -1019,6 +1023,12 @@ class Conductor:
                         scale = 1.0 / sum_active
                         for k in target_allocs:
                             target_allocs[k] = target_allocs[k] * scale
+
+                # Force renormalize to guarantee sum <= 1.0
+                _alloc_sum = sum(target_allocs.values())
+                if _alloc_sum > 1.0:
+                    for k in target_allocs:
+                        target_allocs[k] /= _alloc_sum
 
                 # --- INVARIANT: allocations must sum to <= 1.01 ---
                 _alloc_sum = sum(target_allocs.values())
