@@ -102,6 +102,7 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
     opportunity_gate = OpportunityGate()
     prev_entry_score = None
     prev_regime = None
+    decision = None
     last_kelly_dict = {}
     mlp_packages_dict = load_mlp_models(interval)
     
@@ -526,22 +527,20 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
                 equity_drawdown=equity_drawdown,
                 entry_score=entry_score_val
             )
-            if is_opportunistic and 'decision' in locals():
-                total_boost = 0.0
+            if is_opportunistic and decision is not None:
+                # Apply conviction boost to active Kellys only
                 for k in list(kelly_dict.keys()):
-                    if kelly_dict[k] > 0.0 and "Kelly" in k:
-                        boost_amount = min(1.0 - kelly_dict[k], decision.conviction_boost)
-                        kelly_dict[k] += boost_amount
-                        total_boost += boost_amount
-                
-                # Deduct the total boost from Cash to maintain 1.0 sum
-                kelly_dict["Cash"] = max(0.0, kelly_dict.get("Cash", 0.0) - total_boost)
-                
-                # Normalize if somehow still > 1.0
-                total_alloc = sum(v for k, v in kelly_dict.items() if k != "Short_Kelly")  # Short is usually disabled, but just to be safe let's normalize everything that uses equity
-                if total_alloc > 1.0:
-                    for k in kelly_dict:
-                        kelly_dict[k] /= total_alloc
+                    if kelly_dict[k] > 0.0 and k != "Cash":
+                        kelly_dict[k] = kelly_dict[k] + decision.conviction_boost
+                # Renormalize: Cash absorbs the boost so sum stays at 1.0
+                sum_active = sum(v for k, v in kelly_dict.items() if k != "Cash")
+                if sum_active > 1.0:
+                    scale = 1.0 / sum_active
+                    for k in list(kelly_dict.keys()):
+                        if k != "Cash":
+                            kelly_dict[k] = kelly_dict[k] * scale
+                    sum_active = 1.0
+                kelly_dict["Cash"] = max(0.0, round(1.0 - sum_active, 4))
 
             last_kelly_dict = kelly_dict.copy()
         spx_kelly = kelly_dict.get("SPX_Kelly", 0.0)
@@ -667,6 +666,15 @@ def run_backtest(interval="1d", use_rl_agent=False, start_date: str = None, end_
             if target_allocations.get(dticker, 0.0) > 0.0:
                 target_allocations["cash"] += target_allocations[dticker]
                 target_allocations[dticker] = 0.0
+
+        # --- INVARIANT: allocations must sum to 1.0 (within rounding tolerance) ---
+        _alloc_sum = sum(target_allocations.values())
+        if not (0.99 <= _alloc_sum <= 1.01):
+            raise RuntimeError(
+                f"Allocation invariant violated at {current_date}: sum={_alloc_sum:.4f}. "
+                f"This indicates a bug in conviction_boost or baseline allocation logic. "
+                f"Allocations: {target_allocations}"
+            )
             
         bars_since_rebalance = i - last_rebalance_i
         
