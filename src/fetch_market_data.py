@@ -560,10 +560,12 @@ class Conductor:
         is_capitulation_override = False
         if spx_ret_z < -1.5 and spx_ret_z >= -3.0 and current_ihi > 0.0 and mlp_prob > 0.5:
             is_capitulation_override = True
+            self.event_bus.publish("CAPITULATION_OVERRIDE", {"detail": "Capitulation override triggered"})
 
         is_momentum_override = False
         if spx_ret_z > 1.0 and current_ihi > 0.1 and 0.4 < mlp_prob <= 0.80:
             is_momentum_override = True
+            self.event_bus.publish("MOMENTUM_IGNITION", {"detail": "Momentum ignition triggered"})
 
         is_black_swan = False
         if spx_ret_z < -3.5:
@@ -973,7 +975,9 @@ class Conductor:
                         with open(self.entry_quality_path, "r") as f:
                             entry_score_now = float(json.load(f).get("entry_score", 0.5))
                             
-                    market_events = self.event_bus.recent_events() if hasattr(self.event_bus, "recent_events") else []
+                    market_events = self.event_bus.recent_events(
+                        event_types=["CAPITULATION_OVERRIDE", "MOMENTUM_IGNITION"]
+                    )
                     mlp_prob = mlp_state.get("spx", {}).get("bull_probability", 0.5) if 'mlp_state' in locals() and mlp_state else 0.5
                     brier_s = brier_score if 'brier_score' in locals() else 0.5
                     k_state = kalman_res.dominant_state if 'kalman_res' in locals() and kalman_res else "neutral"
@@ -1007,7 +1011,22 @@ class Conductor:
                     # Apply conviction boost
                     for k in target_allocs:
                         if target_allocs[k] > 0.0:
-                            target_allocs[k] = min(1.0, target_allocs[k] + decision.conviction_boost)
+                            target_allocs[k] = target_allocs[k] + decision.conviction_boost
+                    
+                    # Renormalize to ensure sum <= 1.0
+                    sum_active = sum(target_allocs.values())
+                    if sum_active > 1.0:
+                        scale = 1.0 / sum_active
+                        for k in target_allocs:
+                            target_allocs[k] = target_allocs[k] * scale
+
+                # --- INVARIANT: allocations must sum to <= 1.01 ---
+                _alloc_sum = sum(target_allocs.values())
+                if not (_alloc_sum <= 1.01):
+                    raise RuntimeError(
+                        f"Allocation invariant violated in Live Conductor: sum={_alloc_sum:.4f}. "
+                        f"Allocations: {target_allocs}"
+                    )
 
                 self.paper_broker.execute_rebalance(target_allocs, current_prices, vix_zscore=self.snapshot.market_extremes_insight.temperature_zscore, hmm_regime=self.snapshot.regime.current)
                 self.last_rebalance_bar = self.bar_count
