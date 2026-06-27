@@ -184,11 +184,17 @@ def train(interval="1d"):
     os.makedirs(os.path.join(os.path.dirname(__file__), "..", "..", "models"), exist_ok=True)
     shared_path = os.path.join(os.path.dirname(__file__), "..", "..", "models", f"mlp_model_{interval}.pkl")
     joblib.dump(mlp_package, shared_path)
+    if interval == "4h":
+        default_shared_path = os.path.join(os.path.dirname(__file__), "..", "..", "models", f"mlp_model.pkl")
+        joblib.dump(mlp_package, default_shared_path)
     
     # Also save under per-asset names so load_mlp_models can find them
     for asset in ["spx", "btc", "gld", "wti", "nvda", "tsla", "dell", "spce"]:
         asset_path = os.path.join(os.path.dirname(__file__), "..", "..", "models", f"mlp_model_{asset}_{interval}.pkl")
         joblib.dump(mlp_package, asset_path)
+        if interval == "4h":
+            default_asset_path = os.path.join(os.path.dirname(__file__), "..", "..", "models", f"mlp_model_{asset}.pkl")
+            joblib.dump(mlp_package, default_asset_path)
         
     logger.info(f"Retraining complete for {interval}. Models saved (shared + per-asset).")
 
