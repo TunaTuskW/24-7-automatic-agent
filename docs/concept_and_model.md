@@ -1,9 +1,9 @@
-# Concept and Model: v6.5.0 Multi-Asset Trading Terminal & Dynamic Conviction Edge OS
+# Concept and Model: v7.0.0 Multi-Asset Trading Terminal & Dynamic Conviction Edge OS
 
 ## Core Concept
 The Macro Briefing Agent has evolved into a fully autonomous, multi-asset trading engine capable of processing mathematical models for an array of global assets, specifically: `SPX`, `BTC`, `GLD`, `WTI`, `NVDA`, `TSLA`, `DELL`, and `SPCE`. 
 
-Unlike traditional trading systems that utilize static thresholds, v6.5.0 operates a **Dynamic Conviction Edge OS**. This framework evaluates not only the direction of an asset but enforces extremely strict, mathematically optimal "edges" based on the underlying volatility and beta profile of that specific asset.
+Unlike traditional trading systems that utilize static thresholds, v7.0.0 operates a **Dynamic Conviction Edge OS**. This framework evaluates not only the direction of an asset but enforces extremely strict, mathematically optimal "edges" based on the underlying volatility and beta profile of that specific asset.
 
 ## 1. Dynamic Asset Conviction Edge
 The Risk Engine (`src/engines/risk_engine.py`) has been overhauled to apply per-asset Kelly Criterion base thresholds:
@@ -89,7 +89,7 @@ graph TD
         FE --> F_Vol["VIX Z-Scores & Volatility Expansion"]
         FE --> F_Mom["Momentum (RSI, MACD_hist) & Moving Averages"]
         FE --> F_Corr["SPX-VIX & Cross-Asset Correlations"]
-        F_Spreads & F_Vol & F_Mom & F_Corr --> Schema1["Pydantic Schema: 14-Feature Vector"]
+        F_Spreads & F_Vol & F_Mom & F_Corr --> Schema1["Pydantic Schema: 20-Feature Vector"]
     end
 
     %% 3. Quantitative Processing (Regimes & Trends)
@@ -159,7 +159,7 @@ The Python architecture is structured as a modular quantitative pipeline. Below 
    - **Structured Logging & Global Interception (`src/data_lake/lake_manager.py`):** Captures every event fired in the system and logs it directly to `events.jsonl` under daily partitioned folders.
    - **Type-Safe Validation (`src/schemas/models.py`):** Enforces strict data structure contracts using Pydantic.
    - **Asset Ingestion & Parquet Partitioning:** Ingests price series and economic calendar feeds, saving them to daily partitioned Parquet tables.
-   - **Feature Construction (`src/engines/feature_engine.py`):** Computes returns, Gold-to-Silver ratio, volume heat, credit stress, indices, and 14-feature space matrices.
+   - **Feature Construction (`src/engines/feature_engine.py`):** Computes returns, Gold-to-Silver ratio, volume heat, credit stress, indices, and 20-feature space matrices.
    - **Regime Inference & Sizing (`src/engines/regime_ensemble.py` & `src/engines/risk_engine.py`):** Computes macro regimes, runs Kalman filter state tracking, and solves Kelly portfolio sizing.
    - **Mixture of Experts & CoT Synthesis (`src/adapters/gemini_adapter.py` & `src/engines/consensus_engine.py`):** 
      - Runs the Macro Policy and Market Psychology experts in parallel using `ThreadPoolExecutor`.
@@ -176,13 +176,17 @@ The Python architecture is structured as a modular quantitative pipeline. Below 
 3. **`train_models.py` (Offline Machine Learning Training Pipeline)**
    - **Data Compiling:** Pulls 5 years of historical multi-asset data including equities, index futures, dollar index, commodities, and volatility.
    - **Regime Calibration:** Trains Random Forest and Gradient Boosting ensembles to classify structural market regimes without reliance on outdated HMM logic.
-   - **MLP Calibration:** Trains a multi-layer perceptron neural network using a `(16, 8)` hidden layer topology mapping features to forward cumulative returns. Saves model binaries to `models/`.
+   - **MLP Calibration:** Trains a multi-layer perceptron neural network using a `(64, 32)` hidden layer topology mapping 20 features to forward cumulative returns. Saves model binaries to `models/`.
 
 4. **`backtest.py` (Empirical Backtest Audit Engine)**
    - **Evaluation:** Loads the active models and decodes 2 years of daily market features into chronological state labels sequence.
    - **Statistical Auditing:** Measures mean daily returns, annualizes SPX/WTI metrics, and compiles daily yield changes (in basis points) across all regimes, outputting a clear performance audit.
 
-## New in v6.5.0
+## New in v7.0.0
+- **Enforced Allocation Invariant & Force-Normalization**: Implemented strict force-normalization in both `src/quantitative_backtester.py` and `src/fetch_market_data.py` right before rebalancing, guaranteeing portfolio exposure always sums to exactly 1.0.
+- **MLP Feature Dimension Alignment (20-Feature Shape)**: Retrained all 4H MLP models with full 20-feature input dimension (restoring index assets ES, NQ, RTY) and aligned all default model fallback paths inside the Docker backend container.
+- **Adaptive Execution Frequency Capping**: Restricted scheduler adaptive frequency recommendations in `src/engines/frequency_controller.py` to 4H or 1D intervals only.
+- **EventBus Rolling Event Buffer**: Added `recent_events(event_types)` method on EventBus tracking rolling events to correctly stream capitulation and momentum triggers to OpportunityGate.
 - **AdvancedRealTimeChart Integration**: Seamless replacement of lightweight-charts with the official TradingView Advanced Chart widget for 1:1 replica of institutional trading terminals, including full multi-timeframe capability and built-in technical indicators.
 - **Precision PnL Mathematical Engine**: Backend API mathematically derives Unrealized PnL from exact Open Positions (`Total Equity - Cash`), forcing zero drift and perfectly absorbing all execution slippage and commissions into Realized PnL.
 - **Enhanced Aesthetic Profile**: Streamlined visual styling, removal of distracting icons/emojis, and adoption of professional institutional color palettes.
