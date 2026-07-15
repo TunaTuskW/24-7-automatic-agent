@@ -28,12 +28,20 @@ app.add_middleware(
 QUANTOS_SECRET = os.environ.get("QUANTOS_API_SECRET", "")
 
 def require_auth(x_api_key: str = Header(None)):
-    if QUANTOS_SECRET and x_api_key != QUANTOS_SECRET:
+    if not QUANTOS_SECRET or x_api_key != QUANTOS_SECRET:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
 @app.get("/api/health")
 def health_check():
     return {"status": "ok"}
+
+@app.get("/api/config/tickers")
+def get_tickers_config():
+    path = os.path.join(os.path.dirname(__file__), "..", "config", "tickers.json")
+    if os.path.exists(path):
+        with open(path) as f:
+            return json.load(f)
+    return {"active_tickers": [], "macro_indicators": []}
 
 @app.get("/api/decision")
 def get_decision():
@@ -118,6 +126,9 @@ def get_snapshot():
         spx_kelly = kelly_obj.get("SPX_Kelly", 0.0)
         safe_haven = kelly_obj.get("GLD_Kelly", 0.0)
     
+    features_vec = ds_layer.get("features_vector", [])
+    spread = features_vec[7] if len(features_vec) > 7 else 0.0
+    
     return {
         "status": "Active",
         "regime": dominant,
@@ -126,10 +137,10 @@ def get_snapshot():
         "safeHaven": safe_haven,
         "allocations": allocations,
         "vix": data.get("raw_indicators", {}).get("VIX", {}).get("current", 0.0),
-        "spread": ds_layer.get("features_vector", [0,0,0,0,0,0,0,0])[7],
+        "spread": spread,
         "raw_indicators": data.get("raw_indicators", {}),
         "features_dict": ds_layer.get("features_dict", {}),
-        "lastUpdate": data.get("timestamp_utc", datetime.utcnow().isoformat())
+        "lastUpdate": data.get("generated_utc", data.get("timestamp_utc", datetime.utcnow().isoformat()))
     }
 
 @app.get("/api/entry_quality")
@@ -153,6 +164,18 @@ def get_frequency():
         except Exception:
             pass
     return {"recommended_frequency": "4h", "score": 0, "reason": "No data yet", "evaluated_utc": None}
+
+@app.get("/api/fundamentals")
+def get_fundamentals():
+    path = os.path.join(os.path.dirname(__file__), '..', 'data', 'state', 'fundamental_scores.json')
+    if os.path.exists(path):
+        try:
+            with open(path, 'r') as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
+
 
 @app.get("/api/events/recent")
 def get_recent_events(limit: int = 50):
@@ -293,10 +316,7 @@ def get_model():
         "mlp_deep_state": data.get("mlp_deep_state", {}),
         "mcs": data.get("mcs", {}),
         "regime": data.get("regime", {}),
-        "trend_state": data.get("trend_state", {}),
-        "smc_state": data.get("smc_state", {}),
-        "session_state": data.get("session_state", {}),
-        "liquidity_state": data.get("liquidity_state", {})
+        "assets": data.get("assets", {})
     }
 
 @app.get("/api/macro", dependencies=[Depends(require_auth)])

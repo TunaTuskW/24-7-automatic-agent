@@ -1,0 +1,19 @@
+{
+    "active_tickers": [
+        {"symbol": "SPX", "asset_class": "equity_index"},
+        {"symbol": "BTC", "asset_class": "crypto"},
+        {"symbol": "GLD", "asset_class": "commodity"},
+        {"symbol": "WTI", "asset_class": "commodity"},
+        {"symbol": "NVDA", "asset_class": "equity_single"},
+        {"symbol": "TSLA", "asset_class": "equity_single"},
+        {"symbol": "DELL", "asset_class": "equity_single"},
+        {"symbol": "SPCE", "asset_class": "equity_single"}
+    ],
+    "macro_indicators": [
+        "GC=F",
+        "CL=F",
+        "SI=F",
+        "DX-Y.NYB",
+        "^VIX"
+    ]
+}

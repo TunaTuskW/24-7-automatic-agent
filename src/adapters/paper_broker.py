@@ -124,10 +124,11 @@ class PaperBroker:
             return (peak_eq - current_eq) / peak_eq
         return 0.0
 
-    def execute_rebalance(self, target_allocations: dict, current_prices: dict, vix_zscore: float = 0.0, hmm_regime: str = "NEUTRAL"):
+    def execute_rebalance(self, target_allocations: dict, current_prices: dict, current_atrs: dict = None, vix_zscore: float = 0.0, hmm_regime: str = "NEUTRAL"):
         """
         target_allocations: dict mapped by ticker to target fraction (e.g. {"SPX": 0.5, "Gold": 0.2})
         current_prices: dict mapped by ticker to current spot price (e.g. {"SPX": 5300.0, "Gold": 2350.0})
+        current_atrs: dict mapped by ticker to ATR
         """
         logger.info(f"PaperBroker starting rebalance. Targets: {target_allocations}")
         
@@ -179,22 +180,66 @@ class PaperBroker:
             if ticker not in target_values:
                 target_values[ticker] = 0.0
                 
-            # Dynamic Trailing Stop Logic (Check if we need to force 0.0 allocation)
+            # Dynamic Trailing Stop, Disaster Stop, and Profit-Taking Logic
             spot = current_prices.get(ticker)
             if spot is not None and spot > 0 and target_values[ticker] > 0.0:
-                peak = self.portfolio["position_details"].get(ticker, {}).get("peak_price", spot)
-                drawdown = (peak - spot) / peak if peak > 0 else 0.0
+                pos_details = self.portfolio["position_details"].get(ticker, {})
+                peak = pos_details.get("peak_price", spot)
+                entry = pos_details.get("entry_price", spot)
+                trimmed = pos_details.get("trimmed", False)
                 
-                # Tighten stops if regime is risk-off
-                stop_threshold = 0.05 # 5% trailing stop base
-                if hmm_regime.startswith("RISK_OFF") or hmm_regime == "STAGFLATION_STRESS":
-                    stop_threshold = 0.03 # Tighten to 3%
+                drawdown_from_peak = (peak - spot) / peak if peak > 0 else 0.0
+                return_from_entry = (spot - entry) / entry if entry > 0 else 0.0
+                
+                # Get the asset's ATR
+                atr = 0.0
+                if current_atrs is not None:
+                    atr = current_atrs.get(ticker) or 0.0
+                
+                # If ATR is unavailable, fallback to 1.5% of price
+                if atr == 0.0:
+                    atr = spot * 0.015
                     
-                if drawdown >= stop_threshold:
-                    logger.warning(f"TRAILING STOP TRIGGERED for {ticker}: Drawdown {drawdown:.2%} >= limit {stop_threshold:.2%} (Peak: {peak}, Spot: {spot}). Forcing liquidation.")
+                # 1. Wide Disaster Stop (Link to VIX Z-Score, min -5%, max -15%)
+                disaster_stop_pct = min(-0.05, max(-0.15, -0.08 + (vix_zscore * 0.02)))
+                if return_from_entry <= disaster_stop_pct:
+                    logger.warning(f"DISASTER STOP TRIGGERED for {ticker} ({disaster_stop_pct:.2%} from entry). Liquidating.")
                     target_values[ticker] = 0.0
                     target_allocations[ticker] = 0.0
-                    trade_reasons[ticker] = f"Trailing stop triggered (Drawdown: {drawdown:.2%} >= Limit: {stop_threshold:.2%}). Liquidating."
+                    trade_reasons[ticker] = f"Wide disaster stop triggered ({disaster_stop_pct:.2%} from entry). Liquidating to prevent tail risk."
+                    continue
+
+                # 2. Dynamic Trailing Stop (Based on ATR)
+                atr_multiplier = 2.5 # Default 2.5 ATR trailing stop
+                if hmm_regime.startswith("RISK_OFF") or hmm_regime == "STAGFLATION_STRESS":
+                    atr_multiplier = 1.5 # Tighten to 1.5 ATR
+                    
+                atr_stop_dist = (atr * atr_multiplier) / spot if spot > 0 else 0.0
+                
+                if drawdown_from_peak >= atr_stop_dist:
+                    logger.warning(f"ATR TRAILING STOP TRIGGERED for {ticker}: Drawdown {drawdown_from_peak:.2%} >= limit {atr_stop_dist:.2%} ({atr_multiplier} ATR) (Peak: {peak}, Spot: {spot}). Forcing liquidation.")
+                    target_values[ticker] = 0.0
+                    target_allocations[ticker] = 0.0
+                    trade_reasons[ticker] = f"ATR trailing stop triggered (Drawdown: {drawdown_from_peak:.2%} >= Limit: {atr_stop_dist:.2%}). Liquidating."
+                    continue
+
+                # 3. Volatility-Adjusted First Target (Bank profits on +2 ATR move)
+                current_shares = self.portfolio["positions"].get(ticker, 0.0)
+                profit_target_dist = (atr * 2.0) / spot if spot > 0 else 0.0
+                if profit_target_dist < 0.02: # Ensure it's at least a 2% move
+                    profit_target_dist = 0.02
+                    
+                if not trimmed and return_from_entry >= profit_target_dist:
+                    logger.info(f"FIRST ATR TARGET HIT for {ticker} (+{profit_target_dist:.2%}). Trimming position.")
+                    self.portfolio["position_details"][ticker]["trimmed"] = True
+                    target_values[ticker] = current_shares * spot * 0.5
+                    target_allocations[ticker] = target_values[ticker] / total_equity if total_equity > 0 else 0.0
+                    trade_reasons[ticker] = f"First ATR target hit (+{profit_target_dist:.2%}). Banking profits fast by trimming 50%."
+                elif trimmed:
+                    # Prevent model from re-buying after a trim
+                    if target_values[ticker] > current_shares * spot:
+                        target_values[ticker] = current_shares * spot
+                        target_allocations[ticker] = target_values[ticker] / total_equity if total_equity > 0 else 0.0
 
         # 3. Process SELLS first (to free up cash)
         for ticker, target_val in target_values.items():
@@ -271,9 +316,13 @@ class PaperBroker:
                     
                     self.portfolio["positions"][ticker] = self.portfolio["positions"].get(ticker, 0.0) + shares_to_buy
                     
-                    # Initialize peak price for new buys
+                    # Initialize position details for new buys
                     if ticker not in self.portfolio.get("position_details", {}):
-                        self.portfolio["position_details"][ticker] = {"peak_price": exec_price}
+                        self.portfolio["position_details"][ticker] = {
+                            "entry_price": exec_price,
+                            "peak_price": exec_price,
+                            "trimmed": False
+                        }
                     self.portfolio["cash"] -= val_to_buy
                     
                     self._log_trade(ticker, "BUY", shares_to_buy, exec_price, val_to_buy, fee)

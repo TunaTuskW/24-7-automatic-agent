@@ -7,6 +7,7 @@ import MacroTab from './components/MacroTab';
 import DiagnosticsTab from './components/DiagnosticsTab';
 import SettingsTab from './components/SettingsTab';
 import ReportsTab from './components/ReportsTab';
+import FundamentalTab from './components/FundamentalTab';
 import './index.css';
 
 // Auth helper — reads stored key from localStorage (set in Settings tab)
@@ -109,6 +110,7 @@ function App() {
         <button className={`orbital-tab ${activeTab === 'terminal' ? 'active' : ''}`} onClick={() => setActiveTab('terminal')}>[ TERMINAL ]</button>
         <button className={`orbital-tab ${activeTab === 'trading' ? 'active' : ''}`} onClick={() => setActiveTab('trading')}>[ LEDGER ]</button>
         <button className={`orbital-tab ${activeTab === 'macro' ? 'active' : ''}`} onClick={() => setActiveTab('macro')}>[ MACRO ]</button>
+        <button className={`orbital-tab ${activeTab === 'fundamentals' ? 'active' : ''}`} onClick={() => setActiveTab('fundamentals')}>[ FUNDAMENTALS ]</button>
         <button className={`orbital-tab ${activeTab === 'model' ? 'active' : ''}`} onClick={() => setActiveTab('model')}>[ MODELS ]</button>
         <button className={`orbital-tab ${activeTab === 'logs' ? 'active' : ''}`} onClick={() => setActiveTab('logs')}>[ DIAGNOSTICS ]</button>
         <button className={`orbital-tab ${activeTab === 'reports' ? 'active' : ''}`} onClick={() => setActiveTab('reports')}>[ REPORTS ]</button>
@@ -121,6 +123,7 @@ function App() {
         {activeTab === 'terminal' && <TradingTerminal timeZone={timeZone} />}
         {activeTab === 'trading' && <PaperTradingTab timeZone={timeZone} />}
         {activeTab === 'macro' && <MacroTab timeZone={timeZone} />}
+        {activeTab === 'fundamentals' && <FundamentalTab />}
         {activeTab === 'model' && <MathModelTab timeZone={timeZone} />}
         {activeTab === 'logs' && <DiagnosticsTab timeZone={timeZone} />}
         {activeTab === 'reports' && <ReportsTab timeZone={timeZone} />}

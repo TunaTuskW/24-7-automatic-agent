@@ -146,18 +146,18 @@ def compute_stats(series, garch_conditional_vol=None, rolling_window=ROLLING_DAY
         "z_score":   round(z_score, 3),
         "momentum":  momentum,
     }
-def compute_volume_heat(spx_series, spx_vol_series):
-    if len(spx_series) < 20 or len(spx_vol_series) < 20:
+def compute_volume_heat(price_series, vol_series):
+    if len(price_series) < 20 or len(vol_series) < 20:
         return {"participation_type": "UNKNOWN", "institutional_heat_index": 0.0}
     try:
-        vol_mean = spx_vol_series.rolling(20).mean().iloc[-1]
-        vol_std = spx_vol_series.rolling(20).std().iloc[-1]
-        current_vol = float(spx_vol_series.iloc[-1])
+        vol_mean = vol_series.rolling(20).mean().iloc[-1]
+        vol_std = vol_series.rolling(20).std().iloc[-1]
+        current_vol = float(vol_series.iloc[-1])
         effort_z = (current_vol - vol_mean) / vol_std if vol_std > 0 else 0.0
         
-        current_close = float(spx_series.iloc[-1])
-        recent_low = float(spx_series.tail(10).min())
-        recent_high = float(spx_series.tail(10).max())
+        current_close = float(price_series.iloc[-1])
+        recent_low = float(price_series.tail(10).min())
+        recent_high = float(price_series.tail(10).max())
         result_vector = (current_close - recent_low) / (recent_high - recent_low) if recent_high != recent_low else 0.5
         
         ihi = effort_z * (result_vector - 0.5)
@@ -169,6 +169,97 @@ def compute_volume_heat(spx_series, spx_vol_series):
         return {"participation_type": part_type, "institutional_heat_index": round(ihi, 3)}
     except Exception as e:
         return {"participation_type": "UNKNOWN", "institutional_heat_index": 0.0}
+
+def compute_3_pillar_regime(raw_df):
+    """
+    Implements the advanced institutional 3-pillar (Flow, Trend, Pressure) strategy logic
+    and calculates Average True Range (ATR) for volatility-adjusted exits.
+    Returns ADX, MFI, CMF, ATR, and the regime_alignment flag.
+    """
+    if raw_df is None or len(raw_df) < 50:
+        return {"flow": 0, "trend": 0, "pressure": 0, "regime_alignment": 0.0, "atr_14": 0.0}
+    try:
+        high = raw_df["High"]
+        low = raw_df["Low"]
+        close = raw_df["Close"]
+        vol = raw_df["Volume"] if "Volume" in raw_df.columns else pd.Series(0, index=raw_df.index)
+
+        # 0. Average True Range (ATR - 14 period)
+        tr1 = high - low
+        tr2 = (high - close.shift(1)).abs()
+        tr3 = (low - close.shift(1)).abs()
+        tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+        atr_14 = float(tr.rolling(14).mean().iloc[-1])
+
+        # 1. Trend (ADX & Directional Movement)
+        up_move = high.diff()
+        down_move = low.diff()
+        plus_dm = np.where((up_move > down_move) & (up_move > 0), up_move, 0.0)
+        minus_dm = np.where((down_move > up_move) & (down_move > 0), down_move.abs(), 0.0)
+        
+        tr_14 = tr.rolling(14).sum()
+        plus_di = 100 * (pd.Series(plus_dm).rolling(14).sum() / tr_14)
+        minus_di = 100 * (pd.Series(minus_dm).rolling(14).sum() / tr_14)
+        dx = 100 * (abs(plus_di - minus_di) / (plus_di + minus_di)).fillna(0)
+        adx = float(dx.rolling(14).mean().iloc[-1])
+        
+        plus_di_current = float(plus_di.iloc[-1])
+        minus_di_current = float(minus_di.iloc[-1])
+        
+        # Trend is +1 if ADX > 25 and +DI > -DI, else -1 if ADX > 25 and -DI > +DI, else 0
+        trend = 0
+        if adx > 25.0:
+            if plus_di_current > minus_di_current:
+                trend = 1
+            elif minus_di_current > plus_di_current:
+                trend = -1
+
+        # 2. Flow (Money Flow Index - MFI - 14 period)
+        typical_price = (high + low + close) / 3
+        raw_money_flow = typical_price * vol
+        
+        tp_diff = typical_price.diff()
+        pos_flow = np.where(tp_diff > 0, raw_money_flow, 0.0)
+        neg_flow = np.where(tp_diff < 0, raw_money_flow, 0.0)
+        
+        pos_flow_sum = pd.Series(pos_flow).rolling(14).sum()
+        neg_flow_sum = pd.Series(neg_flow).rolling(14).sum()
+        
+        money_ratio = pos_flow_sum / neg_flow_sum.replace(0, 0.0001)
+        mfi = 100 - (100 / (1 + money_ratio))
+        mfi_current = float(mfi.iloc[-1])
+        
+        # Flow is +1 if MFI > 50, else -1
+        flow = 1 if mfi_current > 50.0 else -1
+
+        # 3. Pressure (Chaikin Money Flow - CMF - 20 period)
+        # Handle division by zero if high == low
+        mf_multiplier = np.where(high != low, ((close - low) - (high - close)) / (high - low), 0.0)
+        mf_volume = mf_multiplier * vol
+        
+        cmf = mf_volume.rolling(20).sum() / vol.rolling(20).sum().replace(0, 0.0001)
+        cmf_current = float(cmf.iloc[-1])
+        
+        # Pressure is +1 if CMF > 0.05 (institutional accumulation), -1 if CMF < -0.05 (distribution), else 0
+        pressure = 1 if cmf_current > 0.05 else -1 if cmf_current < -0.05 else 0
+
+        # Alignment
+        alignment = 0.0
+        if flow == 1 and trend == 1 and pressure == 1:
+            alignment = 1.0
+        elif flow == -1 and trend == -1 and pressure == -1:
+            alignment = -1.0
+            
+        return {
+            "flow": flow,
+            "trend": trend,
+            "pressure": pressure,
+            "regime_alignment": alignment,
+            "atr_14": atr_14
+        }
+    except Exception as e:
+        logger.error(f"Error computing 3-pillar regime: {e}")
+        return {"flow": 0, "trend": 0, "pressure": 0, "regime_alignment": 0.0, "atr_14": 0.0}
 
 def compute_market_extremes(spx_series, vix_series, vvix_series=None, dxy_series=None, vix9d_series=None):
     try:
@@ -252,12 +343,13 @@ def compute_garch_volatility(ticker_symbol, lookback_days=250):
         return None, None, None
 def load_mlp_models(interval="1d", assets=None):
     if assets is None:
-        assets = ["spx", "btc", "gld", "wti", "nvda", "tsla", "dell", "spce"]
+        assets = ["SPX", "BTC", "GLD", "WTI", "NVDA", "TSLA", "DELL", "SPCE"]
     models = {}
     for asset in assets:
-        model_path = os.path.join(os.path.dirname(__file__), '..', '..', 'models', f'mlp_model_{asset}_{interval}.pkl')
+        lower_asset = asset.lower()
+        model_path = os.path.join(os.path.dirname(__file__), '..', '..', 'models', f'mlp_model_{lower_asset}_{interval}.pkl')
         if not os.path.exists(model_path):
-            model_path = os.path.join(os.path.dirname(__file__), '..', '..', 'models', f'mlp_model_{asset}.pkl')
+            model_path = os.path.join(os.path.dirname(__file__), '..', '..', 'models', f'mlp_model_{lower_asset}.pkl')
         try:
             if os.path.exists(model_path):
                 models[asset] = joblib.load(model_path)
@@ -280,7 +372,13 @@ def run_mlp_inference(features_vector, mlp_package, current_regime: str, asset="
         # Dead regime-routing model code removed in v5.3.1
             
         scaler = mlp_package["scaler"]
-        obs = np.array([features_vector])
+        expected_features = getattr(scaler, 'n_features_in_', len(features_vector))
+        if len(features_vector) > expected_features:
+            obs = np.array([features_vector[:expected_features]])
+        elif len(features_vector) < expected_features:
+            obs = np.array([features_vector + [0.0] * (expected_features - len(features_vector))])
+        else:
+            obs = np.array([features_vector])
         
         # Algorithmic Outage Immunity: Replace NaN with 0.0 (mean) to prevent entire pipeline crash
         obs = np.nan_to_num(obs, nan=0.0, posinf=4.0, neginf=-4.0)
@@ -303,14 +401,23 @@ def run_mlp_inference(features_vector, mlp_package, current_regime: str, asset="
         prob_neutral_list = []
         for m in valid_models:
             probs = m.predict_proba(obs_scaled)[0]
-            if len(m.classes_) == 3:
+            if len(probs) == 3:
                 # 3 classes: [down, up, neutral] based on y encoding
                 prob_up_list.append(probs[1])
                 prob_down_list.append(probs[0])
                 prob_neutral_list.append(probs[2])
-            else:
+            elif len(probs) == 2:
                 prob_up_list.append(probs[1])
                 prob_down_list.append(probs[0])
+                prob_neutral_list.append(0.0)
+            else:
+                cls_val = getattr(m, 'classes_', [1])[0]
+                if cls_val == 1:
+                    prob_up_list.append(1.0)
+                    prob_down_list.append(0.0)
+                else:
+                    prob_up_list.append(0.0)
+                    prob_down_list.append(1.0)
                 prob_neutral_list.append(0.0)
                 
         if not prob_up_list:

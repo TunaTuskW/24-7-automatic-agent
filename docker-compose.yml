@@ -13,7 +13,7 @@ services:
       - ./config:/app/config
       - ./logs:/app/logs
       - ./reports:/app/reports
-      - quant_models:/app/models
+      - ./models:/app/models
     ports:
       - "8000:8000"
     healthcheck:
@@ -31,6 +31,19 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+
+  fundamental_agent:
+    build: 
+      context: .
+      dockerfile: Dockerfile.fundamental
+    container_name: fundamental_agent
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+      - ./logs:/app/logs
+    restart: always
 
 volumes:
   quant_models:

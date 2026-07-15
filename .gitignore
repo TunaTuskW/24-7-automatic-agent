@@ -16,3 +16,5 @@ data/predictions_history.json
 config/api_keys.json
 config/tuning_configs.json
 .codegraph/
+
+.env

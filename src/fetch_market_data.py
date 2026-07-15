@@ -24,6 +24,7 @@ from src.engines.trend_engine import TrendEngine
 from src.engines.smc_engine import SMCEngine
 from src.engines.session_engine import SessionEngine
 from src.engines.liquidity_engine import LiquidityEngine
+from src.engines.opportunity_gate import OpportunityGate
 from src.engines.regime_ensemble import RegimeEnsemble
 from src.engines.risk_engine import RiskEngine
 from src.engines.consensus_engine import ConsensusEngine
@@ -33,14 +34,30 @@ from src.schemas.models import MarketSnapshot, RegimeState, MarketExtremes, News
 from src.engines.feature_engine import (
     ALL_YF_TICKERS, get_fred_key, get_signature_salt, sign_snapshot_payload,
     check_mathematical_consistency, append_to_immutable_chain,
-    compute_stats, compute_volume_heat, compute_market_extremes,
+    compute_stats, compute_volume_heat, compute_market_extremes, compute_3_pillar_regime,
     compute_garch_volatility, load_mlp_models, run_multi_mlp_inference,
     compute_weekly_liquidity_boundaries, calculate_model_tvd,
     calculate_bayesian_conditional_probability, run_self_calibration,
     compute_mcs, garch_targets
 )
 
+import tempfile
+
 logger = get_logger("conductor")
+
+def atomic_json_write(data, filepath):
+    dir_name = os.path.dirname(filepath)
+    os.makedirs(dir_name, exist_ok=True)
+    fd, temp_path = tempfile.mkstemp(dir=dir_name, text=True)
+    try:
+        with os.fdopen(fd, 'w') as f:
+            json.dump(data, f, indent=4)
+        os.replace(temp_path, filepath)
+    except Exception as e:
+        logger.error(f"Failed atomic write to {filepath}: {e}")
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+        raise
 
 def fetch_rss_headlines(timeout_sec: int = 8) -> list:
     import concurrent.futures
@@ -70,7 +87,7 @@ class Conductor:
     def __init__(self, interval="1d", use_1h_context=False):
         self.interval = interval
         self.use_1h_context = use_1h_context
-        logger.info(f"Initializing v6.0.0 Real-Time Event-Driven Conductor (Interval: {interval}, 1H-Context: {use_1h_context})")
+        logger.info(f"Initializing v7.0.0 Real-Time Event-Driven Conductor (Interval: {interval}, 1H-Context: {use_1h_context})")
         
         self.lake_manager = LakeManager()
         self.event_bus = EventBus()
@@ -82,11 +99,24 @@ class Conductor:
         self.ff_adapter = ForexFactoryAdapter()
         self.gemini_adapter = GeminiAdapter()
         
-        self.trend_engine = TrendEngine()
-        self.smc_engine = SMCEngine()
-        self.session_engine = SessionEngine()
-        self.liquidity_engine = LiquidityEngine()
-        self.regime_ensemble = RegimeEnsemble()
+        import json
+        config_path = os.path.join(os.path.dirname(__file__), "..", "config", "tickers.json")
+        self.active_syms = []
+        if os.path.exists(config_path):
+            with open(config_path) as f:
+                cfg = json.load(f)
+                self.active_syms = [tk["symbol"] for tk in cfg.get("active_tickers", [])]
+                
+        self.engines = {}
+        for tk in self.active_syms:
+            self.engines[tk] = {
+                "trend": TrendEngine(),
+                "smc": SMCEngine(),
+                "session": SessionEngine(),
+                "liquidity": LiquidityEngine(),
+                "regime": RegimeEnsemble()
+            }
+            
         self.risk_engine = RiskEngine()
         self.consensus_engine = ConsensusEngine()
         self.entry_engine = EntryEngine()
@@ -134,6 +164,10 @@ class Conductor:
             ("gsr_ret", "gold_to_silver_ratio", "delta_pct"),
             ("us10y_delta", "bonds", "delta"),
             ("spread_level", "bonds", "spread_2s10s"),
+            ("spx_rsi_14", "SPX_Alpha", "rsi_14"),
+            ("spx_macd_hist", "SPX_Alpha", "macd_hist"),
+            ("spx_bbw", "SPX_Alpha", "bbw_20"),
+            ("vix_corr", "SPX_Alpha", "vix_corr_10"),
             ("btc_ret", "BTC", "delta_pct"),
             ("es_ret", "ES", "delta_pct"),
             ("nq_ret", "NQ", "delta_pct"),
@@ -142,11 +176,9 @@ class Conductor:
             ("tsla_ret", "TSLA", "delta_pct"),
             ("dell_ret", "DELL", "delta_pct"),
             ("spce_ret", "SPCE", "delta_pct"),
-            ("spx_rsi_14", "SPX_Alpha", "rsi_14"),
-            ("spx_macd_hist", "SPX_Alpha", "macd_hist"),
-            ("spx_bbw", "SPX_Alpha", "bbw_20"),
-            ("vix_corr", "SPX_Alpha", "vix_corr_10"),
         ]
+        
+
         
         # Register Event Callbacks
         self.event_bus.subscribe("SystemStart", self.handle_system_start)
@@ -193,6 +225,7 @@ class Conductor:
                     if len(tk_df) > 1:
                         parsed[name] = compute_stats(tk_df["Close"])
                         parsed[name]["raw_series"] = tk_df["Close"]
+                        parsed[name]["raw_df"] = tk_df
                         if "Volume" in tk_df.columns:
                             parsed[name]["volume_series"] = tk_df["Volume"]
             return parsed
@@ -204,7 +237,7 @@ class Conductor:
         
         clean_daily = {}
         for k, v in parsed_daily.items():
-            clean_daily[k] = {ik: iv for ik, iv in v.items() if ik not in ("raw_series", "volume_series")}
+            clean_daily[k] = {ik: iv for ik, iv in v.items() if ik not in ("raw_series", "volume_series", "raw_df")}
             
         # Calculate US10Y and spread z-scores
         us10y_hist = self.data_broker.fetch_yield_history("DGS10")
@@ -249,52 +282,7 @@ class Conductor:
             
         self.garch_layer = garch_layer
             
-        spx_s = parsed_daily.get("SPX", {}).get("raw_series")
-        vix_s = parsed_daily.get("VIX", {}).get("raw_series")
-        if spx_s is not None and len(spx_s) >= 30:
-            clean_daily["SPX"]["ema_20"] = float(spx_s.ewm(span=20, adjust=False).mean().iloc[-1])
-            
-            # SPX RSI 14
-            delta = spx_s.diff()
-            gain = delta.where(delta > 0, 0).ewm(alpha=1/14, adjust=False).mean()
-            loss = (-delta.where(delta < 0, 0)).ewm(alpha=1/14, adjust=False).mean()
-            rs = gain / loss.replace(0, 0.0001)
-            rsi = 100 - (100 / (1 + rs))
-            
-            # SPX MACD Hist
-            ema12 = spx_s.ewm(span=12, adjust=False).mean()
-            ema26 = spx_s.ewm(span=26, adjust=False).mean()
-            macd_line = ema12 - ema26
-            signal_line = macd_line.ewm(span=9, adjust=False).mean()
-            macd_hist = macd_line - signal_line
-            
-            # SPX BBW 20
-            sma20 = spx_s.rolling(window=20).mean()
-            std20_bb = spx_s.rolling(window=20).std()
-            bbw = (4 * std20_bb) / sma20.replace(0, 0.0001)
-            
-            # SPX VIX Corr 10
-            vix_corr = 0.0
-            if vix_s is not None and len(vix_s) >= 20:
-                spx_ret_alpha = spx_s.pct_change() * 100
-                vix_ret_alpha = vix_s.pct_change() * 100
-                corr_s = spx_ret_alpha.rolling(window=10).corr(vix_ret_alpha).fillna(0)
-                vix_corr = float(corr_s.iloc[-1])
-            
-            clean_daily["SPX_Alpha"] = {
-                "rsi_14": float(rsi.iloc[-1]),
-                "macd_hist": float(macd_hist.iloc[-1]),
-                "bbw_20": float(bbw.iloc[-1]),
-                "vix_corr_10": float(vix_corr)
-            }
-        else:
-            clean_daily["SPX_Alpha"] = {
-                "rsi_14": 50.0,
-                "macd_hist": 0.0,
-                "bbw_20": 0.0,
-                "vix_corr_10": 0.0
-            }
-            
+        # --- GLOBAL MACRO ---
         vix_s = parsed_daily.get("VIX", {}).get("raw_series")
         if vix_s is not None and len(vix_s) >= 20:
             v_mean = vix_s.rolling(self.dynamic_rolling_window).mean().iloc[-1]
@@ -307,13 +295,10 @@ class Conductor:
         vvix_s = parsed_daily.get("VVIX", {}).get("raw_series")
         dxy_s = parsed_daily.get("DXY", {}).get("raw_series")
         vix9d_s = parsed_daily.get("VIX9D", {}).get("raw_series")
+        spx_s = parsed_daily.get("SPX", {}).get("raw_series")
         
         extremes_dict = compute_market_extremes(spx_s, vix_s, vvix_s, dxy_s, vix9d_s)
         self.snapshot.market_extremes_insight = MarketExtremes(**extremes_dict)
-        
-        spx_series = parsed_daily.get("SPX", {}).get("raw_series", pd.Series())
-        spx_vol = parsed_daily.get("SPX", {}).get("volume_series", pd.Series())
-        self.clean_daily["volume_activity_heat"] = compute_volume_heat(spx_series, spx_vol)
         
         gold = clean_daily.get("Gold")
         silver = clean_daily.get("Silver")
@@ -341,25 +326,81 @@ class Conductor:
                 "label": "CRITICAL" if credit_z < -2.0 else "ELEVATED" if credit_z < -1.0 else "NORMAL"
             }
             
-        self.features_vector = []
-        self.feature_metadata = {}
-        for label, category, key in self.ordered_feature_keys:
-            val = 0.0
-            try:
-                if category == "bonds":
-                    if key == "delta_zscore" and bonds.get("US10Y"): val = bonds["US10Y"].get("delta_zscore", 0.0)
-                    elif key == "delta" and bonds.get("US10Y"): val = bonds["US10Y"].get("delta", 0.0)
-                    elif key == "spread_zscore": val = bonds.get("spread_zscore", 0.0)
-                    elif key == "spread_2s10s": val = bonds.get("spread_2s10s", 0.0)
-                else: val = self.clean_daily.get(category, {}).get(key, 0.0)
-                if val is None: val = 0.0
-            except Exception: pass
-            self.features_vector.append(float(val))
-            self.feature_metadata[label] = float(val)
+        # --- PER-TICKER METRICS ---
+        for tk in self.active_syms:
+            if tk not in self.clean_daily:
+                self.clean_daily[tk] = {}
+                
+            tk_s = parsed_daily.get(tk, {}).get("raw_series")
+            tk_vol = parsed_daily.get(tk, {}).get("volume_series", pd.Series())
             
-        self.event_bus.publish("FeaturesEngineered", {"vector": self.features_vector, "meta": self.feature_metadata})
+            if tk_s is not None and len(tk_s) >= 30:
+                self.clean_daily[tk]["ema_20"] = float(tk_s.ewm(span=20, adjust=False).mean().iloc[-1])
+                
+                # RSI 14
+                delta = tk_s.diff()
+                gain = delta.where(delta > 0, 0).ewm(alpha=1/14, adjust=False).mean()
+                loss = (-delta.where(delta < 0, 0)).ewm(alpha=1/14, adjust=False).mean()
+                rs = gain / loss.replace(0, 0.0001)
+                rsi = 100 - (100 / (1 + rs))
+                
+                # MACD Hist
+                ema12 = tk_s.ewm(span=12, adjust=False).mean()
+                ema26 = tk_s.ewm(span=26, adjust=False).mean()
+                macd_line = ema12 - ema26
+                signal_line = macd_line.ewm(span=9, adjust=False).mean()
+                macd_hist = macd_line - signal_line
+                
+                # BBW 20
+                sma20 = tk_s.rolling(window=20).mean()
+                std20_bb = tk_s.rolling(window=20).std()
+                bbw = (4 * std20_bb) / sma20.replace(0, 0.0001)
+                
+                # VIX Corr 10
+                vix_corr = 0.0
+                if vix_s is not None and len(vix_s) >= 20:
+                    tk_ret_alpha = tk_s.pct_change() * 100
+                    vix_ret_alpha = vix_s.pct_change() * 100
+                    corr_s = tk_ret_alpha.rolling(window=10).corr(vix_ret_alpha).fillna(0)
+                    vix_corr = float(corr_s.iloc[-1])
+                
+                self.clean_daily[tk]["rsi_14"] = float(rsi.iloc[-1])
+                self.clean_daily[tk]["macd_hist"] = float(macd_hist.iloc[-1])
+                self.clean_daily[tk]["bbw_20"] = float(bbw.iloc[-1])
+                self.clean_daily[tk]["vix_corr_10"] = float(vix_corr)
+            else:
+                self.clean_daily[tk]["rsi_14"] = 50.0
+                self.clean_daily[tk]["macd_hist"] = 0.0
+                self.clean_daily[tk]["bbw_20"] = 0.0
+                self.clean_daily[tk]["vix_corr_10"] = 0.0
+                
+            heat_dict = compute_volume_heat(tk_s if tk_s is not None else pd.Series(), tk_vol)
+            self.clean_daily[tk]["participation_type"] = heat_dict.get("participation_type", "UNKNOWN")
+            self.clean_daily[tk]["institutional_heat_index"] = heat_dict.get("institutional_heat_index", 0.0)
+
+            # 3-Pillar Regime Alignment
+            raw_df = parsed_daily.get(tk, {}).get("raw_df")
+            pillar_dict = compute_3_pillar_regime(raw_df)
+            self.clean_daily[tk]["3_pillar_alignment"] = pillar_dict.get("regime_alignment", 0.0)
+            self.clean_daily[tk]["atr_14"] = pillar_dict.get("atr_14", 0.0)
+
+        # Trigger FeaturesEngineered Event
+        self.event_bus.publish("FeaturesEngineered", {})
 
     def handle_features_engineered(self, payload):
+        vec = []
+        for lbl, src_key, met_key in self.ordered_feature_keys:
+            val = 0.0
+            if src_key == "bonds":
+                val = self.bonds.get(met_key, 0.0)
+            elif src_key.endswith("_Alpha"):
+                tk = src_key.split("_")[0]
+                val = self.clean_daily.get(tk, {}).get(met_key, 0.0)
+            else:
+                val = self.clean_daily.get(src_key, {}).get(met_key, 0.0)
+            vec.append(float(val))
+        self.features_vector = vec
+
         # Manage persistent rolling window of features for HMM inference
         window_path = os.path.join(os.path.dirname(__file__), "..", "data", "state", f"features_window_{self.interval}.json")
         persistent_window = []
@@ -376,156 +417,64 @@ class Conductor:
             persistent_window = persistent_window[-6:]
             
         try:
-            with open(window_path, 'w') as f:
-                json.dump(persistent_window, f)
+            atomic_json_write(persistent_window, window_path)
         except Exception as e:
             logger.warning(f"Could not save features window: {e}")
             
         self.features_window = persistent_window
         
-        if self.use_1h_context:
-            logger.info("Using 1H context for Daily Execution.")
-            prior_path = os.path.join(os.path.dirname(__file__), "..", "data", "state", "market_snapshot_prior.json")
-            if os.path.exists(prior_path):
-                try:
-                    with open(prior_path, 'r') as f:
-                        prior = json.load(f)
-                    hmm_beta_probs = prior.get("regime", {}).get("probabilities", {})
-                    hmm_beta_dom = prior.get("regime", {}).get("dominant_regime", "NEUTRAL_TRANSITIONAL")
-                    hmm_alpha_probs = prior.get("regime", {}).get("tactical_alpha_probabilities", {})
-                    hmm_alpha_dom = prior.get("regime", {}).get("tactical_alpha_regime", "NEUTRAL_TRANSITIONAL")
-                    tr_risk = prior.get("regime", {}).get("transition_risk", 0.0)
-                except Exception as e:
-                    logger.warning(f"Error reading 1H context: {e}. Falling back.")
-                    hmm_beta_probs, hmm_beta_dom, hmm_alpha_probs, hmm_alpha_dom, tr_risk = {}, "NEUTRAL_TRANSITIONAL", {}, "NEUTRAL_TRANSITIONAL", 0.0
-            else:
-                logger.warning("No prior 1H snapshot found! Falling back to flat probabilities.")
-                hmm_beta_probs, hmm_beta_dom, hmm_alpha_probs, hmm_alpha_dom, tr_risk = {}, "NEUTRAL_TRANSITIONAL", {}, "NEUTRAL_TRANSITIONAL", 0.0
-        else:
+        from src.schemas.models import TrendState, SMCState, SessionState, LiquidityState, RegimeState
+        self.snapshot.assets = {}
+        for tk in self.active_syms:
             try:
-                spx_daily = self.raw_daily_data["^GSPC"].dropna()
+                tk_daily = self.raw_daily_data[tk].dropna()
             except Exception:
-                spx_daily = pd.DataFrame()
+                tk_daily = pd.DataFrame()
             try:
-                spx_hourly = self.raw_hourly_data["ES=F"].dropna()
+                tk_hourly = self.raw_hourly_data[tk].dropna()
             except Exception:
-                spx_hourly = pd.DataFrame()
+                tk_hourly = pd.DataFrame()
 
-            trend_state = self.trend_engine.score(spx_daily) if not spx_daily.empty else {}
-            smc_state = self.smc_engine.compute(spx_daily) if not spx_daily.empty else None
+            engine_set = self.engines.get(tk)
+            if not engine_set:
+                continue
+
+            trend_state = engine_set["trend"].score(tk_daily) if not tk_daily.empty else {}
+            smc_state = engine_set["smc"].compute(tk_daily) if not tk_daily.empty else None
             smc_dict = smc_state.__dict__ if smc_state else {}
             
-            # ORB requires hourly bars
-            orb_res = self.session_engine.compute_orb_signal(spx_hourly) if not spx_hourly.empty else {}
-            # TD9 requires 1D closes for macro exhaustion
-            td9_res = self.session_engine.td9_exhaustion_signal(spx_daily["Close"]) if not spx_daily.empty else {}
-            # Session bias
-            sess_bias = self.session_engine.compute_session_state(spx_hourly, datetime.now(timezone.utc)) if not spx_hourly.empty else {}
-            
+            orb_res = engine_set["session"].compute_orb_signal(tk_hourly) if not tk_hourly.empty else {}
+            td9_res = engine_set["session"].td9_exhaustion_signal(tk_daily["Close"]) if not tk_daily.empty else {}
+            sess_bias = engine_set["session"].compute_session_state(tk_hourly, datetime.now(timezone.utc)) if not tk_hourly.empty else {}
             session_state = {**orb_res, **td9_res, **sess_bias}
             
-            liq_state = self.liquidity_engine.compute(spx_daily) if not spx_daily.empty else {}
+            liq_state = engine_set["liquidity"].compute(tk_daily) if not tk_daily.empty else {}
 
-            hmm_beta_probs, hmm_beta_dom, tr_risk, _ = self.regime_ensemble.compute(
-                trend_state, smc_dict, session_state, liq_state, self.feature_metadata
+            meta = {k: float(v) for k, v in self.clean_daily.get(tk, {}).items() if isinstance(v, (int, float))}
+            hmm_beta_probs, hmm_beta_dom, tr_risk, _ = engine_set["regime"].compute(
+                trend_state, smc_dict, session_state, liq_state, meta
             )
-            hmm_alpha_probs = hmm_beta_probs
-            hmm_alpha_dom = hmm_beta_dom
             
-            # Populate snapshot models
-            from src.schemas.models import TrendState, SMCState, SessionState, LiquidityState
-            if trend_state: self.snapshot.trend_state = TrendState(**trend_state)
-            if smc_state: self.snapshot.smc_state = SMCState(**smc_dict)
-            if session_state: self.snapshot.session_state = SessionState(**session_state)
-            if liq_state: self.snapshot.liquidity_state = LiquidityState(**liq_state)
+            # Store everything per ticker
+            self.snapshot.assets[tk] = {
+                "trend_state": trend_state,
+                "smc_state": smc_dict,
+                "session_state": session_state,
+                "liquidity_state": liq_state,
+                "regime": {
+                    "current": hmm_beta_dom if hmm_beta_dom else "NEUTRAL_TRANSITIONAL",
+                    "dominant_regime": hmm_beta_dom if hmm_beta_dom else "NEUTRAL_TRANSITIONAL",
+                    "probabilities": hmm_beta_probs,
+                    "transition_risk": tr_risk
+                }
+            }
         
-        current_regime = hmm_beta_dom if hmm_beta_dom else "NEUTRAL_TRANSITIONAL"
+        # Determine global regime fallback from SPX if available, else first ticker
+        global_regime = "NEUTRAL_TRANSITIONAL"
+        if "SPX" in self.snapshot.assets: global_regime = self.snapshot.assets["SPX"]["regime"]["dominant_regime"]
+        elif len(self.snapshot.assets) > 0: global_regime = list(self.snapshot.assets.values())[0]["regime"]["dominant_regime"]
+        current_regime = global_regime
         
-        # Backend Settings Sync & Isolation: Fetch active tickers to simulate independent execution
-        trading_settings_path = os.path.join(os.path.dirname(__file__), "..", "config", "trading_settings.json")
-        active_tickers = ["spx", "btc", "gld", "wti", "nvda", "tsla", "dell", "spce"]
-        if os.path.exists(trading_settings_path):
-            try:
-                with open(trading_settings_path, 'r') as f:
-                    settings_data = json.load(f)
-                    if "active_tickers" in settings_data:
-                        active_tickers = settings_data["active_tickers"]
-            except: pass
-            
-        mlp_packages = load_mlp_models(self.interval, assets=active_tickers)
-        features_vector_clipped = np.clip(self.features_vector, -4.0, 4.0).tolist()
-        mlp_state = run_multi_mlp_inference(features_vector_clipped, mlp_packages, current_regime)
-        
-        # Extract SPX specific properties for back-compatibility
-        spx_mlp = mlp_state.get("spx", {})
-        mlp_prob = spx_mlp.get("bull_probability", 0.5)
-
-        
-        mcs, sub_comps = compute_mcs(self.clean_daily, self.bonds, self.clean_daily)
-        self.snapshot.mcs = {"score": mcs, "label": "NEUTRAL", "components": sub_comps}
-        
-        prior_path = os.path.join(os.path.dirname(__file__), "..", "data", "state", "market_snapshot_prior.json")
-        prior = {}
-        if os.path.exists(prior_path):
-            try:
-                with open(prior_path, 'r') as f:
-                    prior = json.load(f)
-            except: pass
-            
-        prior_regime = prior.get("regime", {}).get("dominant_regime")
-        regime_changed = current_regime != prior_regime
-        now_utc = datetime.now(timezone.utc)
-        prior_start_str = prior.get("regime", {}).get("start_utc", now_utc.isoformat())
-        prior_start = datetime.fromisoformat(prior_start_str)
-        if prior_start.tzinfo is None:
-            prior_start = prior_start.replace(tzinfo=timezone.utc)
-        
-        if regime_changed:
-            duration_days = 0.0
-            start_utc_str = now_utc.isoformat()
-        else:
-            duration_days = (now_utc - prior_start).total_seconds() / 86400.0
-            start_utc_str = prior_start_str
-            
-        self.snapshot.regime = RegimeState(
-            current=current_regime,
-            dominant_regime=current_regime,
-            tactical_alpha_regime=hmm_alpha_dom,
-            probabilities=hmm_beta_probs or {},
-            tactical_alpha_probabilities=hmm_alpha_probs or {},
-            transition_risk=tr_risk,
-            start_utc=start_utc_str,
-            duration_days=duration_days
-        )
-        
-        prior_state = prior.get("kalman_state", {}).get("probabilities")
-        prior_cov = prior.get("kalman_state", {}).get("covariance_matrix")
-        
-        # v4.9.0 GARCH Bayesian Updating
-        spx_garch_regime = getattr(self, 'garch_layer', {}).get("SPX", {}).get("regime", "NORMAL")
-        if spx_garch_regime == "ELEVATED" and hmm_beta_probs:
-            risk_on_keys = ["LIQUIDITY_DRIVEN_RALLY", "RISK_ON_EXPANSION"]
-            for k in risk_on_keys:
-                if k in hmm_beta_probs and hmm_beta_probs[k] > 0:
-                    penalty = hmm_beta_probs[k] * 0.5
-                    hmm_beta_probs[k] -= penalty
-                    hmm_beta_probs["NEUTRAL_TRANSITIONAL"] = hmm_beta_probs.get("NEUTRAL_TRANSITIONAL", 0.0) + penalty
-                    
-        kalman_res = self.risk_engine.run_kalman_filter(mcs, sub_comps, hmm_beta_probs or {}, prior_state, prior_cov)
-        
-        tvd_score = 0.0
-        if spx_mlp and hmm_beta_probs:
-            tvd_score = calculate_model_tvd(hmm_beta_probs, spx_mlp)
-        kalman_res.tvd = tvd_score
-        
-        entropy = self.risk_engine.compute_shannon_entropy(np.array(list((hmm_beta_probs or {}).values())))
-        half_life = 99.0
-        config_path = os.path.join(os.path.dirname(__file__), "..", "config", "tuning_configs.json")
-        if os.path.exists(config_path):
-            with open(config_path, "r") as f:
-                t_conf = json.load(f)
-                half_life = t_conf.get("regime_half_lives", {}).get(current_regime, 99.0)
-                
         current_spx_val = self.clean_daily.get("SPX", {}).get("current", 0.0) if self.clean_daily.get("SPX") else 0.0
         
         is_downtrend = False
@@ -534,7 +483,16 @@ class Conductor:
             is_downtrend = float(current_spx_val) < ema_20
         
         current_ihi = self.clean_daily.get("volume_activity_heat", {}).get("institutional_heat_index", 0.0)
-        
+        mlp_packages = load_mlp_models(interval=self.interval, assets=self.active_syms)
+        raw_mlp_state = run_multi_mlp_inference(self.features_vector, mlp_packages, current_regime)
+        mlp_state = {}
+        for tk in self.active_syms:
+            tk_mlp = raw_mlp_state.get(tk, raw_mlp_state.get(tk.lower(), {}))
+            if tk in self.snapshot.assets:
+                self.snapshot.assets[tk]["mlp_state"] = tk_mlp
+            mlp_state[tk] = tk_mlp
+            
+        mlp_prob = mlp_state.get("SPX", {}).get("bull_probability", 0.5)
         predictions_history_path = os.path.join(os.path.dirname(__file__), "..", "data", "predictions", f"mlp_predictions_history_{self.interval}.json")
         brier_score = 0.1500
         history = []
@@ -549,12 +507,11 @@ class Conductor:
                 "spx_val_at_prediction": current_spx_val,
                 "target_graded": False
             })
-            with open(predictions_history_path, 'w') as f:
-                json.dump(history, f, indent=4)
+            atomic_json_write(history, predictions_history_path)
         except Exception as e:
             logger.error(f"Failed self-calibration: {e}")
             
-        kalman_res.brier_score_calibration = brier_score
+        self.snapshot.kalman_state.brier_score_calibration = brier_score
 
         spx_ret_z = self.clean_daily.get("SPX", {}).get("z_score", 0.0) if self.clean_daily.get("SPX") else 0.0
         is_capitulation_override = False
@@ -602,9 +559,9 @@ class Conductor:
         if kelly is None:
             kelly = self.risk_engine.compute_multi_asset_kelly(
                 mlp_predictions=mlp_state,
-                dominant_state=kalman_res.dominant_state,
+                dominant_state=self.snapshot.kalman_state.dominant_state,
                 brier_score=brier_score,
-                duration_days=duration_days,
+                duration_days=float(self.snapshot.regime.duration_days),
                 is_capitulation_override=is_capitulation_override,
                 is_momentum_override=is_momentum_override,
                 is_black_swan=is_black_swan,
@@ -649,8 +606,10 @@ class Conductor:
             except Exception as e:
                 logger.error(f"MTF entry gate failed: {e}")
                 
-        self.snapshot.kalman_state = kalman_res
         self.snapshot.mlp_deep_state = mlp_state or {}
+        spx_probs = self.snapshot.assets.get("SPX", {}).get("regime", {}).get("probabilities", {})
+        entropy = self.risk_engine.compute_shannon_entropy(np.array(list(spx_probs.values()))) if spx_probs else 0.0
+        
         self.snapshot.data_science_layer = {
             "ordered_features_list": [lbl for lbl, _, _ in self.ordered_feature_keys],
             "features_vector": self.features_vector,
@@ -660,7 +619,7 @@ class Conductor:
                 "forecast_accuracy": 1.0 - brier_score,
                 "shannon_entropy": entropy,
                 "kelly_exposure_fraction": kelly,
-                "is_high_risk_edge": bool(kalman_res.dominant_prob >= 0.45),
+                "is_high_risk_edge": bool(self.snapshot.kalman_state.dominant_prob >= 0.45),
                 "is_capitulation_override_active": is_capitulation_override
             }
         }
@@ -693,8 +652,7 @@ class Conductor:
             entry_result["computed_utc"] = datetime.now(timezone.utc).isoformat()
             entry_result["interval_used"] = "1h"
 
-            with open(self.entry_quality_path, "w") as f:
-                json.dump(entry_result, f, indent=4)
+            atomic_json_write(entry_result, self.entry_quality_path)
             logger.info(f"Entry quality score computed: {entry_result['entry_score']:.2f} ({entry_result['entry_bias']})")
 
         headlines = fetch_rss_headlines()
@@ -789,15 +747,18 @@ class Conductor:
                 return {k: sanitize_floats(v) for k, v in obj.items()}
             elif isinstance(obj, list):
                 return [sanitize_floats(v) for v in obj]
-            elif isinstance(obj, float):
-                if math.isnan(obj) or math.isinf(obj):
+            elif isinstance(obj, float) or isinstance(obj, np.floating):
+                val = float(obj)
+                if math.isnan(val) or math.isinf(val):
                     return None
+                return val
+            elif isinstance(obj, np.integer):
+                return int(obj)
             return obj
             
         snapshot_dict = sanitize_floats(snapshot_dict)
         
-        with open(out_path, 'w') as f:
-            json.dump(snapshot_dict, f, indent=4)
+        atomic_json_write(snapshot_dict, out_path)
             
         # Write Phase 2 Live Telemetry File
         kelly_obj = self.snapshot.data_science_layer.get("epistemic_metrics", {}).get("kelly_exposure_fraction", {})
@@ -823,8 +784,7 @@ class Conductor:
             "entry_bias": entry_quality.get("entry_bias", "FLAT") if entry_quality else "FLAT"
         }
         
-        with open(telemetry_path, 'w') as f:
-            json.dump(telemetry_payload, f, indent=4)
+        atomic_json_write(telemetry_payload, telemetry_path)
             
         self.lake_manager.save_unstructured(snapshot_dict, "market_snapshot.jsonl")
         
@@ -845,17 +805,9 @@ class Conductor:
         entry_threshold = CONVICTION_GATE.get(dominant_regime, 0.60)
         gate_passed = entry_score >= entry_threshold
         
-        target_allocs = {
-            "SPX":   kelly_obj.get("SPX_Kelly", 0.0),
-            "SH":    0.0, # Short execution is universally disabled
-            "GLD":   kelly_obj.get("GLD_Kelly", 0.0),
-            "BTC":   kelly_obj.get("BTC_Kelly", 0.0),
-            "WTI":   kelly_obj.get("WTI_Kelly", 0.0),
-            "NVDA":  kelly_obj.get("NVDA_Kelly", 0.0),
-            "TSLA":  kelly_obj.get("TSLA_Kelly", 0.0),
-            "DELL":  kelly_obj.get("DELL_Kelly", 0.0),
-            "SPCE":  kelly_obj.get("SPCE_Kelly", 0.0)
-        }
+        target_allocs = {k.replace("_Kelly", ""): v for k, v in kelly_obj.items() if k.endswith("_Kelly") and k != "Short_Kelly"}
+        target_allocs["SH"] = 0.0 # Short execution is universally disabled
+
         
         equity_drawdown = self.paper_broker.get_equity_drawdown()
         if equity_drawdown > 0.15:
@@ -865,14 +817,16 @@ class Conductor:
             gate_passed = False
         else:
             # P2-9 FIX: Sync Live Conviction Gate to Backtester Option A
-            ASSET_THRESHOLDS = {
-                "spx": 0.50, "btc": 0.52, "gld": 0.52, "wti": 0.54,
-                "nvda": 0.53, "tsla": 0.56, "dell": 0.55, "spce": 0.72,
-            }
-            
             mlp_deep_state = self.snapshot.mlp_deep_state
-            for asset_key, asset_threshold in ASSET_THRESHOLDS.items():
-                asset_prob = mlp_deep_state.get(asset_key, {}).get("bull_probability", 0.0)
+            for asset_key in [k.lower() for k in target_allocs.keys() if k != "SH"]:
+                # Default dynamic threshold is 0.55 if not explicitly set below
+                asset_thresholds_override = {
+                    "spx": 0.50, "btc": 0.52, "gld": 0.52, "wti": 0.54,
+                    "nvda": 0.53, "tsla": 0.56, "dell": 0.55, "spce": 0.72,
+                }
+                asset_threshold = asset_thresholds_override.get(asset_key, 0.55)
+                # Dictionary keys in mlp_deep_state are UPPERCASE (e.g. 'SPX')
+                asset_prob = mlp_deep_state.get(asset_key.upper(), {}).get("bull_probability", 0.0)
                 if asset_prob < asset_threshold:
                     target_allocs[asset_key.upper()] = 0.0
                     
@@ -933,8 +887,7 @@ class Conductor:
         )
         
         rec_path = os.path.join(os.path.dirname(__file__), "..", "data", "state", "trade_recommendation.json")
-        with open(rec_path, "w") as f:
-            json.dump(recommendation.model_dump(), f, indent=4)
+        atomic_json_write(recommendation.model_dump(), rec_path)
 
         # Execute Rebalance in Paper Trading
         self.bar_count += 1
@@ -949,18 +902,14 @@ class Conductor:
                     val = self.clean_daily.get(ticker_key, {}).get("current", None)
                     return val if val != 0.0 else None
 
-                current_prices = {
-                    "SPX":   safe_get_price("SPX"),
-                    "SH":    safe_get_price("SH"),
-                    "GLD":   safe_get_price("GLD"),
-                    "BTC":   safe_get_price("BTC"),
-                    "WTI":   safe_get_price("WTI"),
-                    "NVDA":  safe_get_price("NVDA"),
-                    "TSLA":  safe_get_price("TSLA"),
-                    "DELL":  safe_get_price("DELL"),
-                    "SPCE":  safe_get_price("SPCE")
-                }
+                current_prices = {k: safe_get_price(k) for k in target_allocs.keys()}
                 
+                def safe_get_atr(ticker_key):
+                    if not self.clean_daily: return None
+                    val = self.clean_daily.get(ticker_key, {}).get("atr_14", None)
+                    return val if val != 0.0 else None
+                    
+                current_atrs = {k: safe_get_atr(k) for k in target_allocs.keys()}
                 # Dynamic User Config Toggles
                 disabled_tickers = []
                 config_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'state', 'trading_config.json')
@@ -982,9 +931,9 @@ class Conductor:
                     market_events = self.event_bus.recent_events(
                         event_types=["CAPITULATION_OVERRIDE", "MOMENTUM_IGNITION"]
                     )
-                    mlp_prob = mlp_state.get("spx", {}).get("bull_probability", 0.5) if 'mlp_state' in locals() and mlp_state else 0.5
+                    mlp_prob = mlp_state.get("SPX", {}).get("bull_probability", 0.5) if 'mlp_state' in locals() and mlp_state else 0.5
                     brier_s = brier_score if 'brier_score' in locals() else 0.5
-                    k_state = kalman_res.dominant_state if 'kalman_res' in locals() and kalman_res else "neutral"
+                    k_state = self.snapshot.kalman_state.dominant_state if hasattr(self.snapshot, 'kalman_state') and self.snapshot.kalman_state else "neutral"
 
                     decision = self.opportunity_gate.should_execute(
                         current_entry_score=entry_score_now,
@@ -1000,12 +949,11 @@ class Conductor:
                     self.prev_entry_score = entry_score_now
                     self.prev_regime = self.snapshot.regime.current
                     
-                    with open(self.opportunity_state_path, "w") as f:
-                        json.dump({
-                            "prev_entry_score": self.prev_entry_score,
-                            "prev_regime": self.prev_regime,
-                            "evaluated_utc": datetime.now(timezone.utc).isoformat()
-                        }, f, indent=4)
+                    atomic_json_write({
+                        "prev_entry_score": self.prev_entry_score,
+                        "prev_regime": self.prev_regime,
+                        "evaluated_utc": datetime.now(timezone.utc).isoformat()
+                    }, self.opportunity_state_path)
 
                     if not self.opportunistic_1h_enabled or not decision.should_execute:
                         logger.info(f"1H OppGate: SKIP — {decision.reason}")
@@ -1015,7 +963,7 @@ class Conductor:
                     # Apply conviction boost
                     for k in target_allocs:
                         if target_allocs[k] > 0.0:
-                            target_allocs[k] = target_allocs[k] + decision.conviction_boost
+                            target_allocs[k] = min(0.40, target_allocs[k] + decision.conviction_boost)
                     
                     # Renormalize to ensure sum <= 1.0
                     sum_active = sum(target_allocs.values())
@@ -1038,7 +986,7 @@ class Conductor:
                         f"Allocations: {target_allocs}"
                     )
 
-                self.paper_broker.execute_rebalance(target_allocs, current_prices, vix_zscore=self.snapshot.market_extremes_insight.temperature_zscore, hmm_regime=self.snapshot.regime.current)
+                self.paper_broker.execute_rebalance(target_allocs, current_prices, current_atrs, vix_zscore=self.snapshot.market_extremes_insight.temperature_zscore, hmm_regime=self.snapshot.regime.current)
                 self.last_rebalance_bar = self.bar_count
                 logger.info(f"Rebalance executed at bar {self.bar_count}.")
             else:
@@ -1064,16 +1012,14 @@ class Conductor:
             )
             freq_result["evaluated_utc"] = datetime.now(timezone.utc).isoformat()
 
-            with open(self.frequency_state_path, "w") as f:
-                json.dump(freq_result, f, indent=4)
+            atomic_json_write(freq_result, self.frequency_state_path)
             logger.info(f"FrequencyController: recommended={freq_result['recommended_frequency']} (score={freq_result['score']}). {freq_result['reason']}")
         except Exception as e:
             logger.error(f"FrequencyController evaluation failed: {e}")
 
-        logger.info("v6.0.0 Real-Time Event-Driven Pipeline Complete")
+        logger.info("v7.0.0 Real-Time Event-Driven Pipeline Complete")
             
-        with open(prior_path, 'w') as f:
-            json.dump(snapshot_dict, f, indent=4)
+        atomic_json_write(snapshot_dict, prior_path)
             
 
 

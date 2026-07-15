@@ -16,28 +16,39 @@ FREQUENCY_STATE_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'st
 scheduler = BackgroundScheduler()
 current_frequency = "4h"
 
+import fcntl
+
+def run_locked_subprocess(args, lock_name="execution.lock"):
+    lock_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'state', lock_name)
+    os.makedirs(os.path.dirname(lock_path), exist_ok=True)
+    with open(lock_path, 'w') as lock_file:
+        try:
+            logger.info(f"Waiting for lock on {lock_name} for {' '.join(args)}...")
+            fcntl.flock(lock_file, fcntl.LOCK_EX)
+            subprocess.run(args)
+        finally:
+            fcntl.flock(lock_file, fcntl.LOCK_UN)
+
 def run_1h():
     logger.info("Running 1H Context Layer (entry scoring + state write — no execution)...")
-    subprocess.run(["python3", "src/fetch_market_data.py", "--interval", "1h"])
-    # No build_report call here — 1H doesn't need an execution report
-    # (Optionally: build a 1H context-only diagnostic report)
+    run_locked_subprocess(["python3", "src/fetch_market_data.py", "--interval", "1h"])
     _apply_adaptive_frequency()
 
 def run_4h():
     logger.info("Running 4H Execution Engine...")
-    subprocess.run(["python3", "src/fetch_market_data.py", "--interval", "4h"])
+    run_locked_subprocess(["python3", "src/fetch_market_data.py", "--interval", "4h"])
     subprocess.run(["python3", "src/build_report.py", "--title", "4H Execution Report"])
     _apply_adaptive_frequency()
 
 def run_1d():
     logger.info("Running 1D Execution Engine...")
-    subprocess.run(["python3", "src/fetch_market_data.py", "--interval", "1d", "--use-1h-context"])
+    run_locked_subprocess(["python3", "src/fetch_market_data.py", "--interval", "1d", "--use-1h-context"])
     subprocess.run(["python3", "src/build_report.py", "--title", "Daily Execution Report"])
     _apply_adaptive_frequency()
 
 def run_weekly():
     logger.info("Running Weekly Synthesis...")
-    subprocess.run(["python3", "src/build_weekly_synthesis.py"])
+    run_locked_subprocess(["python3", "src/build_weekly_synthesis.py"])
 
 def _apply_adaptive_frequency():
     global current_frequency
@@ -93,4 +104,4 @@ if __name__ == "__main__":
     start_scheduler()
     start_monitor_thread()
     logger.info("Starting FastAPI server...")
-    uvicorn.run("api:app", host="0.0.0.0", port=8000)
+    uvicorn.run("src.api:app", host="0.0.0.0", port=8000)

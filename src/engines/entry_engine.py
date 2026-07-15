@@ -127,9 +127,10 @@ class EntryEngine:
                             components["vix_term_structure"] = 0.5
                         elif not is_long_bias and float(vix_1h.iloc[-1]) > 20:
                             components["vix_term_structure"] = 1.0
-            except Exception:
-                pass
-
+            except Exception as e:
+                logger.warning(f"VIX term structure evaluation failed: {e}. Falling back to neutral 0.5")
+                components["vix_term_structure"] = 0.5
+            
             # 5. Price vs EMA-20 (0.10)
             ema20 = spx_close_1h.ewm(span=20, adjust=False).mean()
             ema20_now = float(ema20.iloc[-1])

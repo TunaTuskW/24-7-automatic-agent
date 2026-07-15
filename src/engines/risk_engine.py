@@ -1,5 +1,6 @@
 import numpy as np
 import math
+import os
 from typing import Dict, Any
 from src.observability.logger import get_logger
 from src.schemas.models import KalmanState
@@ -153,37 +154,20 @@ class RiskEngine:
     def compute_multi_asset_kelly(self, mlp_predictions, dominant_state, brier_score, duration_days=0, is_capitulation_override=False, is_momentum_override=False, is_black_swan=False, is_bull_trap=False, hmm_regime="NEUTRAL_TRANSITIONAL", current_ihi=0.0, is_downtrend=False, max_kelly_cap: float = 0.60, equity_drawdown: float = 0.0, entry_score: float = 1.0):
         if not hmm_regime:
             hmm_regime = "UNKNOWN"
-        # Calculate raw kelly for each asset
         raw_allocations = {}
         for asset, preds in mlp_predictions.items():
             prob = preds.get("bull_probability", 0.5)
             consensus_score = preds.get("consensus_score", 0.0)
-            
-            # P0-6 FIX: Removed Auto-Inversion Module
-            # The calibration penalty dynamically scales down exposure for poorly
-            # calibrated models, which is safer than blindly inverting bimodal outputs.
             effective_prob = prob
-
-            # Apply bull trap logic ONLY to SPX
-            asset_is_bull_trap = False
-            if asset == "spx" and is_bull_trap:
-                asset_is_bull_trap = True
-                
-            # Determine Asset-Specific Conviction Threshold
-            asset_thresholds = {
-                "spx":  0.50,
-                "btc":  0.52,
-                "gld":  0.52,
-                "wti":  0.54,
-                "nvda": 0.53,
-                "tsla": 0.56,
-                "dell": 0.55,
-                "spce": 0.72,
-            }
-            asset_conviction_threshold = asset_thresholds.get(asset, 0.60)
             
-            # DYNAMIC CONVICTION SCALING: Boost frequency & accuracy
-            # Lower threshold when trading WITH the macro wind, raise when against it.
+            asset_is_bull_trap = (asset == "spx" and is_bull_trap)
+            
+            asset_thresholds = {
+                "spx":  0.50, "btc":  0.52, "gld":  0.52, "wti":  0.54,
+                "nvda": 0.53, "tsla": 0.56, "dell": 0.55, "spce": 0.72,
+            }
+            asset_conviction_threshold = asset_thresholds.get(asset, 0.55)
+            
             is_bull_bet = prob >= 0.5
             if hmm_regime == "LIQUIDITY_DRIVEN_RALLY":
                 if is_bull_bet: asset_conviction_threshold -= 0.05
@@ -192,146 +176,110 @@ class RiskEngine:
                 if not is_bull_bet: asset_conviction_threshold -= 0.05
                 else: asset_conviction_threshold += 0.05
                 
-            # Floor/Cap threshold to sane bounds [0.52, 0.75]
             asset_conviction_threshold = max(0.52, min(0.75, asset_conviction_threshold))
             
             raw_kelly = self.compute_kelly_sizing(
-                max_prob=effective_prob, 
-                dominant_state=dominant_state, 
-                brier_score=brier_score, 
-                duration_days=duration_days, 
-                is_capitulation_override=is_capitulation_override, 
-                is_momentum_override=is_momentum_override, 
-                is_black_swan=is_black_swan, 
-                is_bull_trap=asset_is_bull_trap, 
-                hmm_regime=hmm_regime, 
-                current_ihi=current_ihi,
-                consensus_score=consensus_score,
-                conviction_threshold=asset_conviction_threshold
+                max_prob=effective_prob, dominant_state=dominant_state, brier_score=brier_score, 
+                duration_days=duration_days, is_capitulation_override=is_capitulation_override, 
+                is_momentum_override=is_momentum_override, is_black_swan=is_black_swan, 
+                is_bull_trap=asset_is_bull_trap, hmm_regime=hmm_regime, current_ihi=current_ihi,
+                consensus_score=consensus_score, conviction_threshold=asset_conviction_threshold
             )
             raw_allocations[asset] = raw_kelly
 
-        # Extract SPX for specific filters
+        allocations = {}
         spx_raw = raw_allocations.get("spx", 0.0)
-        spx_kelly = 0.0
-        short_kelly = 0.0
+        allocations["SPX_Kelly"] = 0.0
+        allocations["Short_Kelly"] = 0.0
         
-        # 0.0 means "no edge". A strictly negative value means "active bearish bet".
-        # Only the latter should produce a SHORT allocation; no-edge -> cash.
         if spx_raw > 0:
-            spx_kelly = round(min(max_kelly_cap, spx_raw), 3)
+            allocations["SPX_Kelly"] = round(min(max_kelly_cap, spx_raw), 3)
             if is_downtrend:
-                spx_kelly = round(spx_kelly * 0.5, 3)
+                allocations["SPX_Kelly"] = round(allocations["SPX_Kelly"] * 0.5, 3)
                 logger.warning("SPX is in a macro downtrend. Halving long Kelly allocation.")
-        elif spx_raw < -0.05:  # require material bearish edge, not just "no bull edge"
-            short_kelly = round(min(max_kelly_cap, abs(spx_raw)), 3)
-            logger.info(f"Negative Edge Detected. Shorting enabled with allocation {short_kelly}.")
-        # else: spx_raw in [-0.05, 0] -> no actionable edge, leave both at 0 (cash)
+        elif spx_raw < -0.05:
+            allocations["Short_Kelly"] = round(min(max_kelly_cap, abs(spx_raw)), 3)
+            logger.info(f"Negative Edge Detected. Shorting enabled with allocation {allocations['Short_Kelly']}.")
 
-        # Black Swan Circuit Breaker overrides SPX
         if is_black_swan:
             logger.error("BLACK SWAN CIRCUIT BREAKER ACTIVE: Liquidating all SPX equity exposure.")
-            spx_kelly = 0.0
-            
-        # Process other assets
-        btc_kelly = round(max(0.0, min(1.0, raw_allocations.get("btc", 0.0))), 3)
-        gld_kelly = round(max(0.0, min(1.0, raw_allocations.get("gld", 0.0))), 3)
-        wti_kelly = round(max(0.0, min(1.0, raw_allocations.get("wti", 0.0))), 3)
-        nvda_kelly = round(max(0.0, min(1.0, raw_allocations.get("nvda", 0.0))), 3)
-        tsla_kelly = round(max(0.0, min(1.0, raw_allocations.get("tsla", 0.0))), 3)
-        dell_kelly = round(max(0.0, min(1.0, raw_allocations.get("dell", 0.0))), 3)
-        spce_kelly = round(max(0.0, min(1.0, raw_allocations.get("spce", 0.0))), 3)
+            allocations["SPX_Kelly"] = 0.0
 
+        for asset, raw_k in raw_allocations.items():
+            if asset.lower() not in ["spx", "short"]:
+                allocations[f"{asset.upper()}_Kelly"] = round(max(0.0, min(1.0, raw_k)), 3)
 
-        # Capital Rotation Engine (Active Rotation & Diversity)
         spx_prob = mlp_predictions.get("spx", {}).get("bull_probability", 0.5)
         
-        # Safe Haven Diversity (Risk-Off / Short environment)
         if dominant_state == "risk_off" or hmm_regime in ("DEFENSIVE_RISK_OFF", "VOLATILITY_EXPANSION"):
             logger.info(f"Risk-Off environment detected. Allocating proportional safe-haven diversity.")
-            gld_kelly = max(gld_kelly, 0.20) # 20% safe-haven baseline when defensive
+            allocations["GLD_Kelly"] = max(allocations.get("GLD_Kelly", 0.0), 0.20)
             
-        # Extreme Weakness Rotation (Defense / Alpha Rotation)
         if spx_prob < 0.35:
             logger.info("Extreme Weakness: SPX collapsing. Suppressing high-beta names, boosting safe havens.")
-            gld_kelly   = min(1.0, round(gld_kelly * 1.5, 3))
-            short_kelly = min(1.0, round(short_kelly * 1.2, 3))
-            nvda_kelly  = round(nvda_kelly * 0.25, 3)
-            tsla_kelly  = round(tsla_kelly * 0.25, 3)
-            spce_kelly  = 0.0
+            allocations["GLD_Kelly"] = min(1.0, round(allocations.get("GLD_Kelly", 0.0) * 1.5, 3))
+            allocations["Short_Kelly"] = min(1.0, round(allocations.get("Short_Kelly", 0.0) * 1.2, 3))
+            for k in list(allocations.keys()):
+                if k not in ["SPX_Kelly", "Short_Kelly", "BTC_Kelly", "GLD_Kelly", "WTI_Kelly"]:
+                    allocations[k] = round(allocations[k] * 0.25, 3)
+            if "SPCE_Kelly" in allocations: allocations["SPCE_Kelly"] = 0.0
 
-        # Universal Equity Regime Gate
-        # Kalman risk_off or black swan: zero ALL single-name long equity.
-        # SPX is already handled above via is_downtrend. This extends to all names.
         if dominant_state == "risk_off" or is_black_swan:
-            nvda_kelly = 0.0
-            tsla_kelly = 0.0
-            dell_kelly = 0.0
-            spce_kelly = 0.0
-            if dominant_state == "risk_off":
-                btc_kelly = round(btc_kelly * 0.30, 3)
-            logger.warning(
-                f"Regime Gate: dominant_state={dominant_state}. "
-                "All single-name long equity zeroed."
-            )
+            for k in list(allocations.keys()):
+                if k not in ["SPX_Kelly", "Short_Kelly", "BTC_Kelly", "GLD_Kelly", "WTI_Kelly"]:
+                    allocations[k] = 0.0
+            if dominant_state == "risk_off" and "BTC_Kelly" in allocations:
+                allocations["BTC_Kelly"] = round(allocations["BTC_Kelly"] * 0.30, 3)
+            logger.warning(f"Regime Gate: dominant_state={dominant_state}. All single-name long equity zeroed.")
 
-        # HMM Coherence Gate
-        # If HMM explicitly names a stress regime, single names are forbidden.
         STRESS_REGIMES = {"DEFENSIVE_RISK_OFF", "VOLATILITY_EXPANSION"}
         if any(hmm_regime.startswith(s) for s in STRESS_REGIMES):
-            nvda_kelly = 0.0
-            tsla_kelly = 0.0
-            dell_kelly = 0.0
-            spce_kelly = 0.0
-            logger.warning(f"HMM Coherence Gate: {hmm_regime}. Single-name equity zeroed.")
+            for k in list(allocations.keys()):
+                if k not in ["SPX_Kelly", "Short_Kelly", "BTC_Kelly", "GLD_Kelly", "WTI_Kelly"]:
+                    allocations[k] = 0.0
+            logger.warning(f"Ensemble Coherence Gate: {hmm_regime}. Single-name equity zeroed.")
 
-        # Capital Rotation Engine (runs AFTER regime gate so it never re-amplifies zeroed names)
-        if spx_kelly > 0.05 and dominant_state != "risk_off" and not is_black_swan:
+        if allocations["SPX_Kelly"] > 0.05 and dominant_state != "risk_off" and not is_black_swan:
             if not any(hmm_regime.startswith(s) for s in STRESS_REGIMES):
-                nvda_kelly = max(nvda_kelly, round(spx_kelly * 0.35, 3))
-                btc_kelly  = max(btc_kelly,  round(spx_kelly * 0.25, 3))
-                tsla_kelly = max(tsla_kelly, round(spx_kelly * 0.20, 3))
+                if "NVDA_Kelly" in allocations: allocations["NVDA_Kelly"] = max(allocations["NVDA_Kelly"], round(allocations["SPX_Kelly"] * 0.35, 3))
+                if "BTC_Kelly" in allocations: allocations["BTC_Kelly"] = max(allocations["BTC_Kelly"], round(allocations["SPX_Kelly"] * 0.25, 3))
+                if "TSLA_Kelly" in allocations: allocations["TSLA_Kelly"] = max(allocations["TSLA_Kelly"], round(allocations["SPX_Kelly"] * 0.20, 3))
 
-        # Scale by Entry Score Conviction
         entry_score_multiplier = max(0.3, min(1.0, entry_score))
-        spx_kelly = round(spx_kelly * entry_score_multiplier, 3)
-        short_kelly = round(short_kelly * entry_score_multiplier, 3)
-        btc_kelly = round(btc_kelly * entry_score_multiplier, 3)
-        gld_kelly = round(gld_kelly * entry_score_multiplier, 3)
-        wti_kelly = round(wti_kelly * entry_score_multiplier, 3)
-        nvda_kelly = round(nvda_kelly * entry_score_multiplier, 3)
-        tsla_kelly = round(tsla_kelly * entry_score_multiplier, 3)
-        dell_kelly = round(dell_kelly * entry_score_multiplier, 3)
-        spce_kelly = round(spce_kelly * entry_score_multiplier, 3)
+        for k in allocations.keys():
+            allocations[k] = round(allocations[k] * entry_score_multiplier, 3)
+            
+        # Apply fundamental analyst conviction
+        fundamental_scores_path = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'state', 'fundamental_scores.json')
+        if os.path.exists(fundamental_scores_path):
+            try:
+                import json
+                with open(fundamental_scores_path, 'r') as f:
+                    fundamental_data = json.load(f)
+                    
+                for k in list(allocations.keys()):
+                    asset = k.replace("_Kelly", "").upper()
+                    # The JSON uses original tickers (e.g., NVDA). 
+                    # Our keys are like NVDA_Kelly
+                    if asset in fundamental_data:
+                        score = fundamental_data[asset].get("conviction_score", 0.0)
+                        if score < -0.5:
+                            allocations[k] = round(allocations[k] * 0.5, 3)
+                            logger.warning(f"Fundamental Analysis for {asset} is highly negative (score: {score}). Slashing allocation by 50%.")
+                        elif score > 0.5:
+                            allocations[k] = min(max_kelly_cap, round(allocations[k] * 1.2, 3))
+                            logger.info(f"Fundamental Analysis for {asset} is highly positive (score: {score}). Boosting allocation by 20%.")
+            except Exception as e:
+                logger.error(f"Failed to apply fundamental scores: {e}")
         if entry_score_multiplier < 1.0:
             logger.info(f"Entry Score Multiplier: {entry_score_multiplier:.2f} applied to Kellys.")
 
-        # Global Portfolio Balancer (Normalize exposure)
-        total_exposure = spx_kelly + short_kelly + abs(btc_kelly) + abs(gld_kelly) + abs(wti_kelly) + abs(nvda_kelly) + abs(tsla_kelly) + abs(dell_kelly) + abs(spce_kelly)
+        total_exposure = sum(abs(v) for v in allocations.values())
         if total_exposure > 1.0:
             scale = 1.0 / total_exposure
-            spx_kelly = round(spx_kelly * scale, 3)
-            short_kelly = round(short_kelly * scale, 3)
-            btc_kelly = round(btc_kelly * scale, 3)
-            gld_kelly = round(gld_kelly * scale, 3)
-            wti_kelly = round(wti_kelly * scale, 3)
-            nvda_kelly = round(nvda_kelly * scale, 3)
-            tsla_kelly = round(tsla_kelly * scale, 3)
-            dell_kelly = round(dell_kelly * scale, 3)
-            spce_kelly = round(spce_kelly * scale, 3)
-            total_exposure = spx_kelly + short_kelly + abs(btc_kelly) + abs(gld_kelly) + abs(wti_kelly) + abs(nvda_kelly) + abs(tsla_kelly) + abs(dell_kelly) + abs(spce_kelly)
+            for k in allocations.keys():
+                allocations[k] = round(allocations[k] * scale, 3)
+            total_exposure = sum(abs(v) for v in allocations.values())
 
-        cash = round(1.0 - (spx_kelly + short_kelly + btc_kelly + gld_kelly + wti_kelly + nvda_kelly + tsla_kelly + dell_kelly + spce_kelly), 3)
-            
-        return {
-            "SPX_Kelly": spx_kelly,
-            "Short_Kelly": short_kelly,
-            "BTC_Kelly": btc_kelly,
-            "GLD_Kelly": gld_kelly,
-            "WTI_Kelly": wti_kelly,
-            "NVDA_Kelly": nvda_kelly,
-            "TSLA_Kelly": tsla_kelly,
-            "DELL_Kelly": dell_kelly,
-            "SPCE_Kelly": spce_kelly,
-            "Cash": cash
-        }
+        allocations["Cash"] = round(1.0 - total_exposure, 3)
+        return allocations

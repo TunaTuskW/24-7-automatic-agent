@@ -66,8 +66,9 @@ class LakeManager:
                 "event_type": event_type,
                 "payload": payload_dict
             }
+            import numpy as np
             with open(full_path, "a") as f:
-                f.write(json.dumps(event_obj) + "\n")
+                f.write(json.dumps(event_obj, default=lambda o: int(o) if isinstance(o, np.integer) else float(o) if isinstance(o, np.floating) else o.tolist() if hasattr(o, "tolist") else str(o)) + "\n")
         except Exception as e:
             logger.error(f"Failed to log event {event_type}: {e}")
 

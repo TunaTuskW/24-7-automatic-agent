@@ -18,4 +18,8 @@ COPY models/ ./models/
 ENV PYTHONPATH=/app
 EXPOSE 8000
 
+# Run as non-root
+RUN useradd -u 1000 -m appuser && chown -R appuser:appuser /app
+USER appuser
+
 CMD ["python3", "src/scheduler.py"]

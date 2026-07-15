@@ -25,6 +25,7 @@ const TradingTerminal = () => {
     const [portfolio, setPortfolio] = useState({ equity: 100000, positions: {}, win_rate: 0 });
     const [ledger, setLedger] = useState([]);
     const [viewType, setViewType] = useState('backtest');
+    const [fundamentals, setFundamentals] = useState({});
 
     useEffect(() => {
         fetch('/api/trading_settings')
@@ -71,6 +72,16 @@ const TradingTerminal = () => {
                     }
                 })
                 .catch(console.error);
+                
+        // Fetch fundamental scores
+        fetch('/api/fundamentals')
+            .then(r => r.json())
+            .then(data => {
+                if (data) {
+                    setFundamentals(data);
+                }
+            })
+            .catch(console.error);
     }, [viewType]);
 
     return (
@@ -122,6 +133,19 @@ const TradingTerminal = () => {
                             {/* We defer timeframe control to the AdvancedChart itself, but we can keep standard ones for aesthetics if desired, but actually we should just let TradingView handle it. */}
                         </div>
                     </div>
+                    {fundamentals && fundamentals[selectedTicker] && fundamentals[selectedTicker].reasoning !== "Not an equity." && (
+                        <div style={{ padding: '8px 12px', background: 'var(--bg-panel)', border: `1px solid ${fundamentals[selectedTicker].conviction_score > 0 ? 'var(--term-green)' : (fundamentals[selectedTicker].conviction_score < 0 ? 'var(--term-red)' : 'var(--border-color)')}`, borderRadius: '4px', maxWidth: '500px' }}>
+                            <div style={{ marginBottom: '4px' }}>
+                                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginRight: '8px' }}>Fundamental Agent Conviction:</span>
+                                <span style={{ fontWeight: 'bold', color: fundamentals[selectedTicker].conviction_score > 0 ? 'var(--term-green)' : (fundamentals[selectedTicker].conviction_score < 0 ? 'var(--term-red)' : 'var(--text-bright)') }}>
+                                    {(fundamentals[selectedTicker].conviction_score > 0 ? '+' : '') + fundamentals[selectedTicker].conviction_score.toFixed(2)}
+                                </span>
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-main)', lineHeight: '1.4' }}>
+                                {fundamentals[selectedTicker].reasoning}
+                            </div>
+                        </div>
+                    )}
                 </div>
                 
                 {/* AdvancedChart Container */}

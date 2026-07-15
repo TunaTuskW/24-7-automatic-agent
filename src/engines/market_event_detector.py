@@ -24,6 +24,7 @@ class MarketEventDetector:
         self._last_vix_price = None
         self._last_check_utc = None
         self._last_entry_score = 0.5
+        self._last_notified_volume = {}
 
     def fetch_current_prices(self, active_tickers: list = None) -> dict:
         """Fetches current SPX and VIX prices, plus tracked assets."""
@@ -152,14 +153,17 @@ class MarketEventDetector:
                 vol_s = volume_data[ticker].dropna()
                 if len(vol_s) >= 13: # need at least 1 hour of 5m bars
                     current_vol = vol_s.iloc[-1]
+                    current_time = vol_s.index[-1]
                     avg_vol = vol_s.iloc[-13:-1].mean()
                     if avg_vol > 0 and current_vol > (avg_vol * 3.0): # 300% spike
-                        events.append({
-                            "type": "VOLUME_SPIKE",
-                            "severity": "ELEVATED",
-                            "detail": f"Abnormal volume on {ticker}: {current_vol:,.0f} (3x > avg {avg_vol:,.0f})"
-                        })
-                        logger.warning(f"VOLUME_SPIKE detected for {ticker}: {current_vol:,.0f} vs {avg_vol:,.0f}")
+                        if self._last_notified_volume.get(ticker) != current_time:
+                            self._last_notified_volume[ticker] = current_time
+                            events.append({
+                                "type": "VOLUME_SPIKE",
+                                "severity": "ELEVATED",
+                                "detail": f"Abnormal volume on {ticker}: {current_vol:,.0f} (3x > avg {avg_vol:,.0f})"
+                            })
+                            logger.warning(f"VOLUME_SPIKE detected for {ticker}: {current_vol:,.0f} vs {avg_vol:,.0f}")
 
         return events
 

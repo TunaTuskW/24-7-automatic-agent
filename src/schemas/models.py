@@ -111,6 +111,7 @@ class MarketSnapshot(BaseModel):
     session_state: SessionState = Field(default_factory=SessionState)
     liquidity_state: LiquidityState = Field(default_factory=LiquidityState)
     trend_state: TrendState = Field(default_factory=TrendState)
+    assets: Dict[str, Any] = Field(default_factory=dict)
 
 class TradeRecommendation(BaseModel):
     timestamp_utc: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())

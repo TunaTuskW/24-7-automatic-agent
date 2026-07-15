@@ -1,0 +1,23 @@
+FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt yfinance && pip cache purge
+
+COPY src/ ./src/
+COPY config/ ./config/
+
+ENV PYTHONPATH=/app
+
+# Run as non-root
+RUN useradd -u 1000 -m appuser && chown -R appuser:appuser /app
+USER appuser
+
+CMD ["python3", "src/fundamental_agent/main.py"]

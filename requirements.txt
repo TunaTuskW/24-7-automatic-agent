@@ -21,6 +21,7 @@ uvicorn
 apscheduler
 aiofiles
 websockets
+python-dotenv
 
 stable-baselines3>=2.0.0
 gymnasium>=0.29.0

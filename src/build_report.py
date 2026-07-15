@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 build_report.py - v5.2.0
-Generates institutional macro updates displaying dual-engine (HMM + Deep MLP)
+Generates institutional macro updates displaying dual-engine (Bayesian Fusion + Deep MLP)
 statistics alongside the decision-oriented AI Strategic Assumptions Layer.
 """
 import os
@@ -33,7 +33,7 @@ def run_consensus_engine(kalman, volume_heat, extremes, mcs_score, epistemic, ne
         if is_alpha_risk_on != is_beta_risk_on:
             k_conviction *= 0.5
             
-    models.append(ModelResult("HMM_Kalman", k_signal, k_conviction, k_noise, current_regime))
+    models.append(ModelResult("Bayesian_Regime", k_signal, k_conviction, k_noise, current_regime))
     
     m_signal = "long" if mcs_score > 10 else "short" if mcs_score < -10 else "flat"
     models.append(ModelResult("MCS", m_signal, min(abs(mcs_score)/100.0, 1.0), False, current_regime))
@@ -99,7 +99,7 @@ def compute_deterministic_synthesis(kalman, volume_heat, extremes, epistemic, di
     entropy = epistemic.get("shannon_entropy", 1.58)
     
     # 1. Base Consensus State (Trust the Consensus Engine)
-    market_state = f"Consensus clear (HMM Prob: {dominant_prob*100:.1f}%)"
+    market_state = f"Consensus clear (Regime Prob: {dominant_prob*100:.1f}%)"
     if entropy > 1.50:
         market_state = f"NOISY / HIGH CHAOS (Entropy: {entropy:.2f})"
         
@@ -186,10 +186,11 @@ def main():
     timestamp_str = dt.strftime("%Y-%m-%d %H:%M UTC")
     mcs_score = data.get("mcs", {}).get("score", 0.0)
     mcs_label = data.get("mcs", {}).get("label", "NEUTRAL")
-    regime = data.get("regime", {}).get("current", "UNKNOWN")
+    spx_asset = data.get("assets", {}).get("SPX", {})
+    regime = spx_asset.get("regime", {}).get("current", "UNKNOWN")
     
     # Kalman & Model Governance
-    kalman = data.get("kalman_state", {})
+    kalman = spx_asset.get("kalman_state", {})
     dominant_state = kalman.get("dominant_state", "unknown")
     dominant_prob = kalman.get("dominant_prob", 0.0) * 100
     sai_score = kalman.get("structural_ambiguity_index", 0.0) # Fallback if needed
@@ -197,9 +198,9 @@ def main():
     brier_score = kalman.get("brier_score_calibration", 0.15)
     
     # MLP State
-    mlp = data.get("mlp_deep_state", {}) or {}
+    mlp = spx_asset.get("mlp_state", {}) or {}
     mlp_dominant = mlp.get("dominant_state", "unknown").upper()
-    mlp_prob = mlp.get("dominant_prob", 0.0) * 100
+    mlp_prob = mlp.get("bull_probability", 0.5) * 100
     mlp_on = mlp.get("risk_on", 0.0) * 100
     mlp_off = mlp.get("risk_off", 0.0) * 100
     mlp_trans = mlp.get("transitional", 0.0) * 100
