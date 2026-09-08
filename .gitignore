@@ -17,4 +17,16 @@ config/api_keys.json
 config/tuning_configs.json
 .codegraph/
 
+# Environment and Secrets
 .env
+.env.*
+replacements.txt
+
+# OS and Bytecode junk
+.DS_Store
+**/.DS_Store
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+node_modules/
